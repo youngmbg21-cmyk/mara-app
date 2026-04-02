@@ -3802,6 +3802,9 @@ Return ONLY valid JSON (no markdown):
   ">💎 Save to Gems</button>
   <span style="font-size:10px;color:var(--text3);">Save this brief to Saved Gems for future reference</span>`;
   container.querySelector('.fib-wrap')?.appendChild(saveBtn);
+}
+
+async function searchFlights() {
   if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
   const fromVal  = document.getElementById('fl-from').value||'Stockholm (ARN)';
   const toVal    = document.getElementById('fl-to').value;
@@ -5237,6 +5240,20 @@ function rerunGem(id) {
   const gem = savedGems.find(g => g.id === id);
   if (!gem?.sourceParams) return;
   const p = gem.sourceParams;
+
+  if (p.module) {
+    // Planner gem — navigate to planner and re-run
+    switchTab('planner');
+    setTimeout(() => {
+      if (p.module) runModule(p.module);
+      if (p.dest)    document.getElementById('planner-dest').value    = p.dest;
+      if (p.dates)   document.getElementById('planner-dates').value   = p.dates;
+      if (p.context) document.getElementById('planner-context').value = p.context;
+      document.getElementById('planner-input-area').style.display = 'block';
+    }, 200);
+    return;
+  }
+
   switchTab('flights2');
   if (p.mode === 'hotel') {
     setPulseMode('hotel');
