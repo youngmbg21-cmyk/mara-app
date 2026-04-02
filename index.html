@@ -843,7 +843,33 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .agent-add-btn:hover { opacity:0.85; }
 .agent-add-btn.added { background:var(--green); cursor:default; }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+/* ── SAVED GEMS ── */
+.gems-layout{display:grid;grid-template-columns:280px 1fr;height:100%;overflow:hidden;}
+.gems-list{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;}
+.gems-list-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:0.12em;color:var(--cyan);font-weight:600;flex-shrink:0;}
+.gem-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;border-left:3px solid transparent;}
+.gem-item:hover{background:var(--bg3);}
+.gem-item.active{background:var(--cyan-dim);border-left-color:var(--cyan);}
+.gem-item-title{font-size:12px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gem-item-meta{font-size:9px;color:var(--text3);margin-top:3px;display:flex;gap:6px;align-items:center;}
+.gem-type-tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(0,200,255,0.12);color:var(--cyan);letter-spacing:0.06em;}
+.gems-detail{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
+.gems-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text2);}
+.save-gem-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,184,0,0.12);border:1px solid rgba(255,184,0,0.35);color:var(--gold);border-radius:5px;padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0.06em;transition:all 0.18s;}
+.save-gem-btn:hover{background:rgba(255,184,0,0.22);border-color:var(--gold);}
+.save-gem-btn.saved{background:rgba(0,255,136,0.12);border-color:var(--green);color:var(--green);cursor:default;}
+
+/* ── ENHANCED CHAT MARKDOWN ── */
+.chat-bubble h2{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:0.1em;text-transform:uppercase;margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.chat-bubble h3{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:0.08em;text-transform:uppercase;margin:8px 0 4px;}
+.chat-bubble ul{margin:4px 0 8px 0;display:flex;flex-direction:column;gap:4px;list-style:none;padding:0;}
+.chat-bubble ul li{padding:4px 8px 4px 12px;border-left:2px solid var(--border2);color:var(--text);font-size:12px;line-height:1.6;}
+.chat-bubble ul li::before{content:none;}
+.chat-bubble .chat-divider{height:1px;background:var(--border);margin:8px 0;}
+.chat-bubble .chat-highlight{background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.2);border-radius:6px;padding:8px 12px;margin:6px 0;font-size:12px;color:var(--cyan);}
+.chat-bubble .chat-warn{background:rgba(255,184,0,0.08);border-left:2px solid var(--gold);border-radius:0 4px 4px 0;padding:6px 10px;margin:6px 0;font-size:11px;color:var(--gold);}
+.chat-bubble .chat-good{background:rgba(0,255,136,0.08);border-left:2px solid var(--green);border-radius:0 4px 4px 0;padding:6px 10px;margin:6px 0;font-size:11px;color:var(--green);}
+.chat-bubble .chat-bad{background:rgba(255,69,96,0.08);border-left:2px solid var(--red);border-radius:0 4px 4px 0;padding:6px 10px;margin:6px 0;font-size:11px;color:var(--red);}
   filter: invert(1) sepia(1) saturate(8) hue-rotate(360deg);
   opacity: 0.9;
   cursor: pointer;
@@ -975,6 +1001,7 @@ input[type="date"] {
     <div class="nav-btn"        id="nav-planner"      onclick="switchTab('planner')">🧠<div class="nav-tip">AI PLANNER</div></div>
     <div class="nav-btn"        id="nav-pack"         onclick="switchTab('pack')">🎒<div class="nav-tip">PACK LIST</div></div>
     <div class="nav-btn"        id="nav-vault"        onclick="switchTab('vault')">🔐<div class="nav-tip">VAULT</div></div>
+    <div class="nav-btn"        id="nav-gems"         onclick="switchTab('gems')">💎<div class="nav-tip">SAVED GEMS</div><span class="nav-badge" id="gems-badge" style="display:none;"></span></div>
     <div class="nav-btn"        id="nav-visitors"     onclick="switchTab('visitors')">👥<div class="nav-tip">VISITORS</div></div>
   </div>
 
@@ -1310,6 +1337,28 @@ input[type="date"] {
 
       </div><!-- end vault-layout -->
     </div><!-- end tab-vault -->
+
+    <!-- SAVED GEMS -->
+    <div class="tab-view" id="tab-gems">
+      <div class="sec-header">
+        <div><div class="sec-title">💎 SAVED <span class="accent">GEMS</span></div><div class="sec-subtitle">YOUR SAVED FLIGHT, HOTEL & PLANNER BRIEFS</div></div>
+        <button class="btn-secondary" style="font-size:10px;color:var(--red);border-color:rgba(255,69,96,0.3);" onclick="clearAllGems()">CLEAR ALL</button>
+      </div>
+      <div class="gems-layout" style="flex:1;min-height:0;">
+        <div class="gems-list">
+          <div class="gems-list-header">💎 SAVED GEMS <span id="gems-count" style="color:var(--text3);font-weight:400;"></span></div>
+          <div id="gems-items"></div>
+        </div>
+        <div class="gems-detail" id="gems-detail">
+          <div class="gems-empty" id="gems-empty">
+            <div style="font-size:48px;opacity:0.3;">💎</div>
+            <div style="font-size:13px;color:var(--text2);">No saved gems yet</div>
+            <div style="font-size:11px;color:var(--text3);text-align:center;max-width:280px;">Run a flight or hotel search, or use AI Planner, then click "💎 Save to Gems"</div>
+          </div>
+          <div id="gems-detail-content" style="display:none;flex-direction:column;gap:12px;"></div>
+        </div>
+      </div>
+    </div><!-- end tab-gems -->
 
     <!-- AGENT -->
     <div class="tab-view" id="tab-agent">
@@ -1760,6 +1809,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Init GIS auth (renders sign-in button, handles silent re-auth)
   initGoogleAuth();
   loadFX();
+  loadGems();
+  updateGemsBadge();
   populateSettingsDrawer();
   renderAll();
   const today = new Date().toISOString().split('T')[0];
@@ -2038,7 +2089,18 @@ Always reference specific booking details, confirmation codes, and dates when av
     ctx += `\n\nUser is viewing the Control Tower map: ${fl} flight routes and ${ht} hotel pins plotted.`;
   }
 
-  // ── Price Pulse last search (always included regardless of active tab) ──
+  // ── Saved Gems ────────────────────────────────
+  loadGems();
+  if (savedGems.length) {
+    ctx += `\n\n── SAVED GEMS (${savedGems.length}) ──`;
+    savedGems.slice(0, 10).forEach(g => {
+      ctx += `\n• [${g.type}] ${g.title} | Saved: ${new Date(g.savedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;
+      if (g.signal) ctx += ` | Signal: ${g.signal.replace(/_/g,' ')}`;
+      if (g.confidence) ctx += ` | Confidence: ${g.confidence}/100`;
+    });
+  }
+
+  // ── SerpApi status ────────────────────────────
   if (window._lastPulseResult && activeTab !== 'flights2') {
     const p = window._lastPulseResult;
     ctx += `\n\n── PRICE PULSE LAST SEARCH (${p.mode === 'hotel' ? 'Hotel: '+p.city : 'Flight: '+p.from+'→'+p.to}) ──`;
@@ -2086,9 +2148,9 @@ function renderChatMessages() {
   container.innerHTML = chatMsgs.map(m => {
     const isUser = m.role === 'user';
     const label  = isUser ? 'YOU' : 'Mara AI';
-    const html   = m.content
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br>');
+    const html   = isUser
+      ? esc(m.content).replace(/\n/g,'<br>')
+      : formatChatMsg(m.content);
     return `<div class="chat-msg-wrap ${isUser?'user':'assistant'}">
       <div class="chat-msg-label">${label}</div>
       <div class="chat-bubble ${isUser?'user':'assistant'} ${m.error?'error':''}">${html}</div>
@@ -2654,6 +2716,7 @@ function renderTab(tab) {
   if (tab === 'dashboard')    renderDashboard();
   if (tab === 'tower')        { initMap(); renderTimeline(); }
   if (tab === 'vault')        renderVault();
+  if (tab === 'gems')         renderGems();
   if (tab === 'agent')        initAgent();
   if (tab === 'visitors')     renderVisitors();
 }
@@ -3328,6 +3391,39 @@ Return ONLY valid JSON:
     </div>
   </div>`;
 
+  // Inject Save to Gems button
+  const hotelGemContent = [
+    `## Hotel Search: ${city}`,
+    `**Check-in:** ${checkin} → **Check-out:** ${checkout}  |  **Nights:** ${nights}  |  **Guests:** ${guests}  |  **Days away:** ${daysToTrip}`,
+    `**Budget/night:** ${budgetPerNight ? cur+' '+budgetPerNight.toLocaleString() : 'not set'}`,
+    `**Price range:** ${cur} ${minP.toLocaleString()} – ${maxP.toLocaleString()}/night  |  **Average:** ${cur} ${avgP.toLocaleString()}/night`,
+    `**Signal:** ${sigLabel}  |  **Confidence:** ${confScore??'—'}/100`,
+    aiJson?.strategySummary ? `\n### Strategy\n${aiJson.strategySummary}` : '',
+    aiJson?.riskFactor      ? `\n### Risk of Waiting\n${aiJson.riskFactor}` : '',
+    aiJson?.budgetVerdict   ? `\n### Budget Verdict\n${aiJson.budgetVerdict}` : '',
+    aiJson?.sweetSpot       ? `\n### Sweet Spot\n${aiJson.sweetSpot}` : '',
+    `\n### Price Bands\n${bands.map(b=>`- **${b.label}:** ${cur} ${b.min.toLocaleString()}–${b.max.toLocaleString()}/night (${b.count} hotels)`).join('\n')}`,
+  ].filter(Boolean).join('\n');
+
+  const hotelGemParams = { mode:'hotel', city, checkin, checkout, guests: String(guests), budget: budgetPerNight ? String(budgetPerNight) : '' };
+  const hotelSaveBtn = document.createElement('div');
+  hotelSaveBtn.style.cssText = 'padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
+  hotelSaveBtn.innerHTML = `<button class="save-gem-btn" onclick="
+    saveGem({
+      title: '🏨 ${esc(city)} · ${checkin} → ${checkout}',
+      type: '🏨 Hotel Brief',
+      signal: '${aiJson?.bookSignal||''}',
+      confidence: ${confScore??'null'},
+      sourceParams: ${JSON.stringify(hotelGemParams)},
+      content: \`${hotelGemContent.replace(/`/g,"'").replace(/\\/g,'\\\\')}\`
+    });
+    this.textContent = '✓ Saved!';
+    this.classList.add('saved');
+    this.disabled = true;
+  ">💎 Save to Gems</button>
+  <span style="font-size:10px;color:var(--text3);">Save this brief to Saved Gems for future reference</span>`;
+  container.querySelector('.fib-wrap')?.appendChild(hotelSaveBtn);
+
   // Attach live budget listener now that DOM is rendered
   try {
     const inputEl = document.getElementById('pp-ht-budget');
@@ -3674,9 +3770,38 @@ Return ONLY valid JSON (no markdown):
     </div>
 
   </div>`;
-}
 
-async function searchFlights() {
+  // Inject Save to Gems button
+  const gemContent = [
+    `## Route: ${from} → ${to}`,
+    `**Dates:** ${depart}${ret?' → '+ret:''}  |  **Class:** ${cls}  |  **Pax:** ${pax}  |  **Days to departure:** ${daysToTrip}`,
+    `**Price range:** ${cur} ${minP.toLocaleString()} – ${maxP.toLocaleString()}  |  **Average:** ${cur} ${avgP.toLocaleString()}`,
+    `**Signal:** ${buyLabel}  |  **Confidence:** ${confScore??'—'}/100`,
+    aiJson?.strategySummary ? `\n### Strategy\n${aiJson.strategySummary}` : '',
+    aiJson?.riskFactor      ? `\n### Risk of Waiting\n${aiJson.riskFactor}` : '',
+    aiJson?.budgetVerdict   ? `\n### Budget Verdict\n${aiJson.budgetVerdict}` : '',
+    aiJson?.sweetSpot       ? `\n### Sweet Spot\n${aiJson.sweetSpot}` : '',
+    `\n### Price Bands\n${bands.map(b=>`- **${b.label}:** ${cur} ${b.min.toLocaleString()}–${b.max.toLocaleString()} (${b.count} flights)`).join('\n')}`,
+  ].filter(Boolean).join('\n');
+
+  const gemParams = { mode:'flight', from, to, depart, ret, cls, pax: String(pax), budget: budget ? String(budget) : '' };
+  const saveBtn = document.createElement('div');
+  saveBtn.style.cssText = 'padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
+  saveBtn.innerHTML = `<button class="save-gem-btn" id="flight-gem-btn" onclick="
+    const gem = saveGem({
+      title: '✈ ${esc(from)} → ${esc(to)} · ${depart}',
+      type: '✈ Flight Brief',
+      signal: '${aiJson?.buySignal||''}',
+      confidence: ${confScore??'null'},
+      sourceParams: ${JSON.stringify(gemParams)},
+      content: \`${gemContent.replace(/`/g,"'").replace(/\\/g,'\\\\')}\`
+    });
+    this.textContent = '✓ Saved!';
+    this.classList.add('saved');
+    this.disabled = true;
+  ">💎 Save to Gems</button>
+  <span style="font-size:10px;color:var(--text3);">Save this brief to Saved Gems for future reference</span>`;
+  container.querySelector('.fib-wrap')?.appendChild(saveBtn);
   if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
   const fromVal  = document.getElementById('fl-from').value||'Stockholm (ARN)';
   const toVal    = document.getElementById('fl-to').value;
@@ -4664,7 +4789,31 @@ async function executePlanner() {
 Use 4-6 sections. Be specific, practical, and insightful. No markdown symbols inside text.`, [{role:'user',content:PROMPTS[activePlannerModule]||`Tell me about ${dest}.`}], 1800);
     let sections = [];
     try { sections = JSON.parse(result.replace(/```json|```/g,'').trim()); } catch(_) { sections = null; }
-    panel.innerHTML=`<div class="ai-result-header"><div class="ai-result-title">🧠 ${(activePlannerModule||'').replace(/_/g,' ').toUpperCase()}</div><button class="btn-secondary" style="font-size:9px;padding:3px 8px;" onclick="this.closest('.ai-result-panel').classList.remove('active')">✕</button></div><div class="ai-result-body">${sections ? formatAiSections(sections) : formatAiText(result)}</div>`;
+    const moduleLabel = (activePlannerModule||'').replace(/_/g,' ').toUpperCase();
+    panel.innerHTML=`<div class="ai-result-header"><div class="ai-result-title">🧠 ${moduleLabel}</div><button class="btn-secondary" style="font-size:9px;padding:3px 8px;" onclick="this.closest('.ai-result-panel').classList.remove('active')">✕</button></div><div class="ai-result-body">${sections ? formatAiSections(sections) : formatAiText(result)}</div>`;
+    // Add Save to Gems button
+    const plannerGemContent = sections
+      ? sections.map(s => `## ${s.emoji||''} ${s.title||''}\n${(s.paragraphs||[]).join('\n\n')}`).join('\n\n')
+      : result;
+    const plannerHeader = panel.querySelector('.ai-result-header');
+    if (plannerHeader) {
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'save-gem-btn';
+      saveBtn.style.cssText = 'margin-left:auto;font-size:9px;padding:3px 10px;';
+      saveBtn.innerHTML = '💎 Save to Gems';
+      saveBtn.onclick = () => {
+        saveGem({
+          title: `🧠 ${moduleLabel}: ${dest}`,
+          type: `🧠 ${moduleLabel}`,
+          content: plannerGemContent,
+          sourceParams: { module: activePlannerModule, dest, dates, context }
+        });
+        saveBtn.textContent = '✓ Saved!';
+        saveBtn.classList.add('saved');
+        saveBtn.disabled = true;
+      };
+      plannerHeader.appendChild(saveBtn);
+    }
   } catch(e) { panel.innerHTML=`<div class="ai-result-header"><div class="ai-result-title">ERROR</div></div><div class="ai-result-body">${esc(e.message)}</div>`; }
 }
 
@@ -4931,6 +5080,195 @@ function loadFX() {
     }).join('');
 
   track.innerHTML = makeItems() + makeItems();
+}
+
+// ═══════════════════════════════════════════════
+// SAVED GEMS
+// ═══════════════════════════════════════════════
+let savedGems = [];
+let activeGemId = null;
+
+function loadGems() {
+  try { savedGems = JSON.parse(localStorage.getItem('voy_gems') || '[]'); } catch(_) { savedGems = []; }
+}
+function persistGems() {
+  try { localStorage.setItem('voy_gems', JSON.stringify(savedGems)); } catch(_) {}
+}
+
+function saveGem(gem) {
+  loadGems();
+  const entry = {
+    id: 'gem-' + Date.now(),
+    title: gem.title,
+    type: gem.type,
+    savedAt: new Date().toISOString(),
+    sourceParams: gem.sourceParams || null,
+    content: gem.content || '',
+    signal: gem.signal || null,
+    confidence: gem.confidence || null,
+  };
+  savedGems.unshift(entry);
+  persistGems();
+  updateGemsBadge();
+  showToast('💎 Saved to Gems', 'success');
+  return entry.id;
+}
+
+function deleteGem(id) {
+  savedGems = savedGems.filter(g => g.id !== id);
+  persistGems();
+  if (activeGemId === id) activeGemId = null;
+  renderGems();
+  updateGemsBadge();
+}
+
+function clearAllGems() {
+  if (!savedGems.length) return;
+  if (!confirm('Clear all saved gems?')) return;
+  savedGems = [];
+  persistGems();
+  activeGemId = null;
+  renderGems();
+  updateGemsBadge();
+}
+
+function updateGemsBadge() {
+  loadGems();
+  const badge = document.getElementById('gems-badge');
+  if (badge) badge.style.display = savedGems.length > 0 ? '' : 'none';
+  const count = document.getElementById('gems-count');
+  if (count) count.textContent = savedGems.length ? `(${savedGems.length})` : '';
+}
+
+function renderGems() {
+  loadGems();
+  const itemsEl   = document.getElementById('gems-items');
+  const emptyEl   = document.getElementById('gems-empty');
+  const detailEl  = document.getElementById('gems-detail-content');
+  const countEl   = document.getElementById('gems-count');
+  if (!itemsEl) return;
+
+  if (countEl) countEl.textContent = savedGems.length ? `(${savedGems.length})` : '';
+
+  if (!savedGems.length) {
+    itemsEl.innerHTML = '';
+    if (emptyEl)  emptyEl.style.display  = 'flex';
+    if (detailEl) detailEl.style.display = 'none';
+    return;
+  }
+
+  if (!activeGemId && savedGems.length) activeGemId = savedGems[0].id;
+
+  itemsEl.innerHTML = savedGems.map(g => {
+    const date = new Date(g.savedAt).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+    const isActive = g.id === activeGemId;
+    return `<div class="gem-item ${isActive?'active':''}" onclick="selectGem('${g.id}')">
+      <div class="gem-item-title">${esc(g.title)}</div>
+      <div class="gem-item-meta">
+        <span class="gem-type-tag">${esc(g.type)}</span>
+        <span>${date}</span>
+        ${g.signal ? `<span style="color:${g.signal==='BUY_NOW'||g.signal==='BOOK_NOW'?'var(--green)':g.signal==='CONSIDER_WAITING'?'var(--red)':'var(--gold)'};font-weight:700;">${g.signal.replace('_',' ')}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  renderGemDetail();
+}
+
+function selectGem(id) {
+  activeGemId = id;
+  renderGems();
+}
+
+function renderGemDetail() {
+  const emptyEl  = document.getElementById('gems-empty');
+  const detailEl = document.getElementById('gems-detail-content');
+  if (!detailEl) return;
+
+  const gem = savedGems.find(g => g.id === activeGemId);
+  if (!gem) {
+    if (emptyEl)  emptyEl.style.display  = 'flex';
+    detailEl.style.display = 'none';
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = 'none';
+  detailEl.style.display = 'flex';
+
+  const date = new Date(gem.savedAt).toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const sigColor = gem.signal==='BUY_NOW'||gem.signal==='BOOK_NOW' ? 'var(--green)' : gem.signal==='CONSIDER_WAITING' ? 'var(--red)' : 'var(--gold)';
+
+  detailEl.innerHTML = `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">${esc(gem.title)}</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span class="gem-type-tag">${esc(gem.type)}</span>
+            <span style="font-size:10px;color:var(--text3);">${date}</span>
+            ${gem.signal ? `<span style="font-size:11px;font-weight:700;color:${sigColor};">${gem.signal.replace(/_/g,' ')}</span>` : ''}
+            ${gem.confidence ? `<span style="font-size:10px;color:var(--text3);">confidence ${gem.confidence}/100</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          ${gem.sourceParams ? `<button class="btn-secondary" style="font-size:10px;padding:5px 10px;" onclick="rerunGem('${gem.id}')">⟳ RERUN</button>` : ''}
+          <button class="btn-secondary" style="font-size:10px;padding:5px 10px;color:var(--red);border-color:rgba(255,69,96,0.3);" onclick="deleteGem('${gem.id}')">✕ DELETE</button>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;font-size:12px;color:var(--text);line-height:1.8;font-family:sans-serif;">
+      ${formatGemContent(gem.content)}
+    </div>`;
+}
+
+function formatGemContent(text) {
+  if (!text) return '<span style="color:var(--text3);">No content saved.</span>';
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--cyan);">$1</strong>')
+    .replace(/^## (.+)$/gm,'<div style="font-family:\'Syne\',sans-serif;font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:0.12em;text-transform:uppercase;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">$1</div>')
+    .replace(/^### (.+)$/gm,'<div style="font-size:11px;font-weight:700;color:var(--gold);margin:10px 0 4px;">$1</div>')
+    .replace(/^- (.+)$/gm,'<div style="padding:3px 8px 3px 12px;border-left:2px solid var(--border2);margin:2px 0;color:var(--text2);">$1</div>')
+    .replace(/^• (.+)$/gm,'<div style="padding:3px 8px 3px 12px;border-left:2px solid var(--border2);margin:2px 0;color:var(--text2);">$1</div>')
+    .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+}
+
+function rerunGem(id) {
+  const gem = savedGems.find(g => g.id === id);
+  if (!gem?.sourceParams) return;
+  const p = gem.sourceParams;
+  switchTab('flights2');
+  if (p.mode === 'hotel') {
+    setPulseMode('hotel');
+    if (p.city)     document.getElementById('pp-ht-city').value     = p.city;
+    if (p.checkin)  document.getElementById('pp-ht-checkin').value  = p.checkin;
+    if (p.checkout) document.getElementById('pp-ht-checkout').value = p.checkout;
+    if (p.guests)   document.getElementById('pp-ht-guests').value   = p.guests;
+    if (p.budget)   document.getElementById('pp-ht-budget').value   = p.budget;
+    setTimeout(() => searchHotelPulse(), 300);
+  } else {
+    setPulseMode('flight');
+    if (p.from)   document.getElementById('fl2-from').value   = p.from;
+    if (p.to)     document.getElementById('fl2-to').value     = p.to;
+    if (p.depart) document.getElementById('fl2-depart').value = p.depart;
+    if (p.ret)    document.getElementById('fl2-return').value = p.ret;
+    if (p.cls)    document.getElementById('fl2-class').value  = p.cls;
+    if (p.budget) document.getElementById('fl2-budget').value = p.budget;
+    setTimeout(() => searchFlights2(), 300);
+  }
+}
+
+// ── Enhanced chat message formatter ──────────────
+function formatChatMsg(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^[-•] (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, s => `<ul>${s}</ul>`)
+    .replace(/^---$/gm, '<div class="chat-divider"></div>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
 }
 
 // ═══════════════════════════════════════════════
