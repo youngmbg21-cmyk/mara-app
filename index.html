@@ -964,8 +964,7 @@ input[type="date"] {
     <div class="nav-btn"        id="nav-timeline"     onclick="switchTab('timeline')">📅<div class="nav-tip">TIMELINE</div></div>
     <div class="nav-btn"        id="nav-alerts"       onclick="switchTab('alerts')">⚠️<span class="nav-badge" id="alerts-badge" style="display:none;"></span><div class="nav-tip">ALERTS</div></div>
     <div class="sidebar-sep"></div>
-    <div class="nav-btn"        id="nav-flights"      onclick="switchTab('flights')">✈️<div class="nav-tip">FLIGHTS</div></div>
-    <div class="nav-btn"        id="nav-flights2"     onclick="switchTab('flights2')">📊<div class="nav-tip">FLIGHT INTEL</div></div>
+    <div class="nav-btn"        id="nav-flights2"     onclick="switchTab('flights2')">⚡<div class="nav-tip">PRICE PULSE</div></div>
     <div class="nav-btn"        id="nav-hotels"       onclick="switchTab('hotels')">🏨<div class="nav-tip">HOTELS</div></div>
     <div class="nav-btn"        id="nav-restaurants"  onclick="switchTab('restaurants')">🍽️<div class="nav-tip">RESTAURANTS</div></div>
     <div class="nav-btn"        id="nav-intel"        onclick="switchTab('intel')">📊<div class="nav-tip">INTELLIGENCE</div></div>
@@ -1071,41 +1070,24 @@ input[type="date"] {
     </div>
 
     <!-- FLIGHTS -->
-    <div class="tab-view" id="tab-flights">
-      <div class="sec-header">
-        <div><div class="sec-title">FLIGHT <span class="accent">SEARCH</span></div></div>
-        <span class="pill cyan">AI POWERED</span>
-      </div>
-      <div class="search-form">
-        <div class="search-field"><div class="search-label">FROM</div>
-          <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="fl-from" placeholder="Search city…" autocomplete="off" oninput="filterCities('fl-from',this.value)" onfocus="openCityDrop('fl-from')" onblur="closeCityDrop('fl-from')"><div class="city-drop" id="cdrop-fl-from"></div></div>
-          <input type="hidden" id="fl-from-code">
-        </div>
-        <div class="search-field"><div class="search-label">TO</div>
-          <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="fl-to" placeholder="Search city…" autocomplete="off" oninput="filterCities('fl-to',this.value)" onfocus="openCityDrop('fl-to')" onblur="closeCityDrop('fl-to')"><div class="city-drop" id="cdrop-fl-to"></div></div>
-          <input type="hidden" id="fl-to-code">
-        </div>
-        <div class="search-field" style="max-width:130px;"><div class="search-label">DEPART</div><input class="search-input" id="fl-depart" type="date"></div>
-        <div class="search-field" style="max-width:130px;"><div class="search-label">RETURN</div><input class="search-input" id="fl-return" type="date"></div>
-        <div class="search-field" style="max-width:80px;"><div class="search-label">PAX</div><input class="search-input" id="fl-pax" type="number" value="1" min="1"></div>
-        <div class="search-field" style="max-width:110px;"><div class="search-label">CLASS</div>
-          <select class="search-input" id="fl-class"><option value="economy">Economy</option><option value="premium">Premium Eco</option><option value="business">Business</option><option value="first">First</option></select>
-        </div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" onclick="searchFlights()">SEARCH FLIGHTS</button></div>
-      </div>
-      <div id="fl-results" class="results-container" style="overflow-y:auto;flex:1;"></div>
-      <div class="section-label">MY FLIGHT BOOKINGS</div>
-      <div class="cards-grid" id="my-flights"></div>
-    </div>
 
 
-    <!-- FLIGHT INTELLIGENCE BRIEF -->
+
+    <!-- PRICE PULSE -->
     <div class="tab-view" id="tab-flights2">
       <div class="sec-header">
-        <div><div class="sec-title">FLIGHT <span class="accent">BRIEF</span></div><div class="sec-subtitle">PRICE INTELLIGENCE · 1 LIVE CALL · AI ANALYSIS</div></div>
+        <div><div class="sec-title">⚡ PRICE <span class="accent">PULSE</span></div><div class="sec-subtitle">FLIGHT & HOTEL INTELLIGENCE · 1 LIVE CALL · AI ANALYSIS</div></div>
         <span class="pill cyan">1 SERP CALL</span>
       </div>
-      <div class="search-form">
+
+      <!-- Mode Toggle -->
+      <div style="display:flex;gap:0;padding:10px 20px 0;border-bottom:1px solid var(--border);">
+        <button id="pp-toggle-flight" onclick="setPulseMode('flight')" style="padding:7px 20px;font-size:11px;font-weight:600;letter-spacing:0.08em;background:var(--cyan);color:var(--bg);border:none;border-radius:6px 0 0 6px;cursor:pointer;">✈️ FLIGHTS</button>
+        <button id="pp-toggle-hotel"  onclick="setPulseMode('hotel')"  style="padding:7px 20px;font-size:11px;font-weight:600;letter-spacing:0.08em;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:0 6px 6px 0;cursor:pointer;">🏨 HOTELS</button>
+      </div>
+
+      <!-- Flight search form -->
+      <div id="pp-form-flight" class="search-form">
         <div class="search-field"><div class="search-label">FROM</div>
           <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="fl2-from" placeholder="Search city…" autocomplete="off" oninput="filterCities('fl2-from',this.value)" onfocus="openCityDrop('fl2-from')" onblur="closeCityDrop('fl2-from')"><div class="city-drop" id="cdrop-fl2-from"></div></div>
           <input type="hidden" id="fl2-from-code">
@@ -1123,6 +1105,23 @@ input[type="date"] {
         <div class="search-field" style="max-width:120px;"><div class="search-label">MY BUDGET</div><input class="search-input" id="fl2-budget" type="number" placeholder="e.g. 800"></div>
         <div style="display:flex;align-items:flex-end;"><button class="btn-primary" onclick="searchFlights2()">GET BRIEF →</button></div>
       </div>
+
+      <!-- Hotel search form (hidden by default) -->
+      <div id="pp-form-hotel" class="search-form" style="display:none;">
+        <div class="search-field" style="flex:2;"><div class="search-label">CITY / DESTINATION</div>
+          <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="pp-ht-city" placeholder="Search city…" autocomplete="off" oninput="filterCities('pp-ht-city',this.value)" onfocus="openCityDrop('pp-ht-city')" onblur="closeCityDrop('pp-ht-city')"><div class="city-drop" id="cdrop-pp-ht-city"></div></div>
+          <input type="hidden" id="pp-ht-city-code">
+        </div>
+        <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-IN</div><input class="search-input" id="pp-ht-checkin" type="date"></div>
+        <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-OUT</div><input class="search-input" id="pp-ht-checkout" type="date"></div>
+        <div class="search-field" style="max-width:80px;"><div class="search-label">GUESTS</div><input class="search-input" id="pp-ht-guests" type="number" value="2" min="1"></div>
+        <div class="search-field" style="max-width:160px;"><div class="search-label">CATEGORY</div>
+          <select class="search-input" id="pp-ht-cat"><option value="">All categories</option><option value="luxury">Luxury / 5-star</option><option value="boutique">Boutique / Design</option><option value="business">Business / Comfort</option><option value="budget">Budget / Value</option></select>
+        </div>
+        <div class="search-field" style="max-width:120px;"><div class="search-label">BUDGET / NIGHT</div><input class="search-input" id="pp-ht-budget" type="number" placeholder="e.g. 200"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" style="background:var(--green);color:var(--bg);" onclick="searchHotelPulse()">GET BRIEF →</button></div>
+      </div>
+
       <div id="fl2-results" style="overflow-y:auto;flex:1;padding:16px 20px;"></div>
     </div>
 
@@ -2641,7 +2640,6 @@ function renderTab(tab) {
   if (tab === 'bookings')     renderBookings('all');
   if (tab === 'timeline')     renderTimeline();
   if (tab === 'alerts')       renderAlerts();
-  if (tab === 'flights')      renderMyFlights();
   if (tab === 'flights2')     renderMyFlights2();
   if (tab === 'hotels')       renderMyHotels();
   if (tab === 'restaurants')  renderMyRestos();
@@ -2996,6 +2994,236 @@ function getBookingLink(type, params) {
   return links[src] || links['Google Flights'];
 }
 
+// ═══════════════════════════════════════════════
+// PRICE PULSE — toggle + hotel brief
+// ═══════════════════════════════════════════════
+let _pulseMode = 'flight';
+
+function setPulseMode(mode) {
+  _pulseMode = mode;
+  const isFlight = mode === 'flight';
+  document.getElementById('pp-form-flight').style.display = isFlight ? 'flex' : 'none';
+  document.getElementById('pp-form-hotel').style.display  = isFlight ? 'none' : 'flex';
+  const btnF = document.getElementById('pp-toggle-flight');
+  const btnH = document.getElementById('pp-toggle-hotel');
+  btnF.style.background = isFlight ? 'var(--cyan)' : 'var(--bg3)';
+  btnF.style.color      = isFlight ? 'var(--bg)'   : 'var(--text2)';
+  btnF.style.border     = isFlight ? 'none'         : '1px solid var(--border)';
+  btnH.style.background = !isFlight ? 'var(--green)' : 'var(--bg3)';
+  btnH.style.color      = !isFlight ? 'var(--bg)'    : 'var(--text2)';
+  btnH.style.border     = !isFlight ? 'none'          : '1px solid var(--border)';
+  document.getElementById('fl2-results').innerHTML = '';
+}
+
+async function searchHotelPulse() {
+  if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
+  const cityVal  = document.getElementById('pp-ht-city').value || '';
+  const city     = cityVal.replace(/\s*\([A-Z]{3}\)$/,'').trim() || cityVal;
+  const checkin  = document.getElementById('pp-ht-checkin').value;
+  const checkout = document.getElementById('pp-ht-checkout').value;
+  const guests   = document.getElementById('pp-ht-guests').value || '2';
+  const cat      = document.getElementById('pp-ht-cat').value;
+  const budget   = parseFloat(document.getElementById('pp-ht-budget').value) || 0;
+  const cur      = settings.currency || 'USD';
+  if (!city) { showToast('Select a city from the dropdown','warning'); return; }
+  if (!checkin)  { showToast('Select a check-in date','warning'); return; }
+  if (!checkout) { showToast('Select a check-out date','warning'); return; }
+  const nights = Math.max(1, Math.round((new Date(checkout) - new Date(checkin)) / 86400000));
+  const container = document.getElementById('fl2-results');
+
+  container.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">
+    <div class="spinner"></div>
+    <div id="fl2-status" style="font-size:12px;color:var(--text2);">Fetching live hotel data…</div>
+    <div style="font-size:10px;color:var(--text3);">Claude is generating your hotel intelligence brief</div>
+  </div>`;
+
+  const setStatus = msg => { const el = document.getElementById('fl2-status'); if(el) el.textContent = msg; };
+
+  // ── 1 SERP CALL ──
+  let hotels = [];
+  let isLive  = false;
+
+  try {
+    setStatus('Step 1/3 — Calling Google Hotels via SerpApi…');
+    const params = { engine:'google_hotels', q:`hotels in ${city}`, check_in_date:checkin, check_out_date:checkout, adults:guests, currency:cur };
+    if (cat && cat !== '') params.amenities = cat;
+    const data = await serpSearch(params);
+    hotels = data.properties || [];
+    isLive = hotels.length > 0;
+  } catch(e) {
+    if (e.message !== 'NO_SERP_KEY' && e.message !== 'QUOTA_EXCEEDED') setStatus('SerpApi unavailable — using AI estimates…');
+  }
+
+  // ── Claude fallback ──
+  if (!hotels.length && apiKey) {
+    try {
+      setStatus('Step 1/3 — Generating AI hotel estimates…');
+      const raw = await callClaude(
+        `Return ONLY a JSON array of 10 realistic hotels. Each:
+{"name":"","price_per_night":number,"total_price":number,"rating":number_out_of_5,"review_score":number_out_of_10,"stars":number,"location":"area name","free_cancellation":boolean,"breakfast_included":boolean,"amenities":["pool","gym","spa","restaurant","parking","wifi"]}
+Vary price points from budget to luxury. Be realistic for the city.`,
+        [{role:'user',content:`Hotels in ${city}, check-in ${checkin}, check-out ${checkout}, ${nights} nights, ${guests} guests${cat?' '+cat+' category':''}.`}], 1200
+      );
+      const est = parseArr(raw);
+      if (est.length) { hotels = est.map(h => ({...h, _estimated:true})); isLive = false; }
+    } catch(_) {}
+  }
+
+  if (!hotels.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🏨</div><div class="empty-title">No results</div><div class="empty-body">Check your API keys or try a different city.</div></div>`;
+    return;
+  }
+
+  // ── Extract data ──
+  setStatus('Step 2/3 — Analysing price bands and value…');
+  const prices  = hotels.map(h => h.rate_per_night?.lowest || h.price_per_night || 0).filter(p=>p>0).sort((a,b)=>a-b);
+  const minP    = prices[0];
+  const maxP    = prices[prices.length-1];
+  const avgP    = Math.round(prices.reduce((s,p)=>s+p,0)/prices.length);
+  const range   = maxP - minP || 1;
+  const bSize   = range / 3;
+
+  const bands = [
+    { label:'Budget',  emoji:'💚', min:minP,                        max:Math.round(minP+bSize),      color:'#00C8FF', bg:'rgba(0,200,255,0.18)' },
+    { label:'Mid',     emoji:'💛', min:Math.round(minP+bSize)+1,    max:Math.round(minP+bSize*2),    color:'#00FF88', bg:'rgba(0,255,136,0.18)' },
+    { label:'Luxury',  emoji:'🧡', min:Math.round(minP+bSize*2)+1,  max:maxP,                        color:'#FFB800', bg:'rgba(255,184,0,0.18)'  },
+  ];
+
+  bands.forEach(b => {
+    const inBand = hotels.filter(h => {
+      const p = h.rate_per_night?.lowest || h.price_per_night || 0;
+      return p >= b.min && p <= b.max;
+    });
+    b.count      = inBand.length;
+    b.totalPcts  = Math.round((b.count / hotels.length) * 100);
+    b.avgRating  = inBand.length ? (inBand.reduce((s,h)=>s+(h.overall_rating||h.review_score||0),0)/inBand.length).toFixed(1) : '—';
+    b.avgStars   = inBand.length ? (inBand.reduce((s,h)=>s+(h.hotel_class||h.stars||0),0)/inBand.length).toFixed(1) : '—';
+    b.freeCancCount = inBand.filter(h=>h.free_cancellation||h.amenities?.includes?.('free_cancellation')).length;
+    b.breakfastCount = inBand.filter(h=>h.breakfast_included||h.amenities?.includes?.('breakfast')).length;
+    b.totalStay  = Math.round(((b.min+b.max)/2) * nights);
+    b.barPct     = Math.max(8, b.totalPcts);
+  });
+
+  // ── Claude hotel intelligence ──
+  setStatus('Step 3/3 — Generating AI hotel intelligence brief…');
+  let aiJson = null;
+  if (apiKey) {
+    try {
+      const summary = JSON.stringify({
+        city, checkin, checkout, nights, guests, currency:cur, budget:budget||null,
+        totalHotels:hotels.length, isLiveData:isLive,
+        priceRange:{ min:minP, max:maxP, avg:avgP },
+        bands: bands.map(b=>({
+          label:b.label, priceRange:`${cur} ${b.min}–${b.max}/night`,
+          totalStayRange:`${cur} ${Math.round(b.min*nights)}–${Math.round(b.max*nights)} for ${nights} nights`,
+          count:b.count, avgGuestRating:b.avgRating, avgStars:b.avgStars,
+          freeCancellation:b.freeCancCount, breakfastIncluded:b.breakfastCount
+        }))
+      });
+      const raw = await callClaude(
+        `You are a hotel intelligence analyst. Return ONLY valid JSON:
+{
+  "bookSignal": "BOOK_NOW"|"FAIR_PRICE"|"CONSIDER_WAITING",
+  "bookSignalReason": "one sentence",
+  "bookSignalScore": 0-100,
+  "summary": "3-4 sentences covering: is this expensive for this city/season, what you get at each price tier, best value band, any notable patterns like free cancellation availability or breakfast deals. Be specific with prices.",
+  "sweetSpot": "one sentence on best value pick",
+  "budgetVerdict": "one sentence on budget realism — only if budget provided, else null",
+  "valueScores": [
+    {"band":"Budget","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"},
+    {"band":"Mid","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"},
+    {"band":"Luxury","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"}
+  ],
+  "warnings": ["e.g. limited availability, school holiday pricing, event surcharges — max 2, empty if none"]
+}`,
+        [{role:'user', content:summary}], 1200
+      );
+      aiJson = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    } catch(_) {}
+  }
+
+  // ── Render ──
+  const liveTag = isLive
+    ? `<span style="font-size:9px;color:var(--green);font-weight:700;">● LIVE · Google Hotels · ${getSerpUsage().calls}/${SERP_FREE_LIMIT} searches used</span>`
+    : `<span style="font-size:9px;color:var(--gold);font-weight:700;">~ AI ESTIMATED · Add SerpApi key for live data</span>`;
+
+  const sigColor = aiJson?.bookSignal==='BOOK_NOW'?'var(--green)':aiJson?.bookSignal==='CONSIDER_WAITING'?'var(--red)':'var(--gold)';
+  const sigLabel = aiJson?.bookSignal==='BOOK_NOW'?'BOOK NOW':aiJson?.bookSignal==='CONSIDER_WAITING'?'CONSIDER WAITING':'FAIR PRICE';
+  const markerPct = aiJson?.bookSignalScore ?? 50;
+
+  const bandsHtml = bands.filter(b=>b.count>0).map(b => `
+    <div class="fib-band">
+      <div>
+        <div class="fib-band-label" style="color:${b.color}">${b.emoji} ${b.label}</div>
+        <div class="fib-band-price">${cur} ${b.min.toLocaleString()}–${b.max.toLocaleString()}/night</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${cur} ${Math.round(b.min*nights).toLocaleString()}–${Math.round(b.max*nights).toLocaleString()} total</div>
+      </div>
+      <div>
+        <div class="fib-bar-wrap">
+          <div class="fib-bar" style="width:${b.barPct}%;background:${b.bg};color:${b.color};">${b.count} hotel${b.count>1?'s':''}</div>
+        </div>
+        <div style="font-size:9px;color:var(--text3);margin-top:3px;">${b.count} of ${hotels.length} results</div>
+      </div>
+      <div class="fib-band-meta">
+        ★ avg ${b.avgStars} stars · ${b.avgRating}/10 guest rating<br>
+        ${b.freeCancCount > 0 ? `${b.freeCancCount} free cancellation` : 'check cancellation policy'}<br>
+        ${b.breakfastCount > 0 ? `${b.breakfastCount} include breakfast` : 'breakfast not included'}
+      </div>
+    </div>`).join('');
+
+  const valueHtml = (aiJson?.valueScores||[]).map(v => {
+    const band = bands.find(b=>b.label===v.band);
+    const dot = (n) => Array.from({length:5},(_,i)=>`<div class="fib-conv-dot" style="background:${i<n?(band?.color||'var(--cyan)'):'var(--bg4)'}"></div>`).join('');
+    return `<div class="fib-convenience-row">
+      <span class="fib-conv-label" style="color:${band?.color||'var(--text)'}">${band?.emoji||''} ${v.band}</span>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);"><span style="width:80px;">Value/money</span><div class="fib-conv-dots">${dot(v.valueForMoney)}</div></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);"><span style="width:80px;">Location</span><div class="fib-conv-dots">${dot(v.locationQuality)}</div></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);"><span style="width:80px;">Amenities</span><div class="fib-conv-dots">${dot(v.amenityScore)}</div></div>
+      </div>
+      <span class="fib-conv-note">${esc(v.note||'')}</span>
+    </div>`;
+  }).join('');
+
+  const warningsHtml = (aiJson?.warnings||[]).filter(Boolean).length
+    ? (aiJson.warnings.map(w=>`<div style="font-size:11px;color:var(--gold);padding:6px 10px;background:rgba(255,184,0,0.08);border-radius:4px;border-left:2px solid var(--gold);">⚠ ${esc(w)}</div>`).join(''))
+    : '';
+
+  container.innerHTML = `<div class="fib-wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      ${liveTag}
+      <span style="font-size:10px;color:var(--text3);">${esc(city)} · ${checkin} → ${checkout} · ${nights} night${nights>1?'s':''} · ${guests} guest${guests>1?'s':''}</span>
+    </div>
+    <div class="fib-summary">
+      <div class="fib-kpi"><div class="fib-kpi-label">Lowest/night</div><div class="fib-kpi-val" style="color:var(--green)">${cur} ${minP.toLocaleString()}</div><div class="fib-kpi-sub">${cur} ${Math.round(minP*nights).toLocaleString()} total</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Average/night</div><div class="fib-kpi-val">${cur} ${avgP.toLocaleString()}</div><div class="fib-kpi-sub">${hotels.length} hotels · ${cur} ${Math.round(avgP*nights).toLocaleString()} total</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Highest/night</div><div class="fib-kpi-val" style="color:var(--text2)">${cur} ${maxP.toLocaleString()}</div><div class="fib-kpi-sub">${cur} ${Math.round(maxP*nights).toLocaleString()} total</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Book signal</div><div class="fib-kpi-val" style="color:${sigColor}">${sigLabel}</div><div class="fib-kpi-sub">${esc(aiJson?.bookSignalReason||'Based on current pricing')}</div></div>
+    </div>
+    <div class="fib-section">
+      <div class="fib-section-title">Price band heat map · ${nights} night stay</div>
+      ${bandsHtml}
+    </div>
+    ${valueHtml ? `<div class="fib-section"><div class="fib-section-title">Value index by price band</div>${valueHtml}</div>` : ''}
+    <div class="fib-section">
+      <div class="fib-section-title">Book signal</div>
+      <div class="fib-signal">
+        <div style="font-size:11px;color:var(--green);width:60px;text-align:center;">CHEAP</div>
+        <div class="fib-thermometer" style="flex:1;"><div class="fib-thermometer-marker" style="left:${markerPct}%;background:${sigColor};"></div></div>
+        <div style="font-size:11px;color:var(--red);width:60px;text-align:center;">PRICEY</div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;">${esc(aiJson?.bookSignalReason||'')}</div>
+    </div>
+    <div class="fib-section">
+      <div class="fib-section-title">AI intelligence summary</div>
+      <div class="fib-ai-summary">${aiJson?.summary||'<span style="color:var(--text3);">Add your Claude API key in ⚙ Settings to enable AI analysis.</span>'}</div>
+      ${aiJson?.sweetSpot?`<div style="margin-top:10px;padding:8px 12px;background:rgba(0,255,136,0.08);border-radius:6px;border-left:2px solid var(--green);font-size:11px;color:var(--green);">💡 Sweet spot: ${esc(aiJson.sweetSpot)}</div>`:''}
+      ${budget&&aiJson?.budgetVerdict?`<div style="margin-top:8px;padding:8px 12px;background:${minP<=budget?'rgba(0,255,136,0.08)':'rgba(255,69,96,0.08)'};border-radius:6px;border-left:2px solid ${minP<=budget?'var(--green)':'var(--red)'};font-size:11px;color:${minP<=budget?'var(--green)':'var(--red)'};">💰 Budget verdict: ${esc(aiJson.budgetVerdict)}</div>`:''}
+      ${warningsHtml?`<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">${warningsHtml}</div>`:''}
+    </div>
+  </div>`;
+}
+
 async function searchFlights2() {
   if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
   const from    = document.getElementById('fl2-from').value || '';
@@ -3076,9 +3304,9 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
   // Define 3 price bands dynamically
   const bandSize  = range / 3;
   const bands     = [
-    { label:'Budget', min: minP,               max: Math.round(minP + bandSize),   color:'#1D9E75', bgColor:'rgba(29,158,117,0.15)' },
-    { label:'Mid',    min: Math.round(minP + bandSize)+1, max: Math.round(minP + bandSize*2), color:'#378ADD', bgColor:'rgba(55,138,221,0.15)' },
-    { label:'Premium',min: Math.round(minP + bandSize*2)+1, max: maxP,             color:'#BA7517', bgColor:'rgba(186,117,23,0.15)' },
+    { label:'Budget', min: minP,               max: Math.round(minP + bandSize),   color:'#00FF88', bgColor:'rgba(0,255,136,0.22)' },
+    { label:'Mid',    min: Math.round(minP + bandSize)+1, max: Math.round(minP + bandSize*2), color:'#00C8FF', bgColor:'rgba(0,200,255,0.22)' },
+    { label:'Premium',min: Math.round(minP + bandSize*2)+1, max: maxP,             color:'#FFB800', bgColor:'rgba(255,184,0,0.22)' },
   ];
 
   bands.forEach(b => {
