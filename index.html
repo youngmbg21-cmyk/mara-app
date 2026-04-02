@@ -965,13 +965,10 @@ input[type="date"] {
     <div class="nav-btn"        id="nav-alerts"       onclick="switchTab('alerts')">⚠️<span class="nav-badge" id="alerts-badge" style="display:none;"></span><div class="nav-tip">ALERTS</div></div>
     <div class="sidebar-sep"></div>
     <div class="nav-btn"        id="nav-flights2"     onclick="switchTab('flights2')">⚡<div class="nav-tip">PRICE PULSE</div></div>
-    <div class="nav-btn"        id="nav-hotels"       onclick="switchTab('hotels')">🏨<div class="nav-tip">HOTELS</div></div>
     <div class="nav-btn"        id="nav-restaurants"  onclick="switchTab('restaurants')">🍽️<div class="nav-tip">RESTAURANTS</div></div>
-    <div class="nav-btn"        id="nav-intel"        onclick="switchTab('intel')">📊<div class="nav-tip">INTELLIGENCE</div></div>
     <div class="sidebar-sep"></div>
     <div class="nav-btn"        id="nav-agent"        onclick="switchTab('agent')">🤖<div class="nav-tip">AGENT</div></div>
     <div class="nav-btn"        id="nav-planner"      onclick="switchTab('planner')">🧠<div class="nav-tip">AI PLANNER</div></div>
-    <div class="nav-btn"        id="nav-budget"       onclick="switchTab('budget')">💰<div class="nav-tip">BUDGET</div></div>
     <div class="nav-btn"        id="nav-pack"         onclick="switchTab('pack')">🎒<div class="nav-tip">PACK LIST</div></div>
     <div class="nav-btn"        id="nav-vault"        onclick="switchTab('vault')">🔐<div class="nav-tip">VAULT</div></div>
     <div class="nav-btn"        id="nav-visitors"     onclick="switchTab('visitors')">👥<div class="nav-tip">VISITORS</div></div>
@@ -1096,7 +1093,7 @@ input[type="date"] {
           <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="fl2-to" placeholder="Search city…" autocomplete="off" oninput="filterCities('fl2-to',this.value)" onfocus="openCityDrop('fl2-to')" onblur="closeCityDrop('fl2-to')"><div class="city-drop" id="cdrop-fl2-to"></div></div>
           <input type="hidden" id="fl2-to-code">
         </div>
-        <div class="search-field" style="max-width:130px;"><div class="search-label">DEPART</div><input class="search-input" id="fl2-depart" type="date"></div>
+        <div class="search-field" style="max-width:130px;"><div class="search-label">DEPART</div><input class="search-input" id="fl2-depart" type="date" onchange="setMinDate('fl2-return',this.value)"></div>
         <div class="search-field" style="max-width:130px;"><div class="search-label">RETURN</div><input class="search-input" id="fl2-return" type="date"></div>
         <div class="search-field" style="max-width:80px;"><div class="search-label">PAX</div><input class="search-input" id="fl2-pax" type="number" value="1" min="1"></div>
         <div class="search-field" style="max-width:110px;"><div class="search-label">CLASS</div>
@@ -1112,7 +1109,7 @@ input[type="date"] {
           <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="pp-ht-city" placeholder="Search city…" autocomplete="off" oninput="filterCities('pp-ht-city',this.value)" onfocus="openCityDrop('pp-ht-city')" onblur="closeCityDrop('pp-ht-city')"><div class="city-drop" id="cdrop-pp-ht-city"></div></div>
           <input type="hidden" id="pp-ht-city-code">
         </div>
-        <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-IN</div><input class="search-input" id="pp-ht-checkin" type="date"></div>
+        <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-IN</div><input class="search-input" id="pp-ht-checkin" type="date" onchange="setMinDate('pp-ht-checkout',this.value)"></div>
         <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-OUT</div><input class="search-input" id="pp-ht-checkout" type="date"></div>
         <div class="search-field" style="max-width:80px;"><div class="search-label">GUESTS</div><input class="search-input" id="pp-ht-guests" type="number" value="2" min="1"></div>
         <div class="search-field" style="max-width:160px;"><div class="search-label">CATEGORY</div>
@@ -1123,29 +1120,6 @@ input[type="date"] {
       </div>
 
       <div id="fl2-results" style="overflow-y:auto;flex:1;padding:16px 20px;"></div>
-    </div>
-
-    <!-- HOTELS -->
-    <div class="tab-view" id="tab-hotels">
-      <div class="sec-header">
-        <div><div class="sec-title">HOTEL <span class="accent">SEARCH</span></div></div>
-        <span class="pill green">AI POWERED</span>
-      </div>
-      <div class="search-form">
-        <div class="search-field" style="flex:2;"><div class="search-label">CITY / DESTINATION</div>
-          <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="ht-city" placeholder="Search city…" autocomplete="off" oninput="filterCities('ht-city',this.value)" onfocus="openCityDrop('ht-city')" onblur="closeCityDrop('ht-city')"><div class="city-drop" id="cdrop-ht-city"></div></div>
-          <input type="hidden" id="ht-city-code">
-        </div>
-        <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-IN</div><input class="search-input" id="ht-checkin" type="date"></div>
-        <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-OUT</div><input class="search-input" id="ht-checkout" type="date"></div>
-        <div class="search-field" style="max-width:160px;"><div class="search-label">CATEGORY</div>
-          <select class="search-input" id="ht-cat"><option value="luxury">Luxury / 5-star</option><option value="boutique">Boutique / Design</option><option value="business">Business / Comfort</option><option value="safari">Safari Lodge</option><option value="beach">Beach Resort</option></select>
-        </div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" style="background:var(--green);color:var(--bg);" onclick="searchHotels()">SEARCH HOTELS</button></div>
-      </div>
-      <div id="ht-results" class="results-container" style="overflow-y:auto;flex:1;"></div>
-      <div class="section-label">MY HOTEL BOOKINGS</div>
-      <div class="cards-grid" id="my-hotels"></div>
     </div>
 
     <!-- RESTAURANTS -->
@@ -1220,192 +1194,6 @@ input[type="date"] {
         </div>
       </div>
       <div id="planner-result" class="ai-result-panel"></div>
-    </div>
-
-    <!-- BUDGET -->
-    <div class="tab-view" id="tab-budget">
-      <div class="sec-header">
-        <div><div class="sec-title">TRIP <span class="accent">BUDGET</span></div></div>
-        <button class="btn-secondary" onclick="openAddExpense()">+ ADD EXPENSE</button>
-      </div>
-      <div class="budget-header">
-        <div><div style="font-size:9px;color:var(--text2);letter-spacing:0.12em;">TOTAL BUDGET</div><div style="font-size:14px;color:var(--text);" id="budget-total-label">Set budget →</div></div>
-        <div class="budget-progress"><div class="budget-fill good" id="budget-fill" style="width:0%;"></div></div>
-        <div class="budget-label" id="budget-spend-label">$0 spent</div>
-        <button class="btn-secondary" onclick="setBudget()">SET BUDGET</button>
-      </div>
-      <div id="budget-by-cat" style="padding:12px 20px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);"></div>
-      <div style="font-size:9px;color:var(--text2);letter-spacing:0.14em;padding:10px 20px 4px;">EXPENSES</div>
-      <div id="expenses-list" style="overflow-y:auto;flex:1;"></div>
-      <div id="budget-empty" class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">No expenses yet</div><div class="empty-body">Add expenses to track spending.</div></div>
-    </div>
-
-    <!-- PACK LIST -->
-    <div class="tab-view" id="tab-pack">
-      <div class="sec-header">
-        <div><div class="sec-title">PACK <span class="accent">LIST</span></div></div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn-secondary" onclick="generatePackList()">🧠 AI GENERATE</button>
-          <button class="btn-secondary" onclick="clearPackList()">CLEAR ALL</button>
-        </div>
-      </div>
-      <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;">
-        <input class="field-input" style="flex:1;" id="pack-trip-context" placeholder="Trip context (e.g. 7 days Cape Town, beach + safari, hot weather)">
-        <button class="btn-primary" onclick="generatePackList()">GENERATE LIST</button>
-      </div>
-      <div id="pack-categories" style="overflow-y:auto;flex:1;"></div>
-      <div class="pack-add-row">
-        <input class="field-input" style="flex:1;" id="pack-new-item" placeholder="Add item...">
-        <select class="field-input" id="pack-new-cat" style="width:150px;"><option>Clothing</option><option>Documents</option><option>Electronics</option><option>Toiletries</option><option>Health</option><option>Other</option></select>
-        <button class="btn-secondary" onclick="addPackItem()">ADD</button>
-      </div>
-    </div>
-
-    <!-- VISITORS -->
-    <div class="tab-view" id="tab-visitors">
-      <div class="sec-header"><div><div class="sec-title">VISITOR <span class="accent">TRACKER</span></div></div></div>
-      <div class="banner info">📁 Create a Gmail label <strong style="margin:0 4px;">"Tracker"</strong> and move friends/family travel emails there. Mara scans it automatically.</div>
-      <div id="visitors-list" style="padding:12px 20px;">
-        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No visitor trips found</div><div class="empty-body">Set up a Tracker folder and rescan.</div></div>
-      </div>
-    </div>
-
-    <!-- VAULT -->
-    <div class="tab-view" id="tab-vault">
-      <div class="vault-layout">
-
-        <!-- Left: Category Nav -->
-        <div class="vault-nav">
-          <div class="vault-nav-header">VAULT</div>
-          <div class="vault-nav-item active" id="vnav-all"       onclick="vaultNav('all',this)">
-            <span class="vault-nav-icon">🗂</span> All
-            <span class="vault-nav-count" id="vnav-count-all">0</span>
-          </div>
-          <div class="vault-nav-item" id="vnav-pinned"    onclick="vaultNav('pinned',this)">
-            <span class="vault-nav-icon">📌</span> Pinned
-            <span class="vault-nav-count" id="vnav-count-pinned">0</span>
-          </div>
-          <div class="vault-nav-sep"></div>
-          <div class="vault-nav-label">DOCUMENTS</div>
-          <div class="vault-nav-item" id="vnav-passport"  onclick="vaultNav('passport',this)">
-            <span class="vault-nav-icon">🛂</span> Passports & Visas
-            <span class="vault-nav-count" id="vnav-count-passport">0</span>
-          </div>
-          <div class="vault-nav-item" id="vnav-ticket"    onclick="vaultNav('ticket',this)">
-            <span class="vault-nav-icon">🎫</span> Tickets & Bookings
-            <span class="vault-nav-count" id="vnav-count-ticket">0</span>
-          </div>
-          <div class="vault-nav-item" id="vnav-insurance" onclick="vaultNav('insurance',this)">
-            <span class="vault-nav-icon">🛡</span> Insurance
-            <span class="vault-nav-count" id="vnav-count-insurance">0</span>
-          </div>
-          <div class="vault-nav-item" id="vnav-document"  onclick="vaultNav('document',this)">
-            <span class="vault-nav-icon">📄</span> Other Documents
-            <span class="vault-nav-count" id="vnav-count-document">0</span>
-          </div>
-          <div class="vault-nav-sep"></div>
-          <div class="vault-nav-label">NOTES</div>
-          <div class="vault-nav-item" id="vnav-note" onclick="vaultNav('note',this)">
-            <span class="vault-nav-icon">📝</span> Notes
-            <span class="vault-nav-count" id="vnav-count-note">0</span>
-          </div>
-        </div>
-
-        <!-- Middle: Item List -->
-        <div class="vault-list">
-          <div class="vault-list-header">
-            <input class="vault-search" id="vault-search" placeholder="Search vault…" oninput="renderVaultList()">
-            <div style="display:flex;gap:6px;">
-              <button class="btn-secondary" style="font-size:10px;padding:6px 12px;" onclick="openNewNote()">+ NOTE</button>
-              <button class="btn-primary"   style="font-size:10px;padding:6px 14px;" onclick="document.getElementById('vault-file-input').click()">↑ UPLOAD</button>
-              <input type="file" id="vault-file-input" style="display:none;" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" onchange="handleVaultUpload(event)">
-            </div>
-          </div>
-          <div class="vault-drop-zone" id="vault-drop-zone"
-            ondragover="event.preventDefault();this.classList.add('drag-over')"
-            ondragleave="this.classList.remove('drag-over')"
-            ondrop="handleVaultDrop(event)">
-            <span style="font-size:22px;">📂</span>
-            <span style="font-size:11px;color:var(--text2);">Drop files here to upload</span>
-          </div>
-          <div id="vault-item-list"></div>
-        </div>
-
-        <!-- Right: Preview / Editor -->
-        <div class="vault-preview" id="vault-preview">
-          <div class="vault-preview-empty">
-            <div style="font-size:48px;opacity:0.3;">🔐</div>
-            <div style="font-size:13px;color:var(--text2);margin-top:12px;">Select an item to view</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:6px;">Upload documents or create notes</div>
-          </div>
-        </div>
-
-      </div><!-- end vault-layout -->
-    </div><!-- end tab-vault -->
-
-    <!-- AGENT -->
-    <div class="tab-view" id="tab-agent">
-      <div class="agent-layout">
-
-        <!-- Left: Agent Input + Memory -->
-        <div class="agent-left">
-          <div class="agent-header">
-            <div>
-              <div class="agent-title">🤖 MARA <span>AGENT</span></div>
-              <div class="agent-sub">Natural language travel search · Powered by Claude + SerpApi</div>
-            </div>
-            <div class="agent-quota-pill" id="agent-quota-pill"></div>
-          </div>
-
-          <!-- Input area -->
-          <div class="agent-input-card">
-            <div class="agent-type-row">
-              <button class="agent-type-btn active" id="atype-flight"   onclick="setAgentType('flight',this)">✈️ FLIGHT</button>
-              <button class="agent-type-btn"         id="atype-hotel"   onclick="setAgentType('hotel',this)">🏨 HOTEL</button>
-              <button class="agent-type-btn"         id="atype-restaurant" onclick="setAgentType('restaurant',this)">🍽️ RESTAURANT</button>
-            </div>
-            <textarea class="agent-textarea" id="agent-input"
-              placeholder="Describe what you're looking for…&#10;e.g. &#34;Find me a flight to Nairobi under $600&#34;&#10;e.g. &#34;Luxury hotel in Cape Town, 3 nights from May 22&#34;&#10;e.g. &#34;Best fine dining restaurant in Nairobi&#34;"
-              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();runAgent();}"></textarea>
-            <div class="agent-input-footer">
-              <span class="agent-hint" id="agent-hint">Press Enter or tap Search</span>
-              <button class="btn-primary" style="padding:8px 20px;" onclick="runAgent()">SEARCH →</button>
-            </div>
-          </div>
-
-          <!-- Memory panel -->
-          <div class="agent-memory-card">
-            <div class="agent-section-label">🧠 AGENT MEMORY</div>
-            <div id="agent-memory-display"></div>
-            <button class="btn-secondary" style="font-size:9px;padding:4px 10px;margin-top:8px;" onclick="clearAgentMemory()">CLEAR MEMORY</button>
-          </div>
-
-          <!-- Search history -->
-          <div class="agent-memory-card">
-            <div class="agent-section-label">🕐 RECENT SEARCHES</div>
-            <div id="agent-history-display"></div>
-          </div>
-        </div>
-
-        <!-- Right: Results -->
-        <div class="agent-right">
-          <div class="agent-results-header" id="agent-results-header">
-            <div style="font-size:11px;color:var(--text2);">Results will appear here after you search</div>
-          </div>
-          <div id="agent-results" class="agent-results-body">
-            <div class="agent-empty">
-              <div style="font-size:48px;opacity:0.2;margin-bottom:12px;">🤖</div>
-              <div style="font-size:14px;color:var(--text2);">Tell me what you're looking for</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6;">
-                "Find me a return flight to Nairobi under $600"<br>
-                "Luxury hotel in Cape Town, check in May 22 for 5 nights"<br>
-                "Best rooftop restaurant in Nairobi"
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
     </div>
 
     <!-- INTELLIGENCE TAB -->
@@ -2097,7 +1885,6 @@ function renderChatMessages() {
       <div class="chat-bubble ${isUser?'user':'assistant'} ${m.error?'error':''}">${html}</div>
     </div>`;
   }).join('');
-  container.scrollTop = container.scrollHeight;
 }
 
 async function sendChat() {
@@ -2115,6 +1902,10 @@ async function sendChat() {
   chatMsgs.push({ role:'user', content: msg });
   chatHistory.push({ role:'user', content: msg });
   renderChatMessages();
+  // Scroll so the new user message is visible at top of view — not bottom
+  const allMsgs = document.querySelectorAll('#chatMessages .chat-msg-wrap');
+  const lastUserMsg = [...allMsgs].filter(m=>m.classList.contains('user')).pop();
+  if (lastUserMsg) lastUserMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // Show typing indicator
   const container = document.getElementById('chatMessages');
@@ -2125,7 +1916,6 @@ async function sendChat() {
       <div class="chat-typing"><span></span><span></span><span></span></div>
     </div>`;
   container.appendChild(typingEl);
-  container.scrollTop = container.scrollHeight;
 
   try {
     const result = await callClaude(
@@ -2627,6 +2417,14 @@ function setStatus(msg) {
 // ═══════════════════════════════════════════════
 // TAB SWITCHING
 // ═══════════════════════════════════════════════
+function setMinDate(targetId, val) {
+  const el = document.getElementById(targetId);
+  if (el && val) {
+    el.min = val;
+    if (el.value && el.value < val) el.value = val;
+  }
+}
+
 function switchTab(tab) {
   document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -2643,16 +2441,13 @@ function renderTab(tab) {
   if (tab === 'timeline')     renderTimeline();
   if (tab === 'alerts')       renderAlerts();
   if (tab === 'flights2')     renderMyFlights2();
-  if (tab === 'hotels')       renderMyHotels();
   if (tab === 'restaurants')  renderMyRestos();
-  if (tab === 'budget')       renderBudget();
   if (tab === 'pack')         renderPackList();
   if (tab === 'dashboard')    renderDashboard();
   if (tab === 'tower')        initMap();
   if (tab === 'vault')        renderVault();
   if (tab === 'agent')        initAgent();
   if (tab === 'visitors')     renderVisitors();
-  if (tab === 'intel')        initIntel();
 }
 
 function switchBookingTab(type, el) {
