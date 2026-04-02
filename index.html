@@ -295,8 +295,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .chat-msg-wrap.user .chat-msg-label      { color: var(--cyan); }
 .chat-msg-wrap.assistant .chat-msg-label { color: var(--green); }
 .chat-bubble {
-  max-width: 88%; padding: 10px 13px;
-  font-size: 12px; line-height: 1.75; color: var(--text);
+  max-width: 88%; padding: 12px 15px;
+  font-size: 13px; line-height: 1.7; color: var(--text);
 }
 .chat-bubble.user {
   background: linear-gradient(135deg, rgba(0,200,255,0.12), rgba(0,255,136,0.08));
@@ -308,14 +308,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   border-radius: 12px 12px 12px 2px;
 }
 .chat-bubble.error { border-color: rgba(255,69,96,0.4); color: var(--red); }
-.chat-bubble strong { color: var(--cyan); font-weight: 600; }
+.chat-bubble strong { color: var(--text); font-weight: 700; }
 .chat-bubble em { color: var(--text2); font-style: italic; }
 .chat-bubble code {
   background: var(--bg4); padding: 1px 5px; border-radius: 3px;
   font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--green);
 }
-.chat-bubble ul, .chat-bubble ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0; }
-.chat-bubble li { color: var(--text); }
 .chat-typing { display: flex; gap: 4px; align-items: center; padding: 2px 0; }
 .chat-typing span {
   width: 6px; height: 6px; border-radius: 50%; background: var(--green);
@@ -859,24 +857,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .save-gem-btn:hover{background:rgba(255,184,0,0.22);border-color:var(--gold);}
 .save-gem-btn.saved{background:rgba(0,255,136,0.12);border-color:var(--green);color:var(--green);cursor:default;}
 
-/* ── ENHANCED CHAT MARKDOWN ── */
-.chat-bubble h2{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:0.1em;text-transform:uppercase;margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
-.chat-bubble h3{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:0.08em;text-transform:uppercase;margin:8px 0 4px;}
-.chat-bubble ul{margin:4px 0 8px 0;display:flex;flex-direction:column;gap:4px;list-style:none;padding:0;}
-.chat-bubble ul li{padding:4px 8px 4px 12px;border-left:2px solid var(--border2);color:var(--text);font-size:12px;line-height:1.6;}
-.chat-bubble ul li::before{content:none;}
-.chat-bubble .chat-divider{height:1px;background:var(--border);margin:8px 0;}
-.chat-bubble .chat-highlight{background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.2);border-radius:6px;padding:8px 12px;margin:6px 0;font-size:12px;color:var(--cyan);}
-.chat-bubble .chat-warn{background:rgba(255,184,0,0.08);border-left:2px solid var(--gold);border-radius:0 4px 4px 0;padding:6px 10px;margin:6px 0;font-size:11px;color:var(--gold);}
-.chat-bubble .chat-good{background:rgba(0,255,136,0.08);border-left:2px solid var(--green);border-radius:0 4px 4px 0;padding:6px 10px;margin:6px 0;font-size:11px;color:var(--green);}
-.chat-bubble .chat-bad{background:rgba(255,69,96,0.08);border-left:2px solid var(--red);border-radius:0 4px 4px 0;padding:6px 10px;margin:6px 0;font-size:11px;color:var(--red);}
+input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1) sepia(1) saturate(8) hue-rotate(360deg);
   opacity: 0.9;
   cursor: pointer;
 }
-input[type="date"] {
-  color-scheme: dark;
-}
+input[type="date"] { color-scheme: dark; }
 </style>
 </head>
 <body>
@@ -5285,31 +5271,60 @@ function rerunGem(id) {
 
 // ── Enhanced chat message formatter ──────────────
 function formatChatMsg(text) {
-  // Normalise line endings, collapse 3+ blank lines to 2
-  let t = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  if (!text) return '';
+  const lines = text.replace(/\r\n/g,'\n').split('\n');
+  const out = [];
+  let i = 0;
 
-  // Headers
-  t = t.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  const renderInline = s => s
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--text);font-weight:700;">$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em style="color:var(--text2);">$1</em>')
+    .replace(/`(.+?)`/g,'<code>$1</code>');
 
-  // Bold
-  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  while (i < lines.length) {
+    const raw  = lines[i];
+    const line = raw.trim();
 
-  // Bullet lists — collect consecutive bullet lines into a <ul>
-  t = t.replace(/((?:^[-•*] .+\n?)+)/gm, match => {
-    const items = match.trim().split('\n').map(line =>
-      `<li>${line.replace(/^[-•*] /, '')}</li>`
-    ).join('');
-    return `<ul>${items}</ul>`;
-  });
+    if (!line) { out.push('<div style="height:6px;"></div>'); i++; continue; }
 
-  // Dividers
-  t = t.replace(/^---$/gm, '<div class="chat-divider"></div>');
+    // Markdown table
+    if (line.startsWith('|') && line.endsWith('|') && line.split('|').length > 2) {
+      const tbl = [];
+      while (i < lines.length) {
+        const tl = lines[i].trim();
+        if ((tl.startsWith('|') && tl.endsWith('|')) || (/^[|\s\-:]+$/.test(tl) && tl.includes('|'))) { tbl.push(tl); i++; } else break;
+      }
+      const rows = tbl.filter(l => !(/^[|\s\-:]+$/.test(l) && l.includes('-')));
+      const pr = r => r.split('|').map(c=>c.trim()).filter((_,j,a)=>j>0&&j<a.length-1);
+      const hdrs = pr(rows[0]||'');
+      if (hdrs.length) {
+        out.push(`<div style="overflow-x:auto;margin:8px 0;"><table style="width:100%;border-collapse:collapse;font-family:inherit;font-size:12px;"><thead><tr style="background:rgba(0,200,255,0.08);">${hdrs.map(h=>`<th style="padding:7px 12px;text-align:left;font-weight:700;letter-spacing:0.05em;color:var(--text);border-bottom:2px solid rgba(0,200,255,0.25);white-space:nowrap;">${renderInline(h)}</th>`).join('')}</tr></thead><tbody>${rows.slice(1).map((row,ri)=>`<tr style="background:${ri%2===0?'transparent':'rgba(255,255,255,0.02)'};">${pr(row).map(c=>`<td style="padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text2);line-height:1.6;">${renderInline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+      }
+      continue;
+    }
 
-  // Paragraphs — double newlines become spacing, single become space
-  t = t.replace(/\n\n/g, '<br>').replace(/\n/g, ' ');
+    if (line.startsWith('# '))   { out.push(`<div style="font-size:16px;font-weight:700;color:var(--text);margin:16px 0 5px;">${renderInline(line.slice(2))}</div>`); i++; continue; }
+    if (line.startsWith('## '))  { out.push(`<div style="font-size:15px;font-weight:700;color:var(--text);margin:14px 0 4px;">${renderInline(line.slice(3))}</div>`); i++; continue; }
+    if (line.startsWith('### ')) { out.push(`<div style="font-size:13px;font-weight:700;color:var(--cyan);margin:10px 0 3px;">${renderInline(line.slice(4))}</div>`); i++; continue; }
+    if (line === '---') { out.push('<div style="height:1px;background:var(--border);margin:10px 0;"></div>'); i++; continue; }
 
-  return t;
+    // ALL CAPS section header
+    if (/^[A-Z][A-Z\s\-&\/]{3,}$/.test(line) && !line.includes('.') && line.length < 60) {
+      out.push(`<div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--text3);margin:16px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--border);">${line}</div>`);
+      i++; continue;
+    }
+    // Bullet
+    const bm = line.match(/^[-*•]\s+(.*)/);
+    if (bm) { out.push(`<div style="display:flex;gap:8px;padding-left:4px;margin-top:3px;align-items:flex-start;"><span style="color:var(--text3);flex-shrink:0;margin-top:4px;font-size:11px;">–</span><span style="line-height:1.7;font-size:13px;">${renderInline(bm[1])}</span></div>`); i++; continue; }
+    // Numbered
+    const nm = line.match(/^(\d+)\.\s+(.*)/);
+    if (nm) { out.push(`<div style="display:flex;gap:8px;padding-left:4px;margin-top:3px;align-items:flex-start;"><span style="color:var(--text3);flex-shrink:0;font-size:12px;font-weight:600;min-width:16px;">${nm[1]}.</span><span style="line-height:1.7;font-size:13px;">${renderInline(nm[2])}</span></div>`); i++; continue; }
+    // Normal line
+    out.push(`<div style="line-height:1.75;margin-top:2px;font-size:13px;">${renderInline(raw)}</div>`);
+    i++;
+  }
+  return out.join('');
 }
 
 // ═══════════════════════════════════════════════
