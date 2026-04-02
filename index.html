@@ -726,36 +726,33 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #scan-overlay { position: fixed; inset: 0; z-index: 900; background: rgba(6,9,14,0.94); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
 #scan-overlay.active { display: flex; }
 
-/* ── FLIGHT INTELLIGENCE GRID ── */
-.fig-wrap{overflow-x:auto;}
-.fig-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'JetBrains Mono',monospace;}
-.fig-table th{font-size:9px;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;padding:8px 12px;border-bottom:2px solid var(--border2);text-align:left;white-space:nowrap;background:var(--bg2);position:sticky;top:0;}
-.fig-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;}
-.fig-table tr:hover td{background:var(--bg3);}
-.fig-table tr.fig-best td{background:rgba(0,255,136,0.04);}
-.fig-rank{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:700;}
-.fig-rank-1{background:#EAF3DE;color:#27500A;}
-.fig-rank-2{background:#E6F1FB;color:#0C447C;}
-.fig-rank-3{background:#FAEEDA;color:#633806;}
-.fig-rank-n{background:var(--bg4);color:var(--text2);}
-.fig-airline{display:flex;align-items:center;gap:8px;}
-.fig-airline img{height:16px;object-fit:contain;opacity:0.85;}
-.fig-green{color:var(--green);font-weight:700;}
-.fig-red{color:var(--red);font-weight:700;}
-.fig-gold{color:var(--gold);}
-.fig-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:3px;letter-spacing:0.06em;font-weight:700;}
-.fig-badge-best{background:rgba(0,255,136,0.12);color:var(--green);}
-.fig-badge-good{background:rgba(0,200,255,0.12);color:var(--cyan);}
-.fig-badge-fair{background:rgba(255,184,0,0.12);color:var(--gold);}
-.fig-badge-poor{background:rgba(255,69,96,0.12);color:var(--red);}
-.fig-score-bar{display:flex;align-items:center;gap:6px;}
-.fig-score-track{width:50px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
-.fig-score-fill{height:100%;border-radius:2px;}
-.fig-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;}
-.fig-kpi{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;}
-.fig-kpi-label{font-size:9px;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:3px;}
-.fig-kpi-val{font-size:18px;font-weight:700;color:var(--text);}
-.fig-kpi-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+/* ── FLIGHT INTELLIGENCE BRIEF ── */
+.fib-wrap{display:flex;flex-direction:column;gap:14px;}
+.fib-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.fib-kpi{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;}
+.fib-kpi-label{font-size:9px;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:3px;}
+.fib-kpi-val{font-size:20px;font-weight:700;color:var(--text);}
+.fib-kpi-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+.fib-section{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.fib-section-title{font-size:10px;letter-spacing:0.12em;color:var(--cyan);text-transform:uppercase;font-weight:600;margin-bottom:12px;}
+.fib-band{display:grid;grid-template-columns:90px 1fr 200px;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.fib-band:last-child{border-bottom:none;}
+.fib-band-label{font-size:11px;font-weight:600;color:var(--text);}
+.fib-band-price{font-size:10px;color:var(--text2);margin-top:2px;}
+.fib-bar-wrap{position:relative;height:28px;background:var(--bg4);border-radius:4px;overflow:hidden;}
+.fib-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:600;transition:width 0.6s ease;}
+.fib-band-meta{font-size:10px;color:var(--text2);line-height:1.6;}
+.fib-signal{display:flex;align-items:center;gap:16px;padding:10px 0;}
+.fib-thermometer{flex:1;height:8px;background:linear-gradient(90deg,var(--green),var(--gold),var(--red));border-radius:4px;position:relative;}
+.fib-thermometer-marker{position:absolute;top:-4px;width:16px;height:16px;border-radius:50%;border:2px solid var(--bg);transform:translateX(-50%);}
+.fib-ai-summary{font-size:13px;color:var(--text);line-height:1.8;font-family:var(--font-sans,sans-serif);}
+.fib-ai-summary strong{color:var(--cyan);}
+.fib-convenience-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+.fib-convenience-row:last-child{border-bottom:none;}
+.fib-conv-label{font-size:11px;color:var(--text);width:100px;flex-shrink:0;}
+.fib-conv-dots{display:flex;gap:3px;}
+.fib-conv-dot{width:8px;height:8px;border-radius:50%;}
+.fib-conv-note{font-size:10px;color:var(--text2);flex:1;}
 
 /* ── CITY DROPDOWN ── */
 .city-dropdown-wrap{position:relative;width:100%;}
@@ -1102,11 +1099,11 @@ input[type="date"] {
     </div>
 
 
-    <!-- FLIGHT INTELLIGENCE GRID -->
+    <!-- FLIGHT INTELLIGENCE BRIEF -->
     <div class="tab-view" id="tab-flights2">
       <div class="sec-header">
-        <div><div class="sec-title">FLIGHT <span class="accent">INTELLIGENCE</span></div><div class="sec-subtitle">AIRLINE COMPARISON · LIVE SERP DATA · AI RANKED</div></div>
-        <span class="pill cyan">2 SERP CALLS</span>
+        <div><div class="sec-title">FLIGHT <span class="accent">BRIEF</span></div><div class="sec-subtitle">PRICE INTELLIGENCE · 1 LIVE CALL · AI ANALYSIS</div></div>
+        <span class="pill cyan">1 SERP CALL</span>
       </div>
       <div class="search-form">
         <div class="search-field"><div class="search-label">FROM</div>
@@ -1124,7 +1121,7 @@ input[type="date"] {
           <select class="search-input" id="fl2-class"><option value="economy">Economy</option><option value="premium">Premium Eco</option><option value="business">Business</option><option value="first">First</option></select>
         </div>
         <div class="search-field" style="max-width:120px;"><div class="search-label">MY BUDGET</div><input class="search-input" id="fl2-budget" type="number" placeholder="e.g. 800"></div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" onclick="searchFlights2()">ANALYSE →</button></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" onclick="searchFlights2()">GET BRIEF →</button></div>
       </div>
       <div id="fl2-results" style="overflow-y:auto;flex:1;padding:16px 20px;"></div>
     </div>
@@ -3001,192 +2998,253 @@ function getBookingLink(type, params) {
 
 async function searchFlights2() {
   if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
-  const fromVal = document.getElementById('fl2-from').value||'Stockholm (ARN)';
-  const toVal   = document.getElementById('fl2-to').value;
-  const from    = fromVal;
-  const to      = toVal;
+  const from    = document.getElementById('fl2-from').value || '';
+  const to      = document.getElementById('fl2-to').value || '';
   const depart  = document.getElementById('fl2-depart').value;
   const ret     = document.getElementById('fl2-return').value;
-  const pax     = document.getElementById('fl2-pax').value||'1';
-  const cls     = document.getElementById('fl2-class').value||'economy';
-  const budget  = parseFloat(document.getElementById('fl2-budget').value)||0;
-  if (!to) { showToast('Select a destination city','warning'); return; }
-  const cur = settings.currency||'USD';
-  const isRoundTrip = !!ret;
+  const pax     = document.getElementById('fl2-pax').value || '1';
+  const cls     = document.getElementById('fl2-class').value || 'economy';
+  const budget  = parseFloat(document.getElementById('fl2-budget').value) || 0;
+  const fromCode = document.getElementById('fl2-from-code')?.value || (from.match(/\(([A-Z]{3})\)/)||[,''])[1];
+  const toCode   = document.getElementById('fl2-to-code')?.value   || (to.match(/\(([A-Z]{3})\)/)||[,''])[1];
+  if (!fromCode || !toCode) { showToast('Select origin and destination from the dropdown','warning'); return; }
+  if (!depart) { showToast('Select a departure date','warning'); return; }
+  const cur  = settings.currency || 'USD';
+  const isRT = !!ret;
   const container = document.getElementById('fl2-results');
 
-  container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:40px;">
-    <div class="spinner"></div>
-    <span style="color:var(--text2);font-size:12px;">Fetching ${isRoundTrip ? 'round trip' : 'one-way'} data — 1 SerpApi call…</span>
-  </div>`;
+  // ── Loading state with steps ──
+  container.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">
+      <div class="spinner"></div>
+      <div id="fl2-status" style="font-size:12px;color:var(--text2);">Fetching live flight data…</div>
+      <div style="font-size:10px;color:var(--text3);">This may take up to 60 seconds — Claude is generating your intelligence brief</div>
+    </div>`;
 
-  // ── EXACTLY 1 SERP CALL ──
-  // Round trip if return date set, one-way otherwise
+  const setStatus = msg => { const el = document.getElementById('fl2-status'); if(el) el.textContent = msg; };
+
+  // ── 1 SERP CALL ──
   let flights = [];
   let isLive  = false;
 
   try {
-    const fromCode = document.getElementById('fl2-from-code')?.value ||
-                     (from.match(/\(([A-Z]{3})\)/)||[,''])[1] ||
-                     from.split(/\s+/).pop().replace(/[^A-Z]/g,'');
-    const toCode   = document.getElementById('fl2-to-code')?.value ||
-                     (to.match(/\(([A-Z]{3})\)/)||[,''])[1] ||
-                     to.split(/\s+/).pop().replace(/[^A-Z]/g,'');
-    if (!fromCode || !toCode) throw new Error('Select cities from the dropdown');
-
-    const serpParams = {
-      engine:        'google_flights',
-      departure_id:   fromCode,
-      arrival_id:     toCode,
-      outbound_date:  depart,
-      currency:       cur,
-      adults:         pax,
-      travel_class:   cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
+    setStatus('Step 1/3 — Calling Google Flights via SerpApi…');
+    const params = {
+      engine: 'google_flights', departure_id: fromCode, arrival_id: toCode,
+      outbound_date: depart, currency: cur, adults: pax,
+      travel_class: cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
     };
-    if (isRoundTrip) {
-      serpParams.return_date = ret;
-      serpParams.type        = '1';
-    }
-
-    const data = await serpSearch(serpParams);
-    flights = data.best_flights || data.other_flights || [];
-    isLive  = true;
-
+    if (isRT) { params.return_date = ret; params.type = '1'; }
+    const data = await serpSearch(params);
+    flights = [...(data.best_flights||[]), ...(data.other_flights||[])];
+    isLive  = flights.length > 0;
   } catch(e) {
     if (e.message !== 'NO_SERP_KEY' && e.message !== 'QUOTA_EXCEEDED') {
-      container.innerHTML += `<div style="padding:8px 0 4px;"><div style="padding:8px 12px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:6px;font-size:10px;color:var(--gold);">⚠ ${esc(e.message)} — using AI estimates</div></div>`;
+      setStatus('SerpApi unavailable — using AI estimates…');
     }
   }
 
-  // ── Claude fallback if SerpApi failed ──
+  // ── Claude fallback if no live data ──
   if (!flights.length && apiKey) {
     try {
+      setStatus('Step 1/3 — Generating AI flight estimates…');
       const raw = await callClaude(
-        `Return ONLY a valid JSON array of 5 realistic flights. Each:
-{"airline":"name","price":number,"total_duration":number_in_minutes,"stops":number}`,
-        [{role:'user',content:`${isRoundTrip?'Round trip':'One-way'} flights from ${from} to ${to}, departing ${depart}${isRoundTrip?', returning '+ret:''}, ${pax} pax ${cls}.`}], 600
+        `Return ONLY a JSON array of 8 realistic flight options for this route. Each object:
+{"price":number,"total_duration":number_minutes,"stops":number,"departure_time":"HH:MM","arrival_time":"HH:MM","layover_airports":["IATA"],"overnight":boolean}
+Vary the options realistically — include direct, 1-stop, and 2-stop options at different price points.`,
+        [{role:'user', content:`${isRT?'Round trip':'One-way'} from ${from} to ${to}, departing ${depart}${isRT?', returning '+ret:''}, ${pax} pax, ${cls}.`}], 1000
       );
       const est = parseArr(raw);
-      if (est.length) {
-        flights = est.map(e => ({
-          price: e.price,
-          total_duration: e.total_duration,
-          flights: Array(e.stops + 1).fill({ airline: e.airline }),
-          _estimated: true
-        }));
-      }
+      if (est.length) flights = est.map(f => ({...f, flights: Array((f.stops||0)+1).fill({airline:''}), _estimated:true}));
     } catch(_) {}
   }
 
   if (!flights.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No results</div><div class="empty-body">Try different dates or check your API keys in ⚙ Settings.</div></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">✈️</div><div class="empty-title">No data available</div><div class="empty-body">Check your API keys in ⚙ Settings and try again.</div></div>`;
     return;
   }
 
-  // ── Build comparison rows ──
-  const rows = flights.slice(0, 8).map(f => {
-    const airline = f.flights?.[0]?.airline || '—';
-    const logo    = f.flights?.[0]?.airline_logo || '';
-    const price   = f.price || 0;
-    const dur     = f.total_duration || 0;
-    const stops   = (f.flights?.length || 1) - 1;
-    return { airline, logo, price, dur, durStr: dur ? `${Math.floor(dur/60)}h ${dur%60}m` : '—', stops, estimated: !!f._estimated };
+  // ── Extract raw data for Claude ──
+  setStatus('Step 2/3 — Analysing price bands and convenience…');
+  const prices    = flights.map(f => f.price || 0).filter(p => p > 0).sort((a,b) => a-b);
+  const minP      = prices[0];
+  const maxP      = prices[prices.length-1];
+  const avgP      = Math.round(prices.reduce((s,p)=>s+p,0) / prices.length);
+  const medianP   = prices[Math.floor(prices.length/2)];
+  const range     = maxP - minP;
+
+  // Define 3 price bands dynamically
+  const bandSize  = range / 3;
+  const bands     = [
+    { label:'Budget', min: minP,               max: Math.round(minP + bandSize),   color:'#1D9E75', bgColor:'rgba(29,158,117,0.15)' },
+    { label:'Mid',    min: Math.round(minP + bandSize)+1, max: Math.round(minP + bandSize*2), color:'#378ADD', bgColor:'rgba(55,138,221,0.15)' },
+    { label:'Premium',min: Math.round(minP + bandSize*2)+1, max: maxP,             color:'#BA7517', bgColor:'rgba(186,117,23,0.15)' },
+  ];
+
+  bands.forEach(b => {
+    const inBand = flights.filter(f => f.price >= b.min && f.price <= b.max);
+    b.count     = inBand.length;
+    b.avgDur    = inBand.length ? Math.round(inBand.reduce((s,f)=>s+(f.total_duration||0),0)/inBand.length) : 0;
+    b.avgStops  = inBand.length ? (inBand.reduce((s,f)=>s+(f.stops||(f.flights?.length||1)-1),0)/inBand.length).toFixed(1) : '—';
+    b.earlyDep  = inBand.filter(f => { const h=parseInt(f.departure_time?.split(':')[0]||'12'); return h>=6&&h<=10; }).length;
+    b.overnight = inBand.filter(f => f.overnight).length;
+    b.directCount = inBand.filter(f => (f.stops||(f.flights?.length||1)-1) === 0).length;
+    b.pct       = maxP > minP ? Math.round((((b.min+b.max)/2 - minP) / range) * 100) : 50;
+    b.barPct    = Math.round((b.count / flights.length) * 100);
   });
 
-  // Sort by price for cost rank
-  const sortedByPrice = [...rows].sort((a, b) => a.price - b.price);
-  rows.forEach(r => { r.costRank = sortedByPrice.findIndex(s => s.airline === r.airline) + 1; });
+  // Buy signal: compare avg to rough historical baseline via Claude
+  const pricePressure = avgP > medianP * 1.1 ? 'high' : avgP < medianP * 0.9 ? 'low' : 'normal';
 
-  // AI score
-  const maxPrice = Math.max(...rows.map(r => r.price));
-  const minPrice = Math.min(...rows.map(r => r.price));
-  const maxDur   = Math.max(...rows.map(r => r.dur || 999));
-  const minDur   = Math.min(...rows.map(r => r.dur || 0));
-  rows.forEach(r => {
-    const ps = maxPrice === minPrice ? 60 : Math.round(60 - ((r.price - minPrice) / (maxPrice - minPrice)) * 60);
-    const ds = maxDur   === minDur   ? 30 : Math.round(30 - ((r.dur   - minDur)   / (maxDur   - minDur))   * 30);
-    const ss = r.stops === 0 ? 10 : 0;
-    r.aiScore = Math.min(100, ps + ds + ss);
-  });
-  const aiSorted = [...rows].sort((a, b) => b.aiScore - a.aiScore);
-  rows.forEach(r => { r.aiRank = aiSorted.findIndex(s => s.airline === r.airline) + 1; });
+  // ── Claude intelligence brief ──
+  setStatus('Step 3/3 — Generating AI intelligence brief…');
+  let aiJson = null;
+  if (apiKey) {
+    try {
+      const flightSummary = JSON.stringify({
+        route: `${from} → ${to}`, date: depart, returnDate: ret||null,
+        isRoundTrip: isRT, class: cls, pax, currency: cur, budget: budget||null,
+        totalOptions: flights.length, isLiveData: isLive,
+        priceRange: { min: minP, max: maxP, avg: avgP, median: medianP },
+        bands: bands.map(b => ({
+          label: b.label, priceRange: `${cur} ${b.min}–${b.max}`,
+          count: b.count, avgDuration: b.avgDur ? Math.floor(b.avgDur/60)+'h '+b.avgDur%60+'m' : '—',
+          avgStops: b.avgStops, directFlights: b.directCount, earlyDepartures: b.earlyDep, overnightOptions: b.overnight
+        }))
+      });
+      const raw = await callClaude(
+        `You are a flight intelligence analyst. Given real flight search data, produce a JSON response.
+Return ONLY valid JSON (no markdown):
+{
+  "buySignal": "BUY_NOW"|"FAIR_PRICE"|"CONSIDER_WAITING",
+  "buySignalReason": "one sentence why",
+  "buySignalScore": 0-100,
+  "summary": "3-4 sentence paragraph summarising the pricing landscape, what the traveller gets at each price band, whether this is good value for this route and time of year, and a clear recommendation. Be specific and insightful — mention actual price figures.",
+  "sweetSpot": "one sentence identifying the best value price point",
+  "budgetVerdict": "one sentence on whether the user budget is realistic — only if budget provided, else null",
+  "convenienceScores": [
+    {"band":"Budget","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"},
+    {"band":"Mid","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"},
+    {"band":"Premium","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"}
+  ],
+  "warnings": ["any notable issues like overnight layovers, very long total times, etc — max 2 items, empty array if none"]
+}`,
+        [{role:'user', content: flightSummary}], 1200
+      );
+      aiJson = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    } catch(_) {}
+  }
 
-  // Sort display by cost rank
-  rows.sort((a, b) => a.costRank - b.costRank);
-
-  // ── Summary KPIs ──
-  const best    = rows[0];
-  const avg     = Math.round(rows.reduce((s, r) => s + r.price, 0) / rows.length);
-  const fastest = [...rows].sort((a, b) => a.dur - b.dur)[0];
-  const priceLabel = isRoundTrip ? 'Best round trip' : 'Best one-way';
-
-  const summaryHtml = `<div class="fig-summary">
-    <div class="fig-kpi"><div class="fig-kpi-label">${priceLabel}</div><div class="fig-kpi-val fig-green">${cur} ${best.price.toLocaleString()}</div><div class="fig-kpi-sub">${esc(best.airline)}</div></div>
-    <div class="fig-kpi"><div class="fig-kpi-label">Market average</div><div class="fig-kpi-val">${cur} ${avg.toLocaleString()}</div><div class="fig-kpi-sub">${rows.length} airlines · ${isRoundTrip?'round trip':'one-way'}</div></div>
-    <div class="fig-kpi"><div class="fig-kpi-label">Fastest option</div><div class="fig-kpi-val">${fastest.durStr}</div><div class="fig-kpi-sub">${fastest.stops === 0 ? 'Direct' : fastest.stops + ' stop'} · ${esc(fastest.airline)}</div></div>
-    <div class="fig-kpi"><div class="fig-kpi-label">${budget ? 'Budget status' : 'Trip type'}</div>
-      <div class="fig-kpi-val" style="color:${budget ? (best.price<=budget?'var(--green)':'var(--red)') : 'var(--text)'}">${budget ? (best.price<=budget?'Within budget':'Over budget') : (isRoundTrip?'Round trip':'One-way')}</div>
-      <div class="fig-kpi-sub">${budget ? cur+' '+budget.toLocaleString()+' budget' : depart+(ret?' → '+ret:'')}</div>
-    </div>
-  </div>`;
-
-  // ── Table rows ──
-  const rankClass = n => n===1?'fig-rank-1':n===2?'fig-rank-2':n===3?'fig-rank-3':'fig-rank-n';
-  const aiBadge   = s => s>=80?'fig-badge-best':s>=65?'fig-badge-good':s>=50?'fig-badge-fair':'fig-badge-poor';
-  const aiLabel   = s => s>=80?'EXCELLENT':s>=65?'GOOD':s>=50?'FAIR':'POOR';
-  const scoreColor= s => s>=80?'var(--green)':s>=65?'var(--cyan)':s>=50?'var(--gold)':'var(--red)';
-
-  const tableRows = rows.map((r, i) => {
-    const budgetDiff = budget > 0 ? r.price - budget : null;
-    const budgetHtml = budgetDiff === null
-      ? '<span style="color:var(--text3);">—</span>'
-      : budgetDiff <= 0
-        ? `<span class="fig-green">-${cur} ${Math.abs(budgetDiff).toLocaleString()}</span>`
-        : `<span class="fig-red">+${cur} ${budgetDiff.toLocaleString()}</span>`;
-
-    return `<tr class="${i===0?'fig-best':''}">
-      <td><span class="fig-rank ${rankClass(r.costRank)}">${r.costRank}</span></td>
-      <td><div class="fig-airline">${r.logo?`<img src="${r.logo}" onerror="this.style.display='none'">`:''}${esc(r.airline)}${r.estimated?` <span style="font-size:9px;color:var(--gold);">~est</span>`:''}</div></td>
-      <td class="${i===0?'fig-green':''}" style="font-weight:${i===0?700:400}">${cur} ${r.price.toLocaleString()}</td>
-      <td>${r.durStr}</td>
-      <td>${r.stops===0?'<span class="fig-green">Direct</span>':`<span class="fig-gold">${r.stops} stop${r.stops>1?'s':''}</span>`}</td>
-      <td><span class="fig-rank ${rankClass(r.costRank)}" style="width:auto;padding:0 8px;border-radius:4px;">#${r.costRank} of ${rows.length}</span></td>
-      <td>${budgetHtml}</td>
-      <td><div class="fig-score-bar">
-        <div class="fig-score-track"><div class="fig-score-fill" style="width:${r.aiScore}%;background:${scoreColor(r.aiScore)}"></div></div>
-        <span class="fig-badge ${aiBadge(r.aiScore)}">${aiLabel(r.aiScore)}</span>
-        <span style="font-size:10px;color:var(--text2);">${r.aiScore}</span>
-      </div></td>
-    </tr>`;
-  }).join('');
-
+  // ── Render ──
   const liveTag = isLive
     ? `<span style="font-size:9px;color:var(--green);font-weight:700;">● LIVE · Google Flights · ${getSerpUsage().calls}/${SERP_FREE_LIMIT} searches used</span>`
     : `<span style="font-size:9px;color:var(--gold);font-weight:700;">~ AI ESTIMATED · Add SerpApi key for live data</span>`;
 
-  container.innerHTML = summaryHtml + `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+  const buyColor = aiJson?.buySignal === 'BUY_NOW' ? 'var(--green)' : aiJson?.buySignal === 'CONSIDER_WAITING' ? 'var(--red)' : 'var(--gold)';
+  const buyLabel = aiJson?.buySignal === 'BUY_NOW' ? 'BUY NOW' : aiJson?.buySignal === 'CONSIDER_WAITING' ? 'CONSIDER WAITING' : 'FAIR PRICE';
+  const markerPct = aiJson?.buySignalScore ?? 50;
+
+  const bandsHtml = bands.filter(b => b.count > 0).map(b => {
+    const durStr = b.avgDur ? Math.floor(b.avgDur/60)+'h '+b.avgDur%60+'m' : '—';
+    const rtNote = isRT ? ` · ${Math.round(b.avgDur*2/60)}h total RT` : '';
+    const directNote = b.directCount > 0 ? `${b.directCount} direct` : 'no direct';
+    const barW = Math.max(10, b.barPct);
+    return `<div class="fib-band">
+      <div>
+        <div class="fib-band-label" style="color:${b.color}">${b.label}</div>
+        <div class="fib-band-price">${cur} ${b.min.toLocaleString()} – ${b.max.toLocaleString()}</div>
+      </div>
+      <div>
+        <div class="fib-bar-wrap">
+          <div class="fib-bar" style="width:${barW}%;background:${b.bgColor};color:${b.color};">${b.count} flight${b.count>1?'s':''}</div>
+        </div>
+        <div style="font-size:9px;color:var(--text3);margin-top:3px;">${b.count} of ${flights.length} total results</div>
+      </div>
+      <div class="fib-band-meta">
+        avg ${durStr}${rtNote}<br>
+        avg ${b.avgStops} stop${parseFloat(b.avgStops)===1?'':'s'} · ${directNote}<br>
+        ${b.earlyDep > 0 ? b.earlyDep+' morning departures' : 'no morning departures'}
+      </div>
+    </div>`;
+  }).join('');
+
+  const convHtml = (aiJson?.convenienceScores || []).map(c => {
+    const band = bands.find(b => b.label === c.band);
+    const dots = (n, max=5) => Array.from({length:max}, (_,i) =>
+      `<div class="fib-conv-dot" style="background:${i<n?(band?.color||'var(--cyan)'):'var(--bg4)'}"></div>`
+    ).join('');
+    return `<div class="fib-convenience-row">
+      <span class="fib-conv-label" style="color:${band?.color||'var(--text)'}">${c.band}</span>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);">
+          <span style="width:60px;">Departure</span><div class="fib-conv-dots">${dots(c.departureQuality)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);">
+          <span style="width:60px;">Arrival</span><div class="fib-conv-dots">${dots(c.arrivalQuality)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);">
+          <span style="width:60px;">Overall</span><div class="fib-conv-dots">${dots(c.overallConvenience)}</div>
+        </div>
+      </div>
+      <span class="fib-conv-note">${esc(c.note||'')}</span>
+    </div>`;
+  }).join('');
+
+  const warningsHtml = (aiJson?.warnings||[]).length > 0
+    ? `<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">${aiJson.warnings.map(w=>`<div style="font-size:11px;color:var(--gold);padding:6px 10px;background:rgba(255,184,0,0.08);border-radius:4px;border-left:2px solid var(--gold);">⚠ ${esc(w)}</div>`).join('')}</div>`
+    : '';
+
+  const budgetHtml = aiJson?.budgetVerdict && budget
+    ? `<div style="margin-top:8px;padding:8px 12px;background:${minP<=budget?'rgba(0,255,136,0.08)':'rgba(255,69,96,0.08)'};border-radius:6px;border-left:2px solid ${minP<=budget?'var(--green)':'var(--red)'};font-size:11px;color:${minP<=budget?'var(--green)':'var(--red)'};">
+        💰 Budget verdict: ${esc(aiJson.budgetVerdict)}
+      </div>` : '';
+
+  container.innerHTML = `<div class="fib-wrap">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       ${liveTag}
       <span style="font-size:10px;color:var(--text3);">${esc(from)} → ${esc(to)} · ${depart}${ret?' → '+ret:''} · ${pax} pax · ${cls}</span>
     </div>
-    <div class="fig-wrap">
-      <table class="fig-table">
-        <thead><tr>
-          <th>#</th>
-          <th>Airline</th>
-          <th>${isRoundTrip ? 'Round trip' : 'One-way'}</th>
-          <th>Total time</th>
-          <th>Stops</th>
-          <th>Cost rank</th>
-          <th>vs Budget</th>
-          <th>AI rank</th>
-        </tr></thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>`;
+
+    <div class="fib-summary">
+      <div class="fib-kpi"><div class="fib-kpi-label">Lowest price</div><div class="fib-kpi-val" style="color:var(--green)">${cur} ${minP.toLocaleString()}</div><div class="fib-kpi-sub">${isRT?'round trip':'one-way'}</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Average price</div><div class="fib-kpi-val">${cur} ${avgP.toLocaleString()}</div><div class="fib-kpi-sub">${flights.length} options analysed</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Highest price</div><div class="fib-kpi-val" style="color:var(--text2)">${cur} ${maxP.toLocaleString()}</div><div class="fib-kpi-sub">price ceiling today</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Buy signal</div><div class="fib-kpi-val" style="color:${buyColor}">${buyLabel}</div><div class="fib-kpi-sub">${esc(aiJson?.buySignalReason||'Based on current pricing')}</div></div>
+    </div>
+
+    <div class="fib-section">
+      <div class="fib-section-title">Price band heat map</div>
+      ${bandsHtml}
+    </div>
+
+    ${aiJson?.convenienceScores?.length ? `<div class="fib-section">
+      <div class="fib-section-title">Convenience index by price band</div>
+      ${convHtml}
+    </div>` : ''}
+
+    <div class="fib-section">
+      <div class="fib-section-title">Buy signal</div>
+      <div class="fib-signal">
+        <div style="font-size:11px;color:var(--green);width:60px;text-align:center;">CHEAP</div>
+        <div class="fib-thermometer" style="flex:1;">
+          <div class="fib-thermometer-marker" style="left:${markerPct}%;background:${buyColor};"></div>
+        </div>
+        <div style="font-size:11px;color:var(--red);width:60px;text-align:center;">PRICEY</div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;">${esc(aiJson?.buySignalReason||'')}</div>
+    </div>
+
+    <div class="fib-section">
+      <div class="fib-section-title">AI intelligence summary</div>
+      <div class="fib-ai-summary">${aiJson?.summary ? esc(aiJson.summary).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>') : '<span style="color:var(--text3);">Add your Claude API key in ⚙ Settings to enable AI analysis.</span>'}</div>
+      ${aiJson?.sweetSpot ? `<div style="margin-top:10px;padding:8px 12px;background:rgba(0,200,255,0.08);border-radius:6px;border-left:2px solid var(--cyan);font-size:11px;color:var(--cyan);">💡 Sweet spot: ${esc(aiJson.sweetSpot)}</div>` : ''}
+      ${budgetHtml}
+      ${warningsHtml}
+    </div>
+
+  </div>`;
 }
-
-
 
 async function searchFlights() {
   if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
