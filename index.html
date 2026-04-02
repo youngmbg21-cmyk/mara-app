@@ -3094,6 +3094,19 @@ Vary price points from budget to luxury. Be realistic for the city.`,
     b.barPct     = Math.max(8, b.totalPcts);
   });
 
+  // ── Deterministic book signal ──
+  const hotelSpread = ((avgP - minP) / minP) * 100;
+  let hotelCalcSignal;
+  if (budget && hotels.filter(h => (getHotelPrice(h)||0) <= budget).length === 0) {
+    hotelCalcSignal = 'CONSIDER_WAITING';
+  } else if (hotelSpread < 15) {
+    hotelCalcSignal = 'BOOK_NOW';
+  } else if (hotelSpread > 35) {
+    hotelCalcSignal = 'CONSIDER_WAITING';
+  } else {
+    hotelCalcSignal = 'FAIR_PRICE';
+  }
+
   // ── Claude hotel intelligence ──
   setStatus('Step 3/3 — Generating AI hotel intelligence brief…');
   let aiJson = null;
@@ -3103,6 +3116,8 @@ Vary price points from budget to luxury. Be realistic for the city.`,
         city, checkin, checkout, nights, guests, currency:cur, budget:budget||null,
         totalHotels:hotels.length, isLiveData:isLive,
         priceRange:{ min:minP, max:maxP, avg:avgP },
+        priceSpreadPct: Math.round(hotelSpread),
+        bookSignalDecided: hotelCalcSignal,
         bands: bands.map(b=>({
           label:b.label, priceRange:`${cur} ${b.min}–${b.max}/night`,
           totalStayRange:`${cur} ${Math.round(b.min*nights)}–${Math.round(b.max*nights)} for ${nights} nights`,
@@ -3111,18 +3126,18 @@ Vary price points from budget to luxury. Be realistic for the city.`,
         }))
       });
       const raw = await callClaude(
-        `You are a hotel intelligence analyst. Return ONLY valid JSON:
+        `You are a hotel intelligence analyst. The book signal has already been decided as "${hotelCalcSignal}" based on price spread analysis. Do NOT change it.
+Return ONLY valid JSON:
 {
-  "bookSignal": "BOOK_NOW"|"FAIR_PRICE"|"CONSIDER_WAITING",
-  "bookSignalReason": "one sentence",
-  "bookSignalScore": 0-100,
+  "bookSignal": "${hotelCalcSignal}",
+  "bookSignalReason": "one sentence justifying the ${hotelCalcSignal} signal based on the data",
   "summary": "3-4 sentences covering: is this expensive for this city/season, what you get at each price tier, best value band, any notable patterns like free cancellation availability or breakfast deals. Be specific with prices.",
   "sweetSpot": "one sentence on best value pick",
   "budgetVerdict": "one sentence on budget realism — only if budget provided, else null",
   "valueScores": [
-    {"band":"Budget","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"},
-    {"band":"Mid","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"},
-    {"band":"Luxury","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"}
+    {"band":"Bottom 33%","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"},
+    {"band":"Middle 33%","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"},
+    {"band":"Top 33%","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"}
   ],
   "warnings": ["e.g. limited availability, school holiday pricing, event surcharges — max 2, empty if none"]
 }`,
@@ -3131,6 +3146,10 @@ Vary price points from budget to luxury. Be realistic for the city.`,
       aiJson = JSON.parse(raw.replace(/```json|```/g,'').trim());
     } catch(_) {}
   }
+
+  // Ensure signal is always the calculated one
+  if (!aiJson) aiJson = {};
+  aiJson.bookSignal = hotelCalcSignal;
 
   // ── Render ──
   const liveTag = isLive
@@ -3183,10 +3202,14 @@ Vary price points from budget to luxury. Be realistic for the city.`,
   </div>`;
 
   const valueHtml = (aiJson?.valueScores||[]).map(v => {
-    const band = bands.find(b=>b.label===v.band);
-    const dot = (n) => Array.from({length:5},(_,i)=>`<div class="fib-conv-dot" style="background:${i<n?(band?.color||'var(--cyan)'):'var(--bg4)'}"></div>`).join('');
+    const BAND_COLOR_MAP = {
+      'Bottom 33%': '#00C8FF', 'Middle 33%': '#00FF88', 'Top 33%': '#FFB800',
+      'Budget': '#00C8FF', 'Mid': '#00FF88', 'Luxury': '#FFB800',
+    };
+    const bandColor = BAND_COLOR_MAP[v.band] || 'var(--cyan)';
+    const dot = (n) => Array.from({length:5},(_,i)=>`<div class="fib-conv-dot" style="background:${i<n ? bandColor : 'var(--bg4)'}"></div>`).join('');
     return `<div class="fib-convenience-row">
-      <span class="fib-conv-label" style="color:${band?.color||'var(--text)'}">${band?.emoji||''} ${v.band}</span>
+      <span class="fib-conv-label" style="color:${bandColor}">${v.band}</span>
       <div style="display:flex;flex-direction:column;gap:3px;">
         <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);"><span style="width:80px;">Value/money</span><div class="fib-conv-dots">${dot(v.valueForMoney)}</div></div>
         <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);"><span style="width:80px;">Location</span><div class="fib-conv-dots">${dot(v.locationQuality)}</div></div>
@@ -3355,8 +3378,18 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
     b.barPct    = Math.round((b.count / flights.length) * 100);
   });
 
-  // Buy signal: compare avg to rough historical baseline via Claude
-  const pricePressure = avgP > medianP * 1.1 ? 'high' : avgP < medianP * 0.9 ? 'low' : 'normal';
+  // ── Deterministic buy signal ──
+  const spread = ((avgP - minP) / minP) * 100;
+  let calcSignal;
+  if (budget && flights.filter(f => (f.price||0) <= budget).length === 0) {
+    calcSignal = 'CONSIDER_WAITING';
+  } else if (spread < 15) {
+    calcSignal = 'BUY_NOW';
+  } else if (spread > 35) {
+    calcSignal = 'CONSIDER_WAITING';
+  } else {
+    calcSignal = 'FAIR_PRICE';
+  }
 
   // ── Claude intelligence brief ──
   setStatus('Step 3/3 — Generating AI intelligence brief…');
@@ -3368,6 +3401,8 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
         isRoundTrip: isRT, class: cls, pax, currency: cur, budget: budget||null,
         totalOptions: flights.length, isLiveData: isLive,
         priceRange: { min: minP, max: maxP, avg: avgP, median: medianP },
+        priceSpreadPct: Math.round(spread),
+        buySignalDecided: calcSignal,
         bands: bands.map(b => ({
           label: b.label, priceRange: `${cur} ${b.min}–${b.max}`,
           count: b.count, avgDuration: b.avgDur ? Math.floor(b.avgDur/60)+'h '+b.avgDur%60+'m' : '—',
@@ -3376,18 +3411,18 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
       });
       const raw = await callClaude(
         `You are a flight intelligence analyst. Given real flight search data, produce a JSON response.
+The buy signal has already been decided as "${calcSignal}" based on price spread analysis. Do NOT change it.
 Return ONLY valid JSON (no markdown):
 {
-  "buySignal": "BUY_NOW"|"FAIR_PRICE"|"CONSIDER_WAITING",
-  "buySignalReason": "one sentence why",
-  "buySignalScore": 0-100,
+  "buySignal": "${calcSignal}",
+  "buySignalReason": "one sentence justifying the ${calcSignal} signal based on the data",
   "summary": "3-4 sentence paragraph summarising the pricing landscape, what the traveller gets at each price band, whether this is good value for this route and time of year, and a clear recommendation. Be specific and insightful — mention actual price figures.",
   "sweetSpot": "one sentence identifying the best value price point",
   "budgetVerdict": "one sentence on whether the user budget is realistic — only if budget provided, else null",
   "convenienceScores": [
-    {"band":"Budget","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"},
-    {"band":"Mid","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"},
-    {"band":"Premium","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"}
+    {"band":"Bottom 33%","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"},
+    {"band":"Middle 33%","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"},
+    {"band":"Top 33%","departureQuality":1-5,"arrivalQuality":1-5,"overallConvenience":1-5,"note":"short note"}
   ],
   "warnings": ["any notable issues like overnight layovers, very long total times, etc — max 2 items, empty array if none"]
 }`,
@@ -3396,6 +3431,10 @@ Return ONLY valid JSON (no markdown):
       aiJson = JSON.parse(raw.replace(/```json|```/g,'').trim());
     } catch(_) {}
   }
+
+  // Ensure signal is always the calculated one regardless of what Claude returned
+  if (!aiJson) aiJson = {};
+  aiJson.buySignal = calcSignal;
 
   // ── Render ──
   const liveTag = isLive
@@ -3453,12 +3492,17 @@ Return ONLY valid JSON (no markdown):
   })();
 
   const convHtml = (aiJson?.convenienceScores || []).map(c => {
-    const band = bands.find(b => b.label === c.band);
+    // Map both old names (Budget/Mid/Premium) and new names (Bottom 33%/Middle 33%/Top 33%)
+    const BAND_COLOR_MAP = {
+      'Bottom 33%': '#00FF88', 'Middle 33%': '#00C8FF', 'Top 33%': '#FFB800',
+      'Budget': '#00FF88', 'Mid': '#00C8FF', 'Premium': '#FFB800',
+    };
+    const bandColor = BAND_COLOR_MAP[c.band] || 'var(--cyan)';
     const dots = (n, max=5) => Array.from({length:max}, (_,i) =>
-      `<div class="fib-conv-dot" style="background:${i<n?(band?.color||'var(--cyan)'):'var(--bg4)'}"></div>`
+      `<div class="fib-conv-dot" style="background:${i<n ? bandColor : 'var(--bg4)'}"></div>`
     ).join('');
     return `<div class="fib-convenience-row">
-      <span class="fib-conv-label" style="color:${band?.color||'var(--text)'}">${c.band}</span>
+      <span class="fib-conv-label" style="color:${bandColor}">${c.band}</span>
       <div style="display:flex;flex-direction:column;gap:3px;">
         <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);">
           <span style="width:60px;">Departure</span><div class="fib-conv-dots">${dots(c.departureQuality)}</div>
