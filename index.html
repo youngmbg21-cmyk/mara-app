@@ -3141,6 +3141,50 @@ Vary price points from budget to luxury. Be realistic for the city.`,
       </div>
     </div>`).join('');
 
+  const budgetRowHtml = (() => {
+    const inputEl = document.getElementById('pp-ht-budget');
+    inputEl._pulseFibUpdate = () => {
+      const bv = parseFloat(inputEl.value) || 0;
+      const row = document.getElementById('fib-hotel-budget-row');
+      if (!row) return;
+      if (!bv) { row.style.display = 'none'; return; }
+      const matched = hotels.filter(h => (h.rate_per_night?.lowest || h.price || 0) <= bv);
+      const barW = Math.max(4, Math.round((matched.length / hotels.length) * 100));
+      const label = matched.length === 0
+        ? '0 hotels · below market'
+        : `${matched.length} hotel${matched.length > 1 ? 's' : ''}`;
+      row.style.display = '';
+      row.querySelector('.fib-budget-bar').style.width = barW + '%';
+      row.querySelector('.fib-budget-bar').textContent = label;
+      row.querySelector('.fib-budget-count').textContent = `${matched.length} of ${hotels.length} results`;
+      row.querySelector('.fib-budget-total').textContent = `${cur} ${Math.round(bv * nights).toLocaleString()} total`;
+    };
+    if (!inputEl._pulseFibBound) {
+      inputEl.addEventListener('input', inputEl._pulseFibUpdate);
+      inputEl._pulseFibBound = true;
+    }
+    const bv = budget;
+    const matched = bv ? hotels.filter(h => (h.rate_per_night?.lowest || h.price || 0) <= bv) : [];
+    const barW = bv && hotels.length ? Math.max(4, Math.round((matched.length / hotels.length) * 100)) : 0;
+    const label = !bv ? '' : matched.length === 0 ? '0 hotels · below market' : `${matched.length} hotel${matched.length > 1 ? 's' : ''}`;
+    return `<div class="fib-band" id="fib-hotel-budget-row" style="${!bv ? 'display:none;' : ''}border-top:1px solid rgba(0,200,255,0.2);padding-top:10px;margin-top:4px;">
+      <div>
+        <div class="fib-band-label" style="color:var(--cyan)">🎯 Your Budget</div>
+        <div class="fib-band-price">${cur} ${bv ? bv.toLocaleString() : '—'}/night</div>
+        <div class="fib-budget-total" style="font-size:9px;color:var(--text3);margin-top:2px;">${bv ? cur+' '+Math.round(bv*nights).toLocaleString()+' total' : ''}</div>
+      </div>
+      <div>
+        <div class="fib-bar-wrap">
+          <div class="fib-budget-bar fib-bar" style="width:${barW}%;background:rgba(0,200,255,0.35);color:var(--cyan);">${label}</div>
+        </div>
+        <div class="fib-budget-count" style="font-size:9px;color:var(--text3);margin-top:3px;">${bv ? matched.length+' of '+hotels.length+' results' : ''}</div>
+      </div>
+      <div class="fib-band-meta" style="color:var(--cyan);opacity:0.7;">
+        hotels at or below<br>your nightly budget
+      </div>
+    </div>`;
+  })();
+
   const valueHtml = (aiJson?.valueScores||[]).map(v => {
     const band = bands.find(b=>b.label===v.band);
     const dot = (n) => Array.from({length:5},(_,i)=>`<div class="fib-conv-dot" style="background:${i<n?(band?.color||'var(--cyan)'):'var(--bg4)'}"></div>`).join('');
@@ -3173,7 +3217,7 @@ Vary price points from budget to luxury. Be realistic for the city.`,
     </div>
     <div class="fib-section">
       <div class="fib-section-title">Price band heat map · ${nights} night stay</div>
-      ${bandsHtml}
+      ${bandsHtml}${budgetRowHtml}
     </div>
     ${valueHtml ? `<div class="fib-section"><div class="fib-section-title">Value index by price band</div>${valueHtml}</div>` : ''}
     <div class="fib-section">
@@ -3367,6 +3411,28 @@ Return ONLY valid JSON (no markdown):
     </div>`;
   }).join('');
 
+  const flightBudgetRowHtml = (() => {
+    if (!budget) return '';
+    const matched = flights.filter(f => (f.price || 0) <= budget);
+    const barW = flights.length ? Math.max(4, Math.round((matched.length / flights.length) * 100)) : 0;
+    const label = matched.length === 0 ? '0 flights · below market' : `${matched.length} flight${matched.length > 1 ? 's' : ''}`;
+    return `<div class="fib-band" style="border-top:1px solid rgba(0,200,255,0.2);padding-top:10px;margin-top:4px;">
+      <div>
+        <div class="fib-band-label" style="color:var(--cyan)">🎯 Your Budget</div>
+        <div class="fib-band-price">${cur} ${budget.toLocaleString()}</div>
+      </div>
+      <div>
+        <div class="fib-bar-wrap">
+          <div class="fib-bar" style="width:${barW}%;background:rgba(0,200,255,0.35);color:var(--cyan);">${label}</div>
+        </div>
+        <div style="font-size:9px;color:var(--text3);margin-top:3px;">${matched.length} of ${flights.length} total results</div>
+      </div>
+      <div class="fib-band-meta" style="color:var(--cyan);opacity:0.7;">
+        flights at or below<br>your budget
+      </div>
+    </div>`;
+  })();
+
   const convHtml = (aiJson?.convenienceScores || []).map(c => {
     const band = bands.find(b => b.label === c.band);
     const dots = (n, max=5) => Array.from({length:max}, (_,i) =>
@@ -3415,7 +3481,7 @@ Return ONLY valid JSON (no markdown):
 
     <div class="fib-section">
       <div class="fib-section-title">Price band heat map</div>
-      ${bandsHtml}
+      ${bandsHtml}${flightBudgetRowHtml}
     </div>
 
     ${aiJson?.convenienceScores?.length ? `<div class="fib-section">
