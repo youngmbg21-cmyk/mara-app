@@ -314,7 +314,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   background: var(--bg4); padding: 1px 5px; border-radius: 3px;
   font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--green);
 }
-.chat-bubble ul, .chat-bubble ol { margin: 6px 0 6px 16px; display: flex; flex-direction: column; gap: 3px; }
+.chat-bubble ul, .chat-bubble ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0; }
 .chat-bubble li { color: var(--text); }
 .chat-typing { display: flex; gap: 4px; align-items: center; padding: 2px 0; }
 .chat-typing span {
@@ -3406,23 +3406,27 @@ Return ONLY valid JSON:
   ].filter(Boolean).join('\n');
 
   const hotelGemParams = { mode:'hotel', city, checkin, checkout, guests: String(guests), budget: budgetPerNight ? String(budgetPerNight) : '' };
-  const hotelSaveBtn = document.createElement('div');
-  hotelSaveBtn.style.cssText = 'padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
-  hotelSaveBtn.innerHTML = `<button class="save-gem-btn" onclick="
-    saveGem({
-      title: '🏨 ${esc(city)} · ${checkin} → ${checkout}',
-      type: '🏨 Hotel Brief',
-      signal: '${aiJson?.bookSignal||''}',
-      confidence: ${confScore??'null'},
-      sourceParams: ${JSON.stringify(hotelGemParams)},
-      content: \`${hotelGemContent.replace(/`/g,"'").replace(/\\/g,'\\\\')}\`
-    });
-    this.textContent = '✓ Saved!';
-    this.classList.add('saved');
-    this.disabled = true;
-  ">💎 Save to Gems</button>
+  const hotelSaveDiv = document.createElement('div');
+  hotelSaveDiv.style.cssText = 'padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
+  hotelSaveDiv.innerHTML = `<button class="save-gem-btn" id="hotel-gem-save-btn">💎 Save to Gems</button>
   <span style="font-size:10px;color:var(--text3);">Save this brief to Saved Gems for future reference</span>`;
-  container.querySelector('.fib-wrap')?.appendChild(hotelSaveBtn);
+  container.querySelector('.fib-wrap')?.appendChild(hotelSaveDiv);
+  const hotelGemBtn = hotelSaveDiv.querySelector('#hotel-gem-save-btn');
+  if (hotelGemBtn) {
+    hotelGemBtn.addEventListener('click', () => {
+      saveGem({
+        title: `🏨 ${city} · ${checkin} → ${checkout}`,
+        type: '🏨 Hotel Brief',
+        signal: aiJson?.bookSignal || '',
+        confidence: confScore ?? null,
+        sourceParams: hotelGemParams,
+        content: hotelGemContent
+      });
+      hotelGemBtn.textContent = '✓ Saved!';
+      hotelGemBtn.classList.add('saved');
+      hotelGemBtn.disabled = true;
+    });
+  }
 
   // Attach live budget listener now that DOM is rendered
   try {
@@ -3785,23 +3789,27 @@ Return ONLY valid JSON (no markdown):
   ].filter(Boolean).join('\n');
 
   const gemParams = { mode:'flight', from, to, depart, ret, cls, pax: String(pax), budget: budget ? String(budget) : '' };
-  const saveBtn = document.createElement('div');
-  saveBtn.style.cssText = 'padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
-  saveBtn.innerHTML = `<button class="save-gem-btn" id="flight-gem-btn" onclick="
-    const gem = saveGem({
-      title: '✈ ${esc(from)} → ${esc(to)} · ${depart}',
-      type: '✈ Flight Brief',
-      signal: '${aiJson?.buySignal||''}',
-      confidence: ${confScore??'null'},
-      sourceParams: ${JSON.stringify(gemParams)},
-      content: \`${gemContent.replace(/`/g,"'").replace(/\\/g,'\\\\')}\`
-    });
-    this.textContent = '✓ Saved!';
-    this.classList.add('saved');
-    this.disabled = true;
-  ">💎 Save to Gems</button>
+  const saveDiv = document.createElement('div');
+  saveDiv.style.cssText = 'padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
+  saveDiv.innerHTML = `<button class="save-gem-btn" id="flight-gem-btn">💎 Save to Gems</button>
   <span style="font-size:10px;color:var(--text3);">Save this brief to Saved Gems for future reference</span>`;
-  container.querySelector('.fib-wrap')?.appendChild(saveBtn);
+  container.querySelector('.fib-wrap')?.appendChild(saveDiv);
+  const flightGemBtn = saveDiv.querySelector('#flight-gem-btn');
+  if (flightGemBtn) {
+    flightGemBtn.addEventListener('click', () => {
+      saveGem({
+        title: `✈ ${from} → ${to} · ${depart}`,
+        type: '✈ Flight Brief',
+        signal: aiJson?.buySignal || '',
+        confidence: confScore ?? null,
+        sourceParams: gemParams,
+        content: gemContent
+      });
+      flightGemBtn.textContent = '✓ Saved!';
+      flightGemBtn.classList.add('saved');
+      flightGemBtn.disabled = true;
+    });
+  }
 }
 
 async function searchFlights() {
@@ -5277,15 +5285,31 @@ function rerunGem(id) {
 
 // ── Enhanced chat message formatter ──────────────
 function formatChatMsg(text) {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^[-•] (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, s => `<ul>${s}</ul>`)
-    .replace(/^---$/gm, '<div class="chat-divider"></div>')
-    .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>');
+  // Normalise line endings, collapse 3+ blank lines to 2
+  let t = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+
+  // Headers
+  t = t.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+
+  // Bold
+  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Bullet lists — collect consecutive bullet lines into a <ul>
+  t = t.replace(/((?:^[-•*] .+\n?)+)/gm, match => {
+    const items = match.trim().split('\n').map(line =>
+      `<li>${line.replace(/^[-•*] /, '')}</li>`
+    ).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Dividers
+  t = t.replace(/^---$/gm, '<div class="chat-divider"></div>');
+
+  // Paragraphs — double newlines become spacing, single become space
+  t = t.replace(/\n\n/g, '<br>').replace(/\n/g, ' ');
+
+  return t;
 }
 
 // ═══════════════════════════════════════════════
