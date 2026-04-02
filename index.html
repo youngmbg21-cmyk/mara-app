@@ -426,8 +426,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 @keyframes fxScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .fx-track{display:flex;gap:0;will-change:transform;animation:fxScroll 60s linear infinite;white-space:nowrap;}
 .fx-track:hover{animation-play-state:paused;}
-.fx-item{display:inline-flex;flex-direction:column;align-items:center;padding:4px 20px;border-right:1px solid var(--border);flex-shrink:0;cursor:default;}
-.fx-country{font-size:9px;color:var(--text2);letter-spacing:0.08em;text-transform:uppercase;}
+.fx-item{display:inline-flex;align-items:center;padding:0 24px;border-right:1px solid var(--border);flex-shrink:0;cursor:default;height:46px;}
+.fx-country{font-size:11px;color:var(--text2);letter-spacing:0.06em;white-space:nowrap;}
 .fx-chg{font-size:13px;font-weight:600;margin-top:2px;}
 .fx-chg.up{color:var(--green);}
 .fx-chg.dn{color:var(--red);}
@@ -4687,56 +4687,50 @@ async function loadFX() {
 
   try {
     const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm   = String(today.getMonth()+1).padStart(2,'0');
-    const dd   = String(today.getDate()).padStart(2,'0');
-    const todayStr = `${yyyy}-${mm}-${dd}`;
-
-    const prev = new Date(today);
-    prev.setDate(prev.getDate() - 1);
-    const prevStr = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(prev.getDate()).padStart(2,'0')}`;
+    const toStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const todayStr = toStr(today);
+    const prev30 = new Date(today); prev30.setDate(prev30.getDate() - 30);
+    const prevStr = toStr(prev30);
 
     const [resToday, resPrev] = await Promise.all([
       fetch(`https://api.frankfurter.app/${todayStr}?from=${base}`),
       fetch(`https://api.frankfurter.app/${prevStr}?from=${base}`)
     ]);
-
     if (!resToday.ok || !resPrev.ok) throw new Error('fetch failed');
 
     const [dataToday, dataPrev] = await Promise.all([resToday.json(), resPrev.json()]);
-    const ratesT = dataToday.rates  || {};
-    const ratesP = dataPrev.rates   || {};
+    const ratesT = dataToday.rates || {};
+    const ratesP = dataPrev.rates  || {};
 
     const items = Object.keys(FX_COUNTRY_MAP)
       .filter(c => c !== base && ratesT[c] && ratesP[c])
       .map(c => {
-        const chg = ((ratesT[c] - ratesP[c]) / ratesP[c]) * 100;
-        return { code: c, country: FX_COUNTRY_MAP[c], chg };
-      })
-      .sort((a,b) => b.chg - a.chg);
+        const rate = ratesT[c];
+        const chg  = ((ratesT[c] - ratesP[c]) / ratesP[c]) * 100;
+        // Format rate: show enough decimals to be meaningful
+        const rateStr = rate >= 100 ? rate.toFixed(1) : rate >= 10 ? rate.toFixed(2) : rate >= 1 ? rate.toFixed(3) : rate.toFixed(4);
+        return { code: c, country: FX_COUNTRY_MAP[c], rate: rateStr, chg };
+      });
 
     if (!items.length) throw new Error('no rates');
 
     const makeItems = () => items.map(item => {
+      const arrow = item.chg >= 0 ? '▲' : '▼';
       const sign  = item.chg >= 0 ? '+' : '';
       const cls   = item.chg >= 0 ? 'up' : 'dn';
       return `<div class="fx-item">
-        <div class="fx-country">${item.country}</div>
-        <div class="fx-chg ${cls}">${sign}${item.chg.toFixed(2)}%</div>
+        <div class="fx-country">${item.country} &nbsp;·&nbsp; 1 ${base} = ${item.rate} ${item.code} &nbsp;·&nbsp; <span class="${cls}">${arrow} ${sign}${item.chg.toFixed(2)}%</span></div>
       </div>`;
     }).join('');
 
-    // Duplicate for seamless infinite scroll
     track.innerHTML = makeItems() + makeItems();
 
-    // Adjust speed to content width
     const totalW = track.scrollWidth / 2;
-    const speed  = Math.max(30, Math.round(totalW / 80));
+    const speed  = Math.max(40, Math.round(totalW / 80));
     track.style.animationDuration = speed + 's';
 
   } catch(e) {
-    // Silent fallback — show placeholder
-    track.innerHTML = `<div class="fx-item"><div class="fx-country">Loading rates…</div><div class="fx-chg" style="color:var(--text3);">—</div></div>`.repeat(6);
+    track.innerHTML = `<div class="fx-item"><div class="fx-country" style="color:var(--text3);">Loading rates…</div></div>`.repeat(8);
   }
 }
 
