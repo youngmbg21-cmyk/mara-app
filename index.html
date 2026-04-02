@@ -4982,7 +4982,7 @@ function renderNoteEditor(item, container) {
       <input class="vault-editor-title" id="note-title" value="${esc(item.name)}" placeholder="Note title…" oninput="scheduleNoteSave('${item.id}')">
       <span class="vault-saved-badge" id="note-saved">✓ SAVED</span>
       <button class="btn-secondary" style="font-size:10px;padding:5px 10px;" onclick="toggleVaultPin('${item.id}')">${item.pinned?'📌 PINNED':'PIN 📌'}</button>
-      <button class="btn-secondary" style="font-size:10px;padding:5px 10px;color:var(--red);border-color:rgba(255,69,96,0.3);" onclick="deleteVaultItem('${item.id}')">DELETE</button>
+      <button class="btn-secondary" style="font-size:10px;padding:5px 10px;color:var(--red);border-color:rgba(255,69,96,0.3);" onclick="deleteVaultItem('${item.id}',event)">DELETE</button>
     </div>
     <div class="vault-editor-meta">
       <select class="vault-tag-select" id="note-tag" onchange="scheduleNoteSave('${item.id}')">
@@ -5109,7 +5109,7 @@ function renderDocPreview(item, container) {
           </select>
           <button class="btn-secondary" style="font-size:10px;padding:4px 10px;" onclick="toggleVaultPin('${item.id}')">${item.pinned?'📌 PINNED':'PIN'}</button>
           ${item.data?`<a href="${item.data}" download="${esc(item.name)}"><button class="btn-primary" style="font-size:10px;padding:4px 12px;">↓ DOWNLOAD</button></a>`:''}
-          <button class="btn-secondary" style="font-size:10px;padding:4px 10px;color:var(--red);border-color:rgba(255,69,96,0.3);" onclick="deleteVaultItem('${item.id}')">DELETE</button>
+          <button class="btn-secondary" style="font-size:10px;padding:4px 10px;color:var(--red);border-color:rgba(255,69,96,0.3);" onclick="deleteVaultItem('${item.id}',event)">DELETE</button>
         </div>
       </div>
     </div>
@@ -5202,22 +5202,22 @@ function changeDocTag(id, tag) {
   renderVaultList();
 }
 
-function deleteVaultItem(id) {
+function deleteVaultItem(id, e) {
   // Find the button that was clicked
-  const btn = event?.currentTarget || event?.target;
-  const item = vaultItems.find(x => x.id === id);
+  const btn = e?.currentTarget || e?.target;
+  const item = vaultItems.find(x => x.id == id);
   if (!item) return;
 
   // Two-step confirmation on the button itself
-  if (!btn || !btn.dataset.confirming) {
+  if (!btn || !btn.classList.contains('confirming')) {
     if (btn) {
-      btn.dataset.confirming = '1';
+      btn.classList.add('confirming');
       const original = btn.textContent;
       btn.textContent = 'CONFIRM DELETE?';
       btn.style.background = 'var(--red)';
       btn.style.color = '#fff';
-      setTimeout(() => {
-        btn.dataset.confirming = '';
+      btn._cancelTimer = setTimeout(() => {
+        btn.classList.remove('confirming');
         btn.textContent = original;
         btn.style.background = '';
         btn.style.color = '';
@@ -5227,7 +5227,8 @@ function deleteVaultItem(id) {
   }
 
   // Confirmed — delete
-  vaultItems = vaultItems.filter(x => x.id !== id);
+  clearTimeout(btn._cancelTimer);
+  vaultItems = vaultItems.filter(x => x.id != id);
   activeVaultId = null;
   saveVault();
   renderVaultCounts();
