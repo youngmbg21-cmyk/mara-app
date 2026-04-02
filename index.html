@@ -419,16 +419,17 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .empty-body{font-size:11px;text-align:center;max-width:280px;line-height:1.6;color:var(--text2);}
 
 /* ── FX STRIP ── */
-.fx-strip{overflow:hidden;flex-shrink:0;background:#000;position:relative;height:38px;display:flex;align-items:center;border-top:1px solid var(--cyan);border-bottom:1px solid rgba(0,200,255,0.2);box-shadow:0 0 12px rgba(0,200,255,0.08);}
+.fx-strip{overflow:hidden;flex-shrink:0;background:#000;position:relative;height:44px;display:flex;align-items:center;border-top:1px solid var(--cyan);border-bottom:1px solid rgba(0,200,255,0.2);box-shadow:0 0 12px rgba(0,200,255,0.08);}
 .fx-strip::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,200,255,0.015) 2px,rgba(0,200,255,0.015) 4px);pointer-events:none;z-index:1;}
 @keyframes fxScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .fx-track{display:flex;gap:0;will-change:transform;animation:fxScroll 45s linear infinite;white-space:nowrap;position:relative;z-index:2;}
-.fx-item{display:inline-flex;align-items:center;padding:0 20px;border-right:1px solid rgba(0,200,255,0.15);flex-shrink:0;cursor:default;height:38px;gap:6px;}
+.fx-item{display:inline-flex;align-items:center;padding:0 20px;border-right:1px solid rgba(0,200,255,0.15);flex-shrink:0;cursor:default;height:44px;gap:6px;}
 .fx-country{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:0.12em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
-.fx-rate{font-size:11px;color:#fff;font-family:'JetBrains Mono',monospace;white-space:nowrap;font-weight:500;}
-.fx-chg{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
-.fx-chg.up{color:#00FF41;text-shadow:0 0 8px rgba(0,255,65,0.5);}
-.fx-chg.dn{color:#FF3333;text-shadow:0 0 8px rgba(255,51,51,0.5);}
+.fx-stat{font-size:10px;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.fx-stat.cheap{color:#00FF41;text-shadow:0 0 6px rgba(0,255,65,0.4);}
+.fx-stat.expensive{color:#FF3333;text-shadow:0 0 6px rgba(255,51,51,0.4);}
+.fx-stat.neutral{color:#fff;}
+.fx-label{font-size:8px;color:rgba(0,200,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;white-space:nowrap;padding:0 12px;flex-shrink:0;z-index:3;position:relative;border-right:1px solid rgba(0,200,255,0.3);height:44px;display:flex;align-items:center;background:#000;}
 
 /* ── SEARCH FORM ── */
 .search-form{display:flex;flex-wrap:wrap;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg2);align-items:flex-end;}
@@ -1005,6 +1006,7 @@ input[type="date"] {
         <div class="stat-item"><div class="stat-val red" id="stat-alerts">0</div><div class="stat-lbl">ALERTS</div></div>
       </div>
       <div class="fx-strip" id="fx-strip">
+        <div class="fx-label">COST OF LIVING</div>
         <div class="fx-track" id="fx-track"></div>
       </div>
       <div id="dash-empty" class="scan-area">
@@ -1746,7 +1748,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Init GIS auth (renders sign-in button, handles silent re-auth)
   initGoogleAuth();
   loadFX();
-  setInterval(loadFX, 60000);
   populateSettingsDrawer();
   renderAll();
   const today = new Date().toISOString().split('T')[0];
@@ -3052,12 +3053,13 @@ Vary price points from budget to luxury. Be realistic for the city.`,
   const maxP    = prices[prices.length-1];
   const avgP    = Math.round(prices.reduce((s,p)=>s+p,0)/prices.length);
   const range   = maxP - minP || 1;
-  const bSize   = range / 3;
+  const p33 = prices[Math.floor(prices.length * 0.33)];
+  const p66 = prices[Math.floor(prices.length * 0.66)];
 
   const bands = [
-    { label:'Budget',  emoji:'💚', min:minP,                        max:Math.round(minP+bSize),      color:'#00C8FF', bg:'rgba(0,200,255,0.35)' },
-    { label:'Mid',     emoji:'💛', min:Math.round(minP+bSize)+1,    max:Math.round(minP+bSize*2),    color:'#00FF88', bg:'rgba(0,255,136,0.35)' },
-    { label:'Luxury',  emoji:'🧡', min:Math.round(minP+bSize*2)+1,  max:maxP,                        color:'#FFB800', bg:'rgba(255,184,0,0.35)'  },
+    { label:'Bottom 33%', emoji:'', min:minP,    max:p33,   color:'#00C8FF', bg:'rgba(0,200,255,0.35)' },
+    { label:'Middle 33%', emoji:'', min:p33+1,   max:p66,   color:'#00FF88', bg:'rgba(0,255,136,0.35)' },
+    { label:'Top 33%',    emoji:'', min:p66+1,   max:maxP,  color:'#FFB800', bg:'rgba(255,184,0,0.35)'  },
   ];
 
   bands.forEach(b => {
@@ -3315,12 +3317,13 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
   const medianP   = prices[Math.floor(prices.length/2)];
   const range     = maxP - minP;
 
-  // Define 3 price bands dynamically
-  const bandSize  = range / 3;
-  const bands     = [
-    { label:'Budget', min: minP,               max: Math.round(minP + bandSize),   color:'#00FF88', bgColor:'rgba(0,255,136,0.40)' },
-    { label:'Mid',    min: Math.round(minP + bandSize)+1, max: Math.round(minP + bandSize*2), color:'#00C8FF', bgColor:'rgba(0,200,255,0.40)' },
-    { label:'Premium',min: Math.round(minP + bandSize*2)+1, max: maxP,             color:'#FFB800', bgColor:'rgba(255,184,0,0.40)' },
+  // Percentile-based price bands
+  const fp33 = prices[Math.floor(prices.length * 0.33)];
+  const fp66 = prices[Math.floor(prices.length * 0.66)];
+  const bands = [
+    { label:'Bottom 33%', min: minP,      max: fp33,  color:'#00FF88', bgColor:'rgba(0,255,136,0.40)' },
+    { label:'Middle 33%', min: fp33+1,    max: fp66,  color:'#00C8FF', bgColor:'rgba(0,200,255,0.40)' },
+    { label:'Top 33%',    min: fp66+1,    max: maxP,  color:'#FFB800', bgColor:'rgba(255,184,0,0.40)'  },
   ];
 
   bands.forEach(b => {
@@ -4669,69 +4672,85 @@ function clearPackList() { if(confirm('Clear all pack list items?')){ packList=[
 // ═══════════════════════════════════════════════
 // FX RATES — scrolling ticker vs home currency
 // ═══════════════════════════════════════════════
-const FX_COUNTRY_MAP = {
-  USD:'United States', EUR:'Euro Zone',  GBP:'United Kingdom', JPY:'Japan',
-  CHF:'Switzerland',   AUD:'Australia',  CAD:'Canada',         CNY:'China',
-  SEK:'Sweden',        NOK:'Norway',     DKK:'Denmark',        NZD:'New Zealand',
-  SGD:'Singapore',     HKD:'Hong Kong',  KRW:'South Korea',    INR:'India',
-  BRL:'Brazil',        MXN:'Mexico',     ZAR:'South Africa',   TRY:'Turkey',
-  SAR:'Saudi Arabia',  AED:'UAE',        THB:'Thailand',       MYR:'Malaysia',
-  IDR:'Indonesia',     PHP:'Philippines',PLN:'Poland',         CZK:'Czech Republic',
-  HUF:'Hungary',       ILS:'Israel',     KES:'Kenya',          NGN:'Nigeria',
-  EGP:'Egypt',         PKR:'Pakistan',   BDT:'Bangladesh',     VND:'Vietnam',
-  RON:'Romania',       HRK:'Croatia',    BGN:'Bulgaria',       ISK:'Iceland',
-};
+// ═══════════════════════════════════════════════
+// COST OF LIVING TICKER
+// ═══════════════════════════════════════════════
+const CITY_COL = [
+  // city, currency symbol, lunch, beer, transport, hotel
+  { city:'London',       cur:'£',  lunch:16,  beer:7,   transport:4,  hotel:180 },
+  { city:'Paris',        cur:'€',  lunch:15,  beer:8,   transport:2,  hotel:170 },
+  { city:'Amsterdam',    cur:'€',  lunch:14,  beer:5,   transport:3,  hotel:160 },
+  { city:'Berlin',       cur:'€',  lunch:12,  beer:4,   transport:3,  hotel:120 },
+  { city:'Rome',         cur:'€',  lunch:13,  beer:5,   transport:2,  hotel:140 },
+  { city:'Madrid',       cur:'€',  lunch:12,  beer:3,   transport:2,  hotel:120 },
+  { city:'Barcelona',    cur:'€',  lunch:13,  beer:3,   transport:2,  hotel:130 },
+  { city:'Lisbon',       cur:'€',  lunch:10,  beer:2,   transport:2,  hotel:110 },
+  { city:'Stockholm',    cur:'kr', lunch:18,  beer:8,   transport:4,  hotel:160 },
+  { city:'Copenhagen',   cur:'kr', lunch:20,  beer:9,   transport:4,  hotel:170 },
+  { city:'Oslo',         cur:'kr', lunch:22,  beer:10,  transport:5,  hotel:190 },
+  { city:'Zurich',       cur:'CHF',lunch:28,  beer:8,   transport:4,  hotel:250 },
+  { city:'Vienna',       cur:'€',  lunch:13,  beer:4,   transport:3,  hotel:130 },
+  { city:'Prague',       cur:'Kč', lunch:7,   beer:2,   transport:1,  hotel:80  },
+  { city:'Budapest',     cur:'Ft', lunch:6,   beer:2,   transport:1,  hotel:70  },
+  { city:'New York',     cur:'$',  lunch:20,  beer:9,   transport:3,  hotel:220 },
+  { city:'Los Angeles',  cur:'$',  lunch:18,  beer:8,   transport:3,  hotel:200 },
+  { city:'Miami',        cur:'$',  lunch:17,  beer:7,   transport:3,  hotel:190 },
+  { city:'Chicago',      cur:'$',  lunch:16,  beer:7,   transport:3,  hotel:180 },
+  { city:'Toronto',      cur:'C$', lunch:15,  beer:7,   transport:3,  hotel:160 },
+  { city:'Mexico City',  cur:'$',  lunch:5,   beer:2,   transport:1,  hotel:60  },
+  { city:'São Paulo',    cur:'R$', lunch:6,   beer:2,   transport:1,  hotel:70  },
+  { city:'Buenos Aires', cur:'$',  lunch:4,   beer:2,   transport:1,  hotel:50  },
+  { city:'Bogotá',       cur:'$',  lunch:4,   beer:2,   transport:1,  hotel:50  },
+  { city:'Tokyo',        cur:'¥',  lunch:10,  beer:5,   transport:2,  hotel:120 },
+  { city:'Singapore',    cur:'S$', lunch:6,   beer:10,  transport:2,  hotel:180 },
+  { city:'Hong Kong',    cur:'HK$',lunch:8,   beer:8,   transport:2,  hotel:150 },
+  { city:'Bangkok',      cur:'฿',  lunch:3,   beer:2,   transport:1,  hotel:50  },
+  { city:'Bali',         cur:'Rp', lunch:3,   beer:2,   transport:2,  hotel:40  },
+  { city:'Dubai',        cur:'AED',lunch:12,  beer:14,  transport:3,  hotel:160 },
+  { city:'Istanbul',     cur:'₺',  lunch:5,   beer:3,   transport:1,  hotel:60  },
+  { city:'Mumbai',       cur:'₹',  lunch:3,   beer:3,   transport:1,  hotel:60  },
+  { city:'Beijing',      cur:'¥',  lunch:5,   beer:2,   transport:1,  hotel:80  },
+  { city:'Seoul',        cur:'₩',  lunch:7,   beer:4,   transport:2,  hotel:90  },
+  { city:'Kuala Lumpur', cur:'RM', lunch:3,   beer:4,   transport:1,  hotel:50  },
+  { city:'Nairobi',      cur:'KSh',lunch:4,   beer:2,   transport:1,  hotel:60  },
+  { city:'Cape Town',    cur:'R',  lunch:6,   beer:2,   transport:2,  hotel:80  },
+  { city:'Lagos',        cur:'₦',  lunch:4,   beer:2,   transport:2,  hotel:70  },
+  { city:'Cairo',        cur:'£',  lunch:3,   beer:2,   transport:1,  hotel:40  },
+  { city:'Sydney',       cur:'A$', lunch:16,  beer:8,   transport:3,  hotel:180 },
+];
 
-async function loadFX() {
-  const base = (settings.currency || 'USD').toUpperCase();
+function loadFX() {
   const track = document.getElementById('fx-track');
   if (!track) return;
 
-  try {
-    const today = new Date();
-    const toStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const todayStr = toStr(today);
-    const prev30 = new Date(today); prev30.setDate(prev30.getDate() - 30);
-    const prevStr = toStr(prev30);
+  // Find home city data for comparison baseline
+  const homeStr  = (settings.home || 'Stockholm').toLowerCase();
+  const homeCity = CITY_COL.find(c => homeStr.includes(c.city.toLowerCase())) || CITY_COL.find(c => c.city === 'Stockholm');
 
-    const [resToday, resPrev] = await Promise.all([
-      fetch(`https://api.frankfurter.app/${todayStr}?from=${base}`),
-      fetch(`https://api.frankfurter.app/${prevStr}?from=${base}`)
-    ]);
-    if (!resToday.ok || !resPrev.ok) throw new Error('fetch failed');
+  const colClass = (val, homeVal) => {
+    const diff = ((val - homeVal) / homeVal) * 100;
+    if (diff <= -15) return 'cheap';
+    if (diff >= 15)  return 'expensive';
+    return 'neutral';
+  };
 
-    const [dataToday, dataPrev] = await Promise.all([resToday.json(), resPrev.json()]);
-    const ratesT = dataToday.rates || {};
-    const ratesP = dataPrev.rates  || {};
-
-    const items = Object.keys(FX_COUNTRY_MAP)
-      .filter(c => c !== base && ratesT[c] && ratesP[c])
-      .map(c => {
-        const rate = ratesT[c];
-        const chg  = ((ratesT[c] - ratesP[c]) / ratesP[c]) * 100;
-        // Format rate: show enough decimals to be meaningful
-        const rateStr = rate >= 100 ? rate.toFixed(1) : rate >= 10 ? rate.toFixed(2) : rate >= 1 ? rate.toFixed(3) : rate.toFixed(4);
-        return { code: c, country: FX_COUNTRY_MAP[c], rate: rateStr, chg };
-      });
-
-    if (!items.length) throw new Error('no rates');
-
-    const makeItems = () => items.map(item => {
-      const arrow = item.chg >= 0 ? '▲' : '▼';
-      const sign  = item.chg >= 0 ? '+' : '';
-      const cls   = item.chg >= 0 ? 'up' : 'dn';
-      return `<div class="fx-item"><span class="fx-country">${item.country}</span><span class="fx-rate">1 ${base} = ${item.rate} ${item.code}</span><span class="fx-chg ${cls}">${arrow} ${sign}${item.chg.toFixed(2)}%</span></div>`;
+  const makeItems = () => CITY_COL
+    .filter(c => c.city !== homeCity.city)
+    .map(c => {
+      const lClass = colClass(c.lunch,     homeCity.lunch);
+      const bClass = colClass(c.beer,      homeCity.beer);
+      const tClass = colClass(c.transport, homeCity.transport);
+      const hClass = colClass(c.hotel,     homeCity.hotel);
+      return `<div class="fx-item">
+        <span class="fx-country">${c.city}</span>
+        <span class="fx-stat ${lClass}">🍜 ${c.cur}${c.lunch}</span>
+        <span class="fx-stat ${bClass}">🍺 ${c.cur}${c.beer}</span>
+        <span class="fx-stat ${tClass}">🚇 ${c.cur}${c.transport}</span>
+        <span class="fx-stat ${hClass}">🏨 ${c.cur}${c.hotel}</span>
+      </div>`;
     }).join('');
 
-    track.innerHTML = makeItems() + makeItems();
-
-    const totalW = track.scrollWidth / 2;
-    const speed  = Math.max(40, Math.round(totalW / 80));
-    track.style.animationDuration = speed + 's';
-
-  } catch(e) {
-    track.innerHTML = `<div class="fx-item"><div class="fx-country" style="color:var(--text3);">Loading rates…</div></div>`.repeat(8);
-  }
+  track.innerHTML = makeItems() + makeItems();
 }
 
 // ═══════════════════════════════════════════════
