@@ -3153,7 +3153,7 @@ Vary price points from budget to luxury. Be realistic for the city.`,
     </div>
     <div>
       <div class="fib-bar-wrap">
-        <div class="fib-budget-bar fib-bar" style="width:${_bvBarW}%;background:rgba(0,200,255,0.35);color:var(--cyan);">${_bvLabel}</div>
+        <div class="fib-budget-bar fib-bar" style="width:${_bvBarW}%;background:rgba(0,200,255,0.35);color:var(--cyan);white-space:nowrap;overflow:hidden;">${_bvLabel}</div>
       </div>
       <div class="fib-budget-count" style="font-size:9px;color:var(--text3);margin-top:3px;">${_bv ? _bvMatched.length+' of '+hotels.length+' results' : ''}</div>
     </div>
@@ -3194,7 +3194,7 @@ Vary price points from budget to luxury. Be realistic for the city.`,
     </div>
     <div class="fib-section">
       <div class="fib-section-title">Price band heat map · ${nights} night stay</div>
-      ${bandsHtml}${budgetRowHtml}
+      ${budgetRowHtml}${bandsHtml}
     </div>
     ${valueHtml ? `<div class="fib-section"><div class="fib-section-title">Value index by price band</div>${valueHtml}</div>` : ''}
     <div class="fib-section">
@@ -3421,7 +3421,7 @@ Return ONLY valid JSON (no markdown):
       </div>
       <div>
         <div class="fib-bar-wrap">
-          <div class="fib-bar" style="width:${barW}%;background:rgba(0,200,255,0.35);color:var(--cyan);">${label}</div>
+          <div class="fib-bar" style="width:${barW}%;background:rgba(0,200,255,0.35);color:var(--cyan);white-space:nowrap;overflow:hidden;">${label}</div>
         </div>
         <div style="font-size:9px;color:var(--text3);margin-top:3px;">${matched.length} of ${flights.length} total results</div>
       </div>
@@ -3479,7 +3479,7 @@ Return ONLY valid JSON (no markdown):
 
     <div class="fib-section">
       <div class="fib-section-title">Price band heat map</div>
-      ${bandsHtml}${flightBudgetRowHtml}
+      ${flightBudgetRowHtml}${bandsHtml}
     </div>
 
     ${aiJson?.convenienceScores?.length ? `<div class="fib-section">
