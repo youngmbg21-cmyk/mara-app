@@ -2987,7 +2987,15 @@ function setPulseMode(mode) {
   if (curMode && curMode !== mode) {
     window._pulseCache[curMode] = container.innerHTML;
     container.innerHTML = window._pulseCache[mode] || '';
-    if (!window._pulseCache[mode]) container.dataset.mode = '';
+    container.dataset.mode = window._pulseCache[mode] ? mode : '';
+    // Re-attach hotel budget listener if restoring hotel results
+    if (mode === 'hotel' && window._pulseCache[mode]) {
+      const inputEl = document.getElementById('pp-ht-budget');
+      if (inputEl) {
+        inputEl._pulseFibBound = false;
+        inputEl.dispatchEvent(new Event('input'));
+      }
+    }
   }
 }
 
@@ -3096,8 +3104,10 @@ Vary price points from budget to luxury. Be realistic for the city.`,
 
   // ── Deterministic book signal ──
   const hotelSpread = ((avgP - minP) / minP) * 100;
+  const budgetPerNight = budget || 0;
+  const budgetTotal = budgetPerNight * nights;
   let hotelCalcSignal;
-  if (budget && hotels.filter(h => (getHotelPrice(h)||0) <= budget).length === 0) {
+  if (budgetPerNight && hotels.filter(h => (getHotelPrice(h)||0) <= budgetPerNight).length === 0) {
     hotelCalcSignal = 'CONSIDER_WAITING';
   } else if (hotelSpread < 15) {
     hotelCalcSignal = 'BOOK_NOW';
@@ -3113,7 +3123,9 @@ Vary price points from budget to luxury. Be realistic for the city.`,
   if (apiKey) {
     try {
       const summary = JSON.stringify({
-        city, checkin, checkout, nights, guests, currency:cur, budget:budget||null,
+        city, checkin, checkout, nights, guests, currency:cur,
+        budgetPerNight: budgetPerNight||null,
+        budgetTotal: budgetPerNight ? budgetTotal : null,
         totalHotels:hotels.length, isLiveData:isLive,
         priceRange:{ min:minP, max:maxP, avg:avgP },
         priceSpreadPct: Math.round(hotelSpread),
@@ -3127,13 +3139,14 @@ Vary price points from budget to luxury. Be realistic for the city.`,
       });
       const raw = await callClaude(
         `You are a hotel intelligence analyst. The book signal has already been decided as "${hotelCalcSignal}" based on price spread analysis. Do NOT change it.
+IMPORTANT: budgetPerNight is the user's budget PER NIGHT. budgetTotal is budgetPerNight × ${nights} nights. Always reference budget as a per-night figure in your response.
 Return ONLY valid JSON:
 {
   "bookSignal": "${hotelCalcSignal}",
   "bookSignalReason": "one sentence justifying the ${hotelCalcSignal} signal based on the data",
   "summary": "3-4 sentences covering: is this expensive for this city/season, what you get at each price tier, best value band, any notable patterns like free cancellation availability or breakfast deals. Be specific with prices.",
   "sweetSpot": "one sentence on best value pick",
-  "budgetVerdict": "one sentence on budget realism — only if budget provided, else null",
+  "budgetVerdict": "one sentence on budget realism referencing the per-night figure — only if budgetPerNight provided, else null",
   "valueScores": [
     {"band":"Bottom 33%","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"},
     {"band":"Middle 33%","valueForMoney":1-5,"locationQuality":1-5,"amenityScore":1-5,"note":"short note"},
