@@ -726,6 +726,37 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #scan-overlay { position: fixed; inset: 0; z-index: 900; background: rgba(6,9,14,0.94); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
 #scan-overlay.active { display: flex; }
 
+/* ── FLIGHT INTELLIGENCE GRID ── */
+.fig-wrap{overflow-x:auto;}
+.fig-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'JetBrains Mono',monospace;}
+.fig-table th{font-size:9px;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;padding:8px 12px;border-bottom:2px solid var(--border2);text-align:left;white-space:nowrap;background:var(--bg2);position:sticky;top:0;}
+.fig-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;}
+.fig-table tr:hover td{background:var(--bg3);}
+.fig-table tr.fig-best td{background:rgba(0,255,136,0.04);}
+.fig-rank{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:700;}
+.fig-rank-1{background:#EAF3DE;color:#27500A;}
+.fig-rank-2{background:#E6F1FB;color:#0C447C;}
+.fig-rank-3{background:#FAEEDA;color:#633806;}
+.fig-rank-n{background:var(--bg4);color:var(--text2);}
+.fig-airline{display:flex;align-items:center;gap:8px;}
+.fig-airline img{height:16px;object-fit:contain;opacity:0.85;}
+.fig-green{color:var(--green);font-weight:700;}
+.fig-red{color:var(--red);font-weight:700;}
+.fig-gold{color:var(--gold);}
+.fig-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:3px;letter-spacing:0.06em;font-weight:700;}
+.fig-badge-best{background:rgba(0,255,136,0.12);color:var(--green);}
+.fig-badge-good{background:rgba(0,200,255,0.12);color:var(--cyan);}
+.fig-badge-fair{background:rgba(255,184,0,0.12);color:var(--gold);}
+.fig-badge-poor{background:rgba(255,69,96,0.12);color:var(--red);}
+.fig-score-bar{display:flex;align-items:center;gap:6px;}
+.fig-score-track{width:50px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.fig-score-fill{height:100%;border-radius:2px;}
+.fig-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;}
+.fig-kpi{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;}
+.fig-kpi-label{font-size:9px;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:3px;}
+.fig-kpi-val{font-size:18px;font-weight:700;color:var(--text);}
+.fig-kpi-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+
 /* ── CITY DROPDOWN ── */
 .city-dropdown-wrap{position:relative;width:100%;}
 .city-search-input{background:transparent;border:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);width:100%;padding:0;}
@@ -937,7 +968,7 @@ input[type="date"] {
     <div class="nav-btn"        id="nav-alerts"       onclick="switchTab('alerts')">⚠️<span class="nav-badge" id="alerts-badge" style="display:none;"></span><div class="nav-tip">ALERTS</div></div>
     <div class="sidebar-sep"></div>
     <div class="nav-btn"        id="nav-flights"      onclick="switchTab('flights')">✈️<div class="nav-tip">FLIGHTS</div></div>
-    <div class="nav-btn"        id="nav-flights2"     onclick="switchTab('flights2')">✈️<div class="nav-tip">FLIGHTS 2</div></div>
+    <div class="nav-btn"        id="nav-flights2"     onclick="switchTab('flights2')">📊<div class="nav-tip">FLIGHT INTEL</div></div>
     <div class="nav-btn"        id="nav-hotels"       onclick="switchTab('hotels')">🏨<div class="nav-tip">HOTELS</div></div>
     <div class="nav-btn"        id="nav-restaurants"  onclick="switchTab('restaurants')">🍽️<div class="nav-tip">RESTAURANTS</div></div>
     <div class="nav-btn"        id="nav-intel"        onclick="switchTab('intel')">📊<div class="nav-tip">INTELLIGENCE</div></div>
@@ -1070,11 +1101,12 @@ input[type="date"] {
       <div class="cards-grid" id="my-flights"></div>
     </div>
 
-    <!-- FLIGHTS 2 (duplicate) -->
+
+    <!-- FLIGHT INTELLIGENCE GRID -->
     <div class="tab-view" id="tab-flights2">
       <div class="sec-header">
-        <div><div class="sec-title">FLIGHT <span class="accent">SEARCH</span></div></div>
-        <span class="pill cyan">AI POWERED</span>
+        <div><div class="sec-title">FLIGHT <span class="accent">INTELLIGENCE</span></div><div class="sec-subtitle">AIRLINE COMPARISON · LIVE SERP DATA · AI RANKED</div></div>
+        <span class="pill cyan">2 SERP CALLS</span>
       </div>
       <div class="search-form">
         <div class="search-field"><div class="search-label">FROM</div>
@@ -1091,11 +1123,10 @@ input[type="date"] {
         <div class="search-field" style="max-width:110px;"><div class="search-label">CLASS</div>
           <select class="search-input" id="fl2-class"><option value="economy">Economy</option><option value="premium">Premium Eco</option><option value="business">Business</option><option value="first">First</option></select>
         </div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" onclick="searchFlights2()">SEARCH FLIGHTS</button></div>
+        <div class="search-field" style="max-width:120px;"><div class="search-label">MY BUDGET</div><input class="search-input" id="fl2-budget" type="number" placeholder="e.g. 800"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" onclick="searchFlights2()">ANALYSE →</button></div>
       </div>
-      <div id="fl2-results" class="results-container" style="overflow-y:auto;flex:1;"></div>
-      <div class="section-label">MY FLIGHT BOOKINGS</div>
-      <div class="cards-grid" id="my-flights2"></div>
+      <div id="fl2-results" style="overflow-y:auto;flex:1;padding:16px 20px;"></div>
     </div>
 
     <!-- HOTELS -->
@@ -2970,23 +3001,27 @@ function getBookingLink(type, params) {
 
 async function searchFlights2() {
   if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
-  const fromVal  = document.getElementById('fl2-from').value||'Stockholm (ARN)';
-  const toVal    = document.getElementById('fl2-to').value;
-  const from     = fromVal;
-  const to       = toVal;
-  const depart   = document.getElementById('fl2-depart').value;
-  const ret      = document.getElementById('fl2-return').value;
-  const pax      = document.getElementById('fl2-pax').value||'1';
-  const cls      = document.getElementById('fl2-class').value||'economy';
+  const fromVal = document.getElementById('fl2-from').value||'Stockholm (ARN)';
+  const toVal   = document.getElementById('fl2-to').value;
+  const from    = fromVal;
+  const to      = toVal;
+  const depart  = document.getElementById('fl2-depart').value;
+  const ret     = document.getElementById('fl2-return').value;
+  const pax     = document.getElementById('fl2-pax').value||'1';
+  const cls     = document.getElementById('fl2-class').value||'economy';
+  const budget  = parseFloat(document.getElementById('fl2-budget').value)||0;
   if (!to) { showToast('Select a destination city','warning'); return; }
   const cur = settings.currency||'USD';
-
   const container = document.getElementById('fl2-results');
-  const source = serpApiKey ? 'Google Flights' : 'AI Estimate';
-  container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:20px;">
+
+  container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:40px;">
     <div class="spinner"></div>
-    <span style="color:var(--text2);font-size:12px;">Searching ${source} — ${from} → ${to}…</span>
+    <span style="color:var(--text2);font-size:12px;">Fetching live data — 2 SerpApi calls…</span>
   </div>`;
+
+  // ── SERP CALL 1: One-way (unchanged from searchFlights) ──
+  let owFlights = [], rtFlights = [];
+  let isLive = false;
 
   try {
     const fromCode = document.getElementById('fl2-from-code')?.value ||
@@ -2995,52 +3030,162 @@ async function searchFlights2() {
     const toCode   = document.getElementById('fl2-to-code')?.value ||
                      (to.match(/\(([A-Z]{3})\)/)||[,''])[1] ||
                      to.split(/\s+/).pop().replace(/[^A-Z]/g,'');
-    if (!fromCode || !toCode) throw new Error('Could not determine airport codes — please select cities from the dropdown');
-    const data = await serpSearch({
-      engine:       'google_flights',
-      departure_id:  fromCode,
-      arrival_id:    toCode,
-      outbound_date: depart,
-      currency:      cur,
-      adults:        pax,
-      travel_class:  cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
-      ...(ret ? { return_date: ret, type: '1' } : {}),
+    if (!fromCode || !toCode) throw new Error('Select cities from the dropdown');
+
+    const owData = await serpSearch({
+      engine: 'google_flights', departure_id: fromCode, arrival_id: toCode,
+      outbound_date: depart, currency: cur, adults: pax,
+      travel_class: cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
     });
-    const flights = data.best_flights || data.other_flights || [];
-    if (!flights.length) throw new Error('No flights found for this route');
-    const time = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    container.innerHTML =
-      `<div style="padding:4px 20px 0;font-size:9px;color:var(--text3);">${flights.length} results · ${getSerpUsage().calls}/${SERP_FREE_LIMIT} monthly searches used</div>` +
-      flights.slice(0,5).map(f => buildSerpFlightCard(f, cur, cls)).join('');
-    return;
+    owFlights = owData.best_flights || owData.other_flights || [];
+
+    // ── SERP CALL 2: Round trip (unchanged from searchFlights) ──
+    if (ret) {
+      const rtData = await serpSearch({
+        engine: 'google_flights', departure_id: fromCode, arrival_id: toCode,
+        outbound_date: depart, return_date: ret, type: '1', currency: cur, adults: pax,
+        travel_class: cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
+      });
+      rtFlights = rtData.best_flights || rtData.other_flights || [];
+    }
+    isLive = true;
   } catch(e) {
-    const isQuota = e.message === 'QUOTA_EXCEEDED';
-    const isNoKey = e.message === 'NO_SERP_KEY';
-    if (!isQuota && !isNoKey) {
-      container.innerHTML = `<div style="padding:8px 20px 4px;">
-        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:6px;font-size:10px;color:var(--gold);">
-          ⚠ SerpApi error: ${esc(e.message)} — showing AI estimate instead
-        </div>
-      </div>`;
+    if (e.message !== 'NO_SERP_KEY' && e.message !== 'QUOTA_EXCEEDED') {
+      container.innerHTML = `<div style="padding:8px 0 12px;">
+        <div style="padding:8px 12px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:6px;font-size:10px;color:var(--gold);">
+          ⚠ Live data unavailable: ${esc(e.message)} — using AI estimates
+        </div></div>`;
     }
   }
 
-  if (!apiKey) { container.innerHTML = `<div class="empty-state"><div class="empty-icon">✈️</div><div class="empty-title">No API key</div><div class="empty-body">Add your Claude or SerpApi key in ⚙ Settings.</div></div>`; return; }
-  try {
-    const raw = await callClaude(
-      `You are a flight search engine. Return ONLY valid JSON array of 4 flight options. Each:
-{"airline":"","stops":0,"price":0,"currency":"${cur}","class":"${cls}",
-"legs":[{"from":"IATA","to":"IATA","dep":"HH:MM","arr":"HH:MM","duration":"Xh Ym","flightNum":"XX000"}],
-"layovers":[{"airport":"IATA","duration":"Xh Ym"}],"totalDuration":"Xh Ym"}`,
-      [{role:'user',content:`Flights ${from} to ${to}, departing ${depart}${ret?', returning '+ret:''}, ${pax} pax, ${cls}. Realistic prices.`}], 1400
-    );
-    const options = parseArr(raw);
-    if (!options.length) throw new Error('No results');
-    container.innerHTML = options.map(opt => buildFlightCard(opt, {from,to,date:depart})).join('');
-  } catch(e) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">✈️</div><div class="empty-title">Search unavailable</div><div class="empty-body">${esc(e.message)}</div></div>`;
+  // ── Claude fallback if no live data ──
+  if (!owFlights.length && apiKey) {
+    try {
+      const raw = await callClaude(
+        `Return ONLY a valid JSON array of 5 realistic flights. Each object:
+{"airline":"name","airline_logo":"","price":number,"total_duration":number_minutes,"stops":number,"rt_price":number_or_null}`,
+        [{role:'user',content:`Flights from ${from} to ${to}, departing ${depart}${ret?', returning '+ret:''}, ${pax} pax ${cls}.`}], 800
+      );
+      const est = parseArr(raw);
+      if (est.length) {
+        owFlights = est.map(e => ({ price: e.price, total_duration: e.total_duration, flights: Array(e.stops+1).fill({airline: e.airline}), _estimated: true }));
+        rtFlights = est.filter(e=>e.rt_price).map(e => ({ price: e.rt_price, flights: Array(e.stops+1).fill({airline: e.airline}) }));
+      }
+    } catch(_) {}
   }
+
+  if (!owFlights.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No results</div><div class="empty-body">Try different dates or check your API keys.</div></div>`;
+    return;
+  }
+
+  // ── Build comparison rows ──
+  const rows = owFlights.slice(0,8).map((f, i) => {
+    const airline   = f.flights?.[0]?.airline || `Option ${i+1}`;
+    const logo      = f.flights?.[0]?.airline_logo || '';
+    const owPrice   = f.price || 0;
+    const dur       = f.total_duration || 0;
+    const stops     = (f.flights?.length || 1) - 1;
+    const durStr    = dur ? `${Math.floor(dur/60)}h ${dur%60}m` : '—';
+    // Find matching RT price
+    const rtMatch   = rtFlights.find(r => r.flights?.[0]?.airline === airline);
+    const rtPrice   = rtMatch?.price || null;
+    return { airline, logo, owPrice, rtPrice, dur, durStr, stops, estimated: !!f._estimated };
+  });
+
+  // ── Column 6: Cost rank ──
+  const sorted = [...rows].sort((a,b) => a.owPrice - b.owPrice);
+  rows.forEach(r => { r.costRank = sorted.findIndex(s => s.airline === r.airline) + 1; });
+
+  // ── Column 8: AI rank score ──
+  const maxPrice = Math.max(...rows.map(r=>r.owPrice));
+  const minPrice = Math.min(...rows.map(r=>r.owPrice));
+  const maxDur   = Math.max(...rows.map(r=>r.dur||999));
+  const minDur   = Math.min(...rows.map(r=>r.dur||999));
+  rows.forEach(r => {
+    const priceScore = maxPrice===minPrice ? 100 : Math.round(100 - ((r.owPrice-minPrice)/(maxPrice-minPrice))*50);
+    const durScore   = maxDur===minDur     ? 100 : Math.round(100 - ((r.dur-minDur)/(maxDur-minDur))*30);
+    const stopScore  = r.stops===0 ? 20 : r.stops===1 ? 10 : 0;
+    const rtScore    = r.rtPrice && r.rtPrice < r.owPrice*1.8 ? 10 : 0;
+    r.aiScore = Math.min(100, priceScore + durScore * 0.3 + stopScore + rtScore);
+    r.aiScore = Math.round(r.aiScore);
+  });
+  const aiSorted = [...rows].sort((a,b) => b.aiScore - a.aiScore);
+  rows.forEach(r => { r.aiRank = aiSorted.findIndex(s => s.airline === r.airline) + 1; });
+
+  // ── Summary KPIs ──
+  const bestOW  = rows[sorted[0] ? sorted.findIndex(s=>true) : 0]?.owPrice || 0;
+  const bestRT  = rows.filter(r=>r.rtPrice).sort((a,b)=>a.rtPrice-b.rtPrice)[0]?.rtPrice || 0;
+  const avgOW   = Math.round(rows.reduce((s,r)=>s+r.owPrice,0)/rows.length);
+  const fastest = rows.slice().sort((a,b)=>a.dur-b.dur)[0];
+
+  const summaryHtml = `<div class="fig-summary">
+    <div class="fig-kpi"><div class="fig-kpi-label">Best one-way</div><div class="fig-kpi-val fig-green">${cur} ${Math.min(...rows.map(r=>r.owPrice)).toLocaleString()}</div><div class="fig-kpi-sub">${rows.find(r=>r.owPrice===Math.min(...rows.map(r=>r.owPrice)))?.airline||''}</div></div>
+    <div class="fig-kpi"><div class="fig-kpi-label">Best round trip</div><div class="fig-kpi-val fig-green">${bestRT ? cur+' '+bestRT.toLocaleString() : '—'}</div><div class="fig-kpi-sub">${bestRT ? rows.find(r=>r.rtPrice===bestRT)?.airline||'' : 'No return set'}</div></div>
+    <div class="fig-kpi"><div class="fig-kpi-label">Market avg</div><div class="fig-kpi-val">${cur} ${avgOW.toLocaleString()}</div><div class="fig-kpi-sub">${rows.length} airlines</div></div>
+    <div class="fig-kpi"><div class="fig-kpi-label">Fastest</div><div class="fig-kpi-val">${fastest?.durStr||'—'}</div><div class="fig-kpi-sub">${fastest?.stops===0?'Direct':fastest?.stops+' stop'} · ${fastest?.airline||''}</div></div>
+  </div>`;
+
+  // ── Build table rows ──
+  const rankClass = r => r<=1?'fig-rank-1':r===2?'fig-rank-2':r===3?'fig-rank-3':'fig-rank-n';
+  const aiBadge = score => score>=80?'fig-badge-best':score>=65?'fig-badge-good':score>=50?'fig-badge-fair':'fig-badge-poor';
+  const aiLabel = score => score>=80?'EXCELLENT':score>=65?'GOOD':score>=50?'FAIR':'POOR';
+
+  const tableRows = rows.map((r, i) => {
+    const budgetDiff = budget > 0 ? r.owPrice - budget : null;
+    const budgetHtml = budgetDiff === null ? '<span style="color:var(--text3);">—</span>'
+      : budgetDiff <= 0
+        ? `<span class="fig-green">-${cur} ${Math.abs(budgetDiff).toLocaleString()} under</span>`
+        : `<span class="fig-red">+${cur} ${budgetDiff.toLocaleString()} over</span>`;
+
+    const scoreColor = r.aiScore>=80?'var(--green)':r.aiScore>=65?'var(--cyan)':r.aiScore>=50?'var(--gold)':'var(--red)';
+
+    return `<tr class="${i===0?'fig-best':''}">
+      <td><span class="fig-rank ${rankClass(r.costRank)}">${r.costRank}</span></td>
+      <td><div class="fig-airline">${r.logo?`<img src="${r.logo}" onerror="this.style.display='none'">`:''}${esc(r.airline)}${r.estimated?` <span style="font-size:9px;color:var(--gold);">~est</span>`:''}</div></td>
+      <td class="${i===0?'fig-green':''}" style="font-weight:${i===0?700:400}">${cur} ${r.owPrice.toLocaleString()}</td>
+      <td>${r.rtPrice ? `<span style="color:var(--cyan)">${cur} ${r.rtPrice.toLocaleString()}</span>` : '<span style="color:var(--text3);">—</span>'}</td>
+      <td>${r.durStr}</td>
+      <td>${r.stops===0?'<span class="fig-green">Direct</span>':`<span class="fig-gold">${r.stops} stop${r.stops>1?'s':''}</span>`}</td>
+      <td><span class="fig-rank ${rankClass(r.costRank)}" style="width:auto;padding:0 8px;border-radius:4px;">#${r.costRank} of ${rows.length}</span></td>
+      <td>${budgetHtml}</td>
+      <td>
+        <div class="fig-score-bar">
+          <div class="fig-score-track"><div class="fig-score-fill" style="width:${r.aiScore}%;background:${scoreColor}"></div></div>
+          <span class="fig-badge ${aiBadge(r.aiScore)}">${aiLabel(r.aiScore)}</span>
+          <span style="font-size:10px;color:var(--text2);">${r.aiScore}</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const liveTag = isLive
+    ? `<span style="font-size:9px;color:var(--green);font-weight:700;">● LIVE · Google Flights · ${getSerpUsage().calls}/${SERP_FREE_LIMIT} searches used</span>`
+    : `<span style="font-size:9px;color:var(--gold);font-weight:700;">~ AI ESTIMATED · Add SerpApi key for live data</span>`;
+
+  container.innerHTML = summaryHtml + `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      ${liveTag}
+      <span style="font-size:10px;color:var(--text3);">${from} → ${to} · ${depart}${ret?' → '+ret:''} · ${pax} pax · ${cls}</span>
+    </div>
+    <div class="fig-wrap">
+      <table class="fig-table">
+        <thead><tr>
+          <th>#</th>
+          <th>Airline</th>
+          <th>One-way</th>
+          <th>Round trip</th>
+          <th>Total time</th>
+          <th>Stops</th>
+          <th>Cost rank</th>
+          <th>vs Budget</th>
+          <th>AI rank</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>`;
 }
+
 
 async function searchFlights() {
   if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
