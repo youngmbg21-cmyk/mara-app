@@ -2780,7 +2780,7 @@ async function searchFlights() {
     const time = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     container.innerHTML =
       `<div style="padding:4px 20px 0;font-size:9px;color:var(--text3);">${flights.length} results · ${getSerpUsage().calls}/${SERP_FREE_LIMIT} monthly searches used</div>` +
-      flights.slice(0,5).map(f => buildSerpFlightCard(f, cur)).join('');
+      flights.slice(0,5).map(f => buildSerpFlightCard(f, cur, cls)).join('');
     return;
   } catch(e) {
     const isQuota = e.message === 'QUOTA_EXCEEDED';
@@ -2814,7 +2814,7 @@ async function searchFlights() {
   }
 }
 
-function buildSerpFlightCard(f, cur) {
+function buildSerpFlightCard(f, cur, cls='economy') {
   const legs     = f.flights || [];
   const price    = f.price || '—';
   const duration = f.total_duration ? `${Math.floor(f.total_duration/60)}h ${f.total_duration%60}m` : '—';
