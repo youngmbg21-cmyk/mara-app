@@ -4943,7 +4943,12 @@ function initIntel() {
 }
 
 async function runIntelSearch() {
-  const fromCode = document.getElementById('city-from-code').value || document.getElementById('city-from').value.match(/\(([A-Z]{3})\)/)?.[1];
+  // Check proxy/key before doing anything
+  if (!proxyBase && !serpApiKey) {
+    showToast('Add your Netlify Proxy URL in ⚙ Settings first','warning');
+    openDrawer();
+    return;
+  }
   const toCode   = document.getElementById('city-to-code').value   || document.getElementById('city-to').value.match(/\(([A-Z]{3})\)/)?.[1];
   const depart   = document.getElementById('intel-depart').value;
   const ret      = document.getElementById('intel-return').value;
@@ -5041,7 +5046,14 @@ async function runIntelSearch() {
     await buildIntelTrendChart(airlines.slice(0,2), bestOW, cur);
 
   } catch(err) {
-    document.getElementById('intel-results').innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Search failed</div><div class="empty-body">${esc(err.message)}</div></div>`;
+    const msg = err.message || '';
+    const isProxyMissing = msg.includes('unreachable') || msg.includes('proxy') || msg.includes('NO_SERP');
+    document.getElementById('intel-results').innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <div class="empty-title">Search failed</div>
+      <div class="empty-body">${esc(msg)}</div>
+      ${isProxyMissing ? `<button class="btn-primary" style="margin-top:14px;padding:8px 20px;" onclick="openDrawer()">⚙ Open Settings to add Proxy URL</button>` : ''}
+    </div>`;
     document.getElementById('intel-results').style.display = 'block';
     console.error('Intel search error:', err);
   }
