@@ -3122,7 +3122,7 @@ Vary price points from budget to luxury. Be realistic for the city.`,
 
   const sigColor = aiJson?.bookSignal==='BOOK_NOW'?'var(--green)':aiJson?.bookSignal==='CONSIDER_WAITING'?'var(--red)':'var(--gold)';
   const sigLabel = aiJson?.bookSignal==='BOOK_NOW'?'BOOK NOW':aiJson?.bookSignal==='CONSIDER_WAITING'?'CONSIDER WAITING':'FAIR PRICE';
-  const markerPct = aiJson?.bookSignalScore ?? 50;
+  const markerPct = aiJson?.bookSignal === 'BOOK_NOW' ? 20 : aiJson?.bookSignal === 'CONSIDER_WAITING' ? 80 : 50;
 
   const bandsHtml = bands.filter(b=>b.count>0).map(b => `
     <div class="fib-band">
@@ -3387,7 +3387,7 @@ Return ONLY valid JSON (no markdown):
 
   const buyColor = aiJson?.buySignal === 'BUY_NOW' ? 'var(--green)' : aiJson?.buySignal === 'CONSIDER_WAITING' ? 'var(--red)' : 'var(--gold)';
   const buyLabel = aiJson?.buySignal === 'BUY_NOW' ? 'BUY NOW' : aiJson?.buySignal === 'CONSIDER_WAITING' ? 'CONSIDER WAITING' : 'FAIR PRICE';
-  const markerPct = aiJson?.buySignalScore ?? 50;
+  const markerPct = aiJson?.buySignal === 'BUY_NOW' ? 20 : aiJson?.buySignal === 'CONSIDER_WAITING' ? 80 : 50;
 
   const bandsHtml = bands.filter(b => b.count > 0).map(b => {
     const durStr = b.avgDur ? Math.floor(b.avgDur/60)+'h '+b.avgDur%60+'m' : '—';
@@ -4509,7 +4509,7 @@ Use 4-6 sections. Be specific, practical, and insightful. No markdown symbols in
 function formatAiText(t) { return t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>'); }
 
 function formatAiSections(sections) {
-  return `<div style="display:flex;flex-direction:column;gap:12px;">` +
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">` +
     sections.map(s => `
       <div style="background:var(--bg4);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:8px;padding:14px 16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
