@@ -3391,11 +3391,11 @@ Return ONLY valid JSON:
     `**Budget/night:** ${budgetPerNight ? cur+' '+budgetPerNight.toLocaleString() : 'not set'}`,
     `**Price range:** ${cur} ${minP.toLocaleString()} – ${maxP.toLocaleString()}/night  |  **Average:** ${cur} ${avgP.toLocaleString()}/night`,
     `**Signal:** ${sigLabel}  |  **Confidence:** ${confScore??'—'}/100`,
-    aiJson?.strategySummary ? `\n### Strategy\n${aiJson.strategySummary}` : '',
-    aiJson?.riskFactor      ? `\n### Risk of Waiting\n${aiJson.riskFactor}` : '',
-    aiJson?.budgetVerdict   ? `\n### Budget Verdict\n${aiJson.budgetVerdict}` : '',
-    aiJson?.sweetSpot       ? `\n### Sweet Spot\n${aiJson.sweetSpot}` : '',
-    `\n### Price Bands\n${bands.map(b=>`- **${b.label}:** ${cur} ${b.min.toLocaleString()}–${b.max.toLocaleString()}/night (${b.count} hotels)`).join('\n')}`,
+    aiJson?.strategySummary ? `### Strategy\n${aiJson.strategySummary}` : '',
+    aiJson?.riskFactor      ? `### Risk of Waiting\n${aiJson.riskFactor}` : '',
+    aiJson?.budgetVerdict   ? `### Budget Verdict\n${aiJson.budgetVerdict}` : '',
+    aiJson?.sweetSpot       ? `### Sweet Spot\n${aiJson.sweetSpot}` : '',
+    `### Price Bands\n${bands.map(b=>`- **${b.label}:** ${cur} ${b.min.toLocaleString()}–${b.max.toLocaleString()}/night (${b.count} hotels)`).join('\n')}`,
   ].filter(Boolean).join('\n');
 
   const hotelGemParams = { mode:'hotel', city, checkin, checkout, guests: String(guests), budget: budgetPerNight ? String(budgetPerNight) : '' };
@@ -3774,11 +3774,11 @@ Return ONLY valid JSON (no markdown):
     `**Dates:** ${depart}${ret?' → '+ret:''}  |  **Class:** ${cls}  |  **Pax:** ${pax}  |  **Days to departure:** ${daysToTrip}`,
     `**Price range:** ${cur} ${minP.toLocaleString()} – ${maxP.toLocaleString()}  |  **Average:** ${cur} ${avgP.toLocaleString()}`,
     `**Signal:** ${buyLabel}  |  **Confidence:** ${confScore??'—'}/100`,
-    aiJson?.strategySummary ? `\n### Strategy\n${aiJson.strategySummary}` : '',
-    aiJson?.riskFactor      ? `\n### Risk of Waiting\n${aiJson.riskFactor}` : '',
-    aiJson?.budgetVerdict   ? `\n### Budget Verdict\n${aiJson.budgetVerdict}` : '',
-    aiJson?.sweetSpot       ? `\n### Sweet Spot\n${aiJson.sweetSpot}` : '',
-    `\n### Price Bands\n${bands.map(b=>`- **${b.label}:** ${cur} ${b.min.toLocaleString()}–${b.max.toLocaleString()} (${b.count} flights)`).join('\n')}`,
+    aiJson?.strategySummary ? `### Strategy\n${aiJson.strategySummary}` : '',
+    aiJson?.riskFactor      ? `### Risk of Waiting\n${aiJson.riskFactor}` : '',
+    aiJson?.budgetVerdict   ? `### Budget Verdict\n${aiJson.budgetVerdict}` : '',
+    aiJson?.sweetSpot       ? `### Sweet Spot\n${aiJson.sweetSpot}` : '',
+    `### Price Bands\n${bands.map(b=>`- **${b.label}:** ${cur} ${b.min.toLocaleString()}–${b.max.toLocaleString()} (${b.count} flights)`).join('\n')}`,
   ].filter(Boolean).join('\n');
 
   const gemParams = { mode:'flight', from, to, depart, ret, cls, pax: String(pax), budget: budget ? String(budget) : '' };
@@ -4741,6 +4741,7 @@ Each item: { "type":"missing_flight"|"missing_hotel"|"transit"|"gap", "severity"
     proactiveGaps   = issues.filter(i=>['missing_flight','missing_hotel','gap'].includes(i.type));
     proactiveAlerts = issues.filter(i=>i.type==='transit');
     updateStats();
+    renderAlerts();
     if (remindersEnabled) setupCheckInReminders();
   } catch(e) {}
 }
@@ -5221,20 +5222,8 @@ function renderGemDetail() {
       </div>
     </div>
     <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;font-size:12px;color:var(--text);line-height:1.8;font-family:sans-serif;">
-      ${formatGemContent(gem.content)}
+      ${formatChatMsg(gem.content)}
     </div>`;
-}
-
-function formatGemContent(text) {
-  if (!text) return '<span style="color:var(--text3);">No content saved.</span>';
-  return text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--cyan);">$1</strong>')
-    .replace(/^## (.+)$/gm,'<div style="font-family:\'Syne\',sans-serif;font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:0.12em;text-transform:uppercase;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">$1</div>')
-    .replace(/^### (.+)$/gm,'<div style="font-size:11px;font-weight:700;color:var(--gold);margin:10px 0 4px;">$1</div>')
-    .replace(/^- (.+)$/gm,'<div style="padding:3px 8px 3px 12px;border-left:2px solid var(--border2);margin:2px 0;color:var(--text2);">$1</div>')
-    .replace(/^• (.+)$/gm,'<div style="padding:3px 8px 3px 12px;border-left:2px solid var(--border2);margin:2px 0;color:var(--text2);">$1</div>')
-    .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
 }
 
 function rerunGem(id) {
@@ -6164,6 +6153,20 @@ function closeCityDrop(side) {
   _cityDropTimers[side] = setTimeout(() => {
     const drop = document.getElementById('cdrop-'+side);
     if (drop) drop.classList.remove('open');
+    // Auto-complete if user typed a bare IATA code e.g. "ord" → "Chicago O'Hare (ORD)"
+    const inputEl = document.getElementById(_cityInputId(side));
+    if (inputEl) {
+      const val = inputEl.value.trim();
+      const isCodeField = ['from','to','fl-from','fl-to','fl2-from','fl2-to'].includes(side);
+      if (isCodeField && val.length <= 4 && !val.includes('(')) {
+        const match = WORLD_CITIES.find(c => c.iata.toLowerCase() === val.toLowerCase());
+        if (match) {
+          inputEl.value = `${match.name} (${match.iata})`;
+          const codeEl = document.getElementById(_cityCodeId(side));
+          if (codeEl) codeEl.value = match.iata;
+        }
+      }
+    }
   }, 200);
 }
 
