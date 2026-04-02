@@ -5425,9 +5425,10 @@ function filterCities(side, query) {
 function selectCity(side, iata, name, country) {
   const inputEl = document.getElementById(_cityInputId(side));
   const codeEl  = document.getElementById(_cityCodeId(side));
-  // For hotel/restaurant city fields, show clean city name without airport suffix
-  const isCodeField = ['from','to','fl-from','fl-to'].includes(side);
-  if (inputEl) inputEl.value = isCodeField ? `${name} (${iata})` : name;
+  const isCodeField = ['from','to','fl-from','fl-to','fl2-from','fl2-to'].includes(side);
+  // For hotel/restaurant fields strip airport suffix — "Paris Charles de Gaulle" → "Paris"
+  const cleanName = name.split(' / ')[0].split(' Charles')[0].split(' Airport')[0].split(' International')[0].trim();
+  if (inputEl) inputEl.value = isCodeField ? `${name} (${iata})` : cleanName;
   if (codeEl)  codeEl.value  = iata;
   const drop = document.getElementById('cdrop-'+side);
   if (drop) drop.classList.remove('open');
