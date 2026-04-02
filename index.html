@@ -419,18 +419,16 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .empty-body{font-size:11px;text-align:center;max-width:280px;line-height:1.6;color:var(--text2);}
 
 /* ── FX STRIP ── */
-.fx-strip{overflow:hidden;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);position:relative;height:46px;display:flex;align-items:center;}
-.fx-strip::before,.fx-strip::after{content:'';position:absolute;top:0;bottom:0;width:40px;z-index:2;pointer-events:none;}
-.fx-strip::before{left:0;background:linear-gradient(to right,var(--bg2),transparent);}
-.fx-strip::after{right:0;background:linear-gradient(to left,var(--bg2),transparent);}
+.fx-strip{overflow:hidden;flex-shrink:0;background:#000;position:relative;height:38px;display:flex;align-items:center;border-top:1px solid var(--cyan);border-bottom:1px solid rgba(0,200,255,0.2);box-shadow:0 0 12px rgba(0,200,255,0.08);}
+.fx-strip::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,200,255,0.015) 2px,rgba(0,200,255,0.015) 4px);pointer-events:none;z-index:1;}
 @keyframes fxScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.fx-track{display:flex;gap:0;will-change:transform;animation:fxScroll 60s linear infinite;white-space:nowrap;}
-.fx-track:hover{animation-play-state:paused;}
-.fx-item{display:inline-flex;align-items:center;padding:0 24px;border-right:1px solid var(--border);flex-shrink:0;cursor:default;height:46px;}
-.fx-country{font-size:11px;color:var(--text2);letter-spacing:0.06em;white-space:nowrap;}
-.fx-chg{font-size:13px;font-weight:600;margin-top:2px;}
-.fx-chg.up{color:var(--green);}
-.fx-chg.dn{color:var(--red);}
+.fx-track{display:flex;gap:0;will-change:transform;animation:fxScroll 45s linear infinite;white-space:nowrap;position:relative;z-index:2;}
+.fx-item{display:inline-flex;align-items:center;padding:0 20px;border-right:1px solid rgba(0,200,255,0.15);flex-shrink:0;cursor:default;height:38px;gap:6px;}
+.fx-country{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:0.12em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.fx-rate{font-size:11px;color:#fff;font-family:'JetBrains Mono',monospace;white-space:nowrap;font-weight:500;}
+.fx-chg{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.fx-chg.up{color:#00FF41;text-shadow:0 0 8px rgba(0,255,65,0.5);}
+.fx-chg.dn{color:#FF3333;text-shadow:0 0 8px rgba(255,51,51,0.5);}
 
 /* ── SEARCH FORM ── */
 .search-form{display:flex;flex-wrap:wrap;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg2);align-items:flex-end;}
@@ -2675,25 +2673,29 @@ function renderDashboard() {
   const nightsEl = document.getElementById('stat-nights');
   if (nightsEl) nightsEl.textContent = nights || '—';
 
-  // Next destination banner
+  // Next event banner — soonest upcoming booking of any type
   const now = new Date();
-  const nextFlight = visible.filter(b=>b.type==='flight'&&b.date&&new Date(b.date)>=now)
-    .sort((a,b)=>new Date(a.date)-new Date(b.date))[0];
-  const nextHotel = visible.filter(b=>b.type==='hotel'&&b.date&&new Date(b.date)>=now)
-    .sort((a,b)=>new Date(a.date)-new Date(b.date))[0];
+  const nextEvent = visible
+    .filter(b => b.date && new Date(b.date) >= now)
+    .sort((a,b) => new Date(a.date) - new Date(b.date))[0];
+
+  const TYPE_META = {
+    flight:     { label:'Next Flight',      color:'var(--cyan)',  detail: b => `Departing ${fd(b.date)}${b.time?' at '+b.time:''}`,          sub: b => b.airline?`${esc(b.airline)} ${esc(b.flightNumber||'')}`:'' },
+    hotel:      { label:'Next Hotel',       color:'var(--green)', detail: b => `Check-in ${fd(b.date)}${b.endDate?' → '+fd(b.endDate):''}`,   sub: b => b.hotelName?esc(b.hotelName):'' },
+    restaurant: { label:'Next Restaurant',  color:'var(--gold)',  detail: b => `${fd(b.date)}${b.time?' at '+b.time:''}`,                     sub: b => b.address?esc(b.address):'' },
+    other:      { label:'Next Event',       color:'var(--cyan)',  detail: b => fd(b.date),                                                    sub: () => '' },
+  };
+
   const nextDest = document.getElementById('dash-next-dest');
   if (nextDest) {
-    if (nextFlight) {
+    if (nextEvent) {
+      const meta = TYPE_META[nextEvent.type] || TYPE_META.other;
+      const subLine = meta.sub(nextEvent);
       nextDest.style.display = 'flex';
-      nextDest.innerHTML = `<div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:2px;">Next Flight</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text);">${esc(nextFlight.to||nextFlight.title||'')}</div>
-        <div style="font-size:11px;color:var(--cyan);margin-top:2px;">Departing ${fd(nextFlight.date)}${nextFlight.time?' at '+nextFlight.time:''}</div>
-        ${nextFlight.airline?`<div style="font-size:10px;color:var(--text3);">${esc(nextFlight.airline)} ${esc(nextFlight.flightNumber||'')}</div>`:''}`;
-    } else if (nextHotel) {
-      nextDest.style.display = 'flex';
-      nextDest.innerHTML = `<div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:2px;">Upcoming Stay</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text);">${esc(nextHotel.hotelName||nextHotel.title||'')}</div>
-        <div style="font-size:11px;color:var(--green);margin-top:2px;">Check-in ${fd(nextHotel.date)}${nextHotel.endDate?' → '+fd(nextHotel.endDate):''}</div>`;
+      nextDest.innerHTML = `<div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:2px;">${meta.label}</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">${esc(nextEvent.to||nextEvent.hotelName||nextEvent.restaurantName||nextEvent.title||'')}</div>
+        <div style="font-size:11px;color:${meta.color};margin-top:2px;">${meta.detail(nextEvent)}</div>
+        ${subLine?`<div style="font-size:10px;color:var(--text3);">${subLine}</div>`:''}`;
     } else {
       nextDest.style.display = 'none';
     }
@@ -4718,9 +4720,7 @@ async function loadFX() {
       const arrow = item.chg >= 0 ? '▲' : '▼';
       const sign  = item.chg >= 0 ? '+' : '';
       const cls   = item.chg >= 0 ? 'up' : 'dn';
-      return `<div class="fx-item">
-        <div class="fx-country">${item.country} &nbsp;·&nbsp; 1 ${base} = ${item.rate} ${item.code} &nbsp;·&nbsp; <span class="${cls}">${arrow} ${sign}${item.chg.toFixed(2)}%</span></div>
-      </div>`;
+      return `<div class="fx-item"><span class="fx-country">${item.country}</span><span class="fx-rate">1 ${base} = ${item.rate} ${item.code}</span><span class="fx-chg ${cls}">${arrow} ${sign}${item.chg.toFixed(2)}%</span></div>`;
     }).join('');
 
     track.innerHTML = makeItems() + makeItems();
