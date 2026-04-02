@@ -3321,9 +3321,6 @@ const ESTIMATE_BADGE = (reason) =>
 // Public CORS proxies removed — too unreliable.
 // ═══════════════════════════════════════════════
 async function serpSearch(params) {
-  // Always read fresh from localStorage in case saved mid-session
-  if (!serpApiKey) serpApiKey = localStorage.getItem('voy_serp_key') || '';
-  if (!proxyBase)  proxyBase  = (localStorage.getItem('voy_proxy_url') || '').replace(/\/$/, '');
   if (!serpApiKey && !proxyBase) throw new Error('NO_SERP_KEY');
   if (serpQuotaExceeded()) throw new Error('QUOTA_EXCEEDED');
 
@@ -3800,7 +3797,6 @@ function renderMapSidebar() {
 // CLAUDE API
 // ═══════════════════════════════════════════════
 async function callClaude(systemPrompt, messages, maxTokens=1000) {
-  if (!apiKey) apiKey = localStorage.getItem('voy_api_key') || '';
   if (!apiKey) throw new Error('No API key configured');
   const body = {
     model: 'claude-sonnet-4-20250514',
