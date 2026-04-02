@@ -937,6 +937,7 @@ input[type="date"] {
     <div class="nav-btn"        id="nav-alerts"       onclick="switchTab('alerts')">⚠️<span class="nav-badge" id="alerts-badge" style="display:none;"></span><div class="nav-tip">ALERTS</div></div>
     <div class="sidebar-sep"></div>
     <div class="nav-btn"        id="nav-flights"      onclick="switchTab('flights')">✈️<div class="nav-tip">FLIGHTS</div></div>
+    <div class="nav-btn"        id="nav-flights2"     onclick="switchTab('flights2')">✈️<div class="nav-tip">FLIGHTS 2</div></div>
     <div class="nav-btn"        id="nav-hotels"       onclick="switchTab('hotels')">🏨<div class="nav-tip">HOTELS</div></div>
     <div class="nav-btn"        id="nav-restaurants"  onclick="switchTab('restaurants')">🍽️<div class="nav-tip">RESTAURANTS</div></div>
     <div class="nav-btn"        id="nav-intel"        onclick="switchTab('intel')">📊<div class="nav-tip">INTELLIGENCE</div></div>
@@ -1067,6 +1068,34 @@ input[type="date"] {
       <div id="fl-results" class="results-container" style="overflow-y:auto;flex:1;"></div>
       <div class="section-label">MY FLIGHT BOOKINGS</div>
       <div class="cards-grid" id="my-flights"></div>
+    </div>
+
+    <!-- FLIGHTS 2 (duplicate) -->
+    <div class="tab-view" id="tab-flights2">
+      <div class="sec-header">
+        <div><div class="sec-title">FLIGHT <span class="accent">SEARCH</span></div></div>
+        <span class="pill cyan">AI POWERED</span>
+      </div>
+      <div class="search-form">
+        <div class="search-field"><div class="search-label">FROM</div>
+          <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="fl2-from" placeholder="Search city…" autocomplete="off" oninput="filterCities('fl2-from',this.value)" onfocus="openCityDrop('fl2-from')" onblur="closeCityDrop('fl2-from')"><div class="city-drop" id="cdrop-fl2-from"></div></div>
+          <input type="hidden" id="fl2-from-code">
+        </div>
+        <div class="search-field"><div class="search-label">TO</div>
+          <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="fl2-to" placeholder="Search city…" autocomplete="off" oninput="filterCities('fl2-to',this.value)" onfocus="openCityDrop('fl2-to')" onblur="closeCityDrop('fl2-to')"><div class="city-drop" id="cdrop-fl2-to"></div></div>
+          <input type="hidden" id="fl2-to-code">
+        </div>
+        <div class="search-field" style="max-width:130px;"><div class="search-label">DEPART</div><input class="search-input" id="fl2-depart" type="date"></div>
+        <div class="search-field" style="max-width:130px;"><div class="search-label">RETURN</div><input class="search-input" id="fl2-return" type="date"></div>
+        <div class="search-field" style="max-width:80px;"><div class="search-label">PAX</div><input class="search-input" id="fl2-pax" type="number" value="1" min="1"></div>
+        <div class="search-field" style="max-width:110px;"><div class="search-label">CLASS</div>
+          <select class="search-input" id="fl2-class"><option value="economy">Economy</option><option value="premium">Premium Eco</option><option value="business">Business</option><option value="first">First</option></select>
+        </div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" onclick="searchFlights2()">SEARCH FLIGHTS</button></div>
+      </div>
+      <div id="fl2-results" class="results-container" style="overflow-y:auto;flex:1;"></div>
+      <div class="section-label">MY FLIGHT BOOKINGS</div>
+      <div class="cards-grid" id="my-flights2"></div>
     </div>
 
     <!-- HOTELS -->
@@ -2585,6 +2614,7 @@ function renderTab(tab) {
   if (tab === 'timeline')     renderTimeline();
   if (tab === 'alerts')       renderAlerts();
   if (tab === 'flights')      renderMyFlights();
+  if (tab === 'flights2')     renderMyFlights2();
   if (tab === 'hotels')       renderMyHotels();
   if (tab === 'restaurants')  renderMyRestos();
   if (tab === 'budget')       renderBudget();
@@ -2798,6 +2828,7 @@ function renderBookings(type) {
 }
 
 function renderMyFlights()    { document.getElementById('my-flights').innerHTML = getVisibleBookings().filter(b=>b.type==='flight').map(buildCard).join('')||'<div class="empty-state"><div class="empty-icon">✈️</div><div class="empty-title">No flights</div></div>'; }
+function renderMyFlights2()   { document.getElementById('my-flights2').innerHTML = getVisibleBookings().filter(b=>b.type==='flight').map(buildCard).join('')||'<div class="empty-state"><div class="empty-icon">✈️</div><div class="empty-title">No flights</div></div>'; }
 function renderMyHotels()     { document.getElementById('my-hotels').innerHTML  = getVisibleBookings().filter(b=>b.type==='hotel').map(buildCard).join('')||'<div class="empty-state"><div class="empty-icon">🏨</div><div class="empty-title">No hotels</div></div>'; }
 function renderMyRestos()     { document.getElementById('my-restos').innerHTML  = getVisibleBookings().filter(b=>b.type==='restaurant').map(buildCard).join('')||'<div class="empty-state"><div class="empty-icon">🍽️</div><div class="empty-title">No restaurants</div></div>'; }
 
@@ -2935,6 +2966,80 @@ function getBookingLink(type, params) {
     'Agoda': `https://www.agoda.com/search?city=${encodeURIComponent(params.city||'')}`,
   };
   return links[src] || links['Google Flights'];
+}
+
+async function searchFlights2() {
+  if (!apiKey && !serpApiKey) { showToast('Add your API keys in ⚙ Settings first','warning'); openDrawer(); return; }
+  const fromVal  = document.getElementById('fl2-from').value||'Stockholm (ARN)';
+  const toVal    = document.getElementById('fl2-to').value;
+  const from     = fromVal;
+  const to       = toVal;
+  const depart   = document.getElementById('fl2-depart').value;
+  const ret      = document.getElementById('fl2-return').value;
+  const pax      = document.getElementById('fl2-pax').value||'1';
+  const cls      = document.getElementById('fl2-class').value||'economy';
+  if (!to) { showToast('Select a destination city','warning'); return; }
+  const cur = settings.currency||'USD';
+
+  const container = document.getElementById('fl2-results');
+  const source = serpApiKey ? 'Google Flights' : 'AI Estimate';
+  container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:20px;">
+    <div class="spinner"></div>
+    <span style="color:var(--text2);font-size:12px;">Searching ${source} — ${from} → ${to}…</span>
+  </div>`;
+
+  try {
+    const fromCode = document.getElementById('fl2-from-code')?.value ||
+                     (from.match(/\(([A-Z]{3})\)/)||[,''])[1] ||
+                     from.split(/\s+/).pop().replace(/[^A-Z]/g,'');
+    const toCode   = document.getElementById('fl2-to-code')?.value ||
+                     (to.match(/\(([A-Z]{3})\)/)||[,''])[1] ||
+                     to.split(/\s+/).pop().replace(/[^A-Z]/g,'');
+    if (!fromCode || !toCode) throw new Error('Could not determine airport codes — please select cities from the dropdown');
+    const data = await serpSearch({
+      engine:       'google_flights',
+      departure_id:  fromCode,
+      arrival_id:    toCode,
+      outbound_date: depart,
+      currency:      cur,
+      adults:        pax,
+      travel_class:  cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
+      ...(ret ? { return_date: ret, type: '1' } : {}),
+    });
+    const flights = data.best_flights || data.other_flights || [];
+    if (!flights.length) throw new Error('No flights found for this route');
+    const time = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    container.innerHTML =
+      `<div style="padding:4px 20px 0;font-size:9px;color:var(--text3);">${flights.length} results · ${getSerpUsage().calls}/${SERP_FREE_LIMIT} monthly searches used</div>` +
+      flights.slice(0,5).map(f => buildSerpFlightCard(f, cur, cls)).join('');
+    return;
+  } catch(e) {
+    const isQuota = e.message === 'QUOTA_EXCEEDED';
+    const isNoKey = e.message === 'NO_SERP_KEY';
+    if (!isQuota && !isNoKey) {
+      container.innerHTML = `<div style="padding:8px 20px 4px;">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:6px;font-size:10px;color:var(--gold);">
+          ⚠ SerpApi error: ${esc(e.message)} — showing AI estimate instead
+        </div>
+      </div>`;
+    }
+  }
+
+  if (!apiKey) { container.innerHTML = `<div class="empty-state"><div class="empty-icon">✈️</div><div class="empty-title">No API key</div><div class="empty-body">Add your Claude or SerpApi key in ⚙ Settings.</div></div>`; return; }
+  try {
+    const raw = await callClaude(
+      `You are a flight search engine. Return ONLY valid JSON array of 4 flight options. Each:
+{"airline":"","stops":0,"price":0,"currency":"${cur}","class":"${cls}",
+"legs":[{"from":"IATA","to":"IATA","dep":"HH:MM","arr":"HH:MM","duration":"Xh Ym","flightNum":"XX000"}],
+"layovers":[{"airport":"IATA","duration":"Xh Ym"}],"totalDuration":"Xh Ym"}`,
+      [{role:'user',content:`Flights ${from} to ${to}, departing ${depart}${ret?', returning '+ret:''}, ${pax} pax, ${cls}. Realistic prices.`}], 1400
+    );
+    const options = parseArr(raw);
+    if (!options.length) throw new Error('No results');
+    container.innerHTML = options.map(opt => buildFlightCard(opt, {from,to,date:depart})).join('');
+  } catch(e) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">✈️</div><div class="empty-title">Search unavailable</div><div class="empty-body">${esc(e.message)}</div></div>`;
+  }
 }
 
 async function searchFlights() {
