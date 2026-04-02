@@ -6153,17 +6153,23 @@ function closeCityDrop(side) {
   _cityDropTimers[side] = setTimeout(() => {
     const drop = document.getElementById('cdrop-'+side);
     if (drop) drop.classList.remove('open');
-    // Auto-complete if user typed a bare IATA code e.g. "ord" → "Chicago O'Hare (ORD)"
+    // Auto-complete if value doesn't look like a properly selected city
     const inputEl = document.getElementById(_cityInputId(side));
-    if (inputEl) {
+    const codeEl  = document.getElementById(_cityCodeId(side));
+    if (inputEl && codeEl) {
       const val = inputEl.value.trim();
       const isCodeField = ['from','to','fl-from','fl-to','fl2-from','fl2-to'].includes(side);
-      if (isCodeField && val.length <= 4 && !val.includes('(')) {
-        const match = WORLD_CITIES.find(c => c.iata.toLowerCase() === val.toLowerCase());
+      // Only auto-complete flight/from/to fields, not hotel/restaurant
+      if (isCodeField && val && !val.includes('(')) {
+        const q = val.toLowerCase();
+        // Find best match — exact IATA first, then name starts with, then name contains
+        const match =
+          WORLD_CITIES.find(c => c.iata.toLowerCase() === q) ||
+          WORLD_CITIES.find(c => c.name.toLowerCase().startsWith(q)) ||
+          WORLD_CITIES.find(c => c.name.toLowerCase().includes(q));
         if (match) {
           inputEl.value = `${match.name} (${match.iata})`;
-          const codeEl = document.getElementById(_cityCodeId(side));
-          if (codeEl) codeEl.value = match.iata;
+          codeEl.value  = match.iata;
         }
       }
     }
