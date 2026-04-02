@@ -2978,7 +2978,9 @@ function setPulseMode(mode) {
   btnH.style.background = !isFlight ? 'var(--green)' : 'var(--bg3)';
   btnH.style.color      = !isFlight ? 'var(--bg)'    : 'var(--text2)';
   btnH.style.border     = !isFlight ? 'none'          : '1px solid var(--border)';
-  document.getElementById('fl2-results').innerHTML = '';
+  // Only clear results when switching modes, preserve within same mode
+  const curMode = document.getElementById('fl2-results').dataset.mode;
+  if (curMode && curMode !== mode) document.getElementById('fl2-results').innerHTML = '';
 }
 
 async function searchHotelPulse() {
@@ -3061,9 +3063,9 @@ Vary price points from budget to luxury. Be realistic for the city.`,
   const bSize   = range / 3;
 
   const bands = [
-    { label:'Budget',  emoji:'💚', min:minP,                        max:Math.round(minP+bSize),      color:'#00C8FF', bg:'rgba(0,200,255,0.18)' },
-    { label:'Mid',     emoji:'💛', min:Math.round(minP+bSize)+1,    max:Math.round(minP+bSize*2),    color:'#00FF88', bg:'rgba(0,255,136,0.18)' },
-    { label:'Luxury',  emoji:'🧡', min:Math.round(minP+bSize*2)+1,  max:maxP,                        color:'#FFB800', bg:'rgba(255,184,0,0.18)'  },
+    { label:'Budget',  emoji:'💚', min:minP,                        max:Math.round(minP+bSize),      color:'#00C8FF', bg:'rgba(0,200,255,0.35)' },
+    { label:'Mid',     emoji:'💛', min:Math.round(minP+bSize)+1,    max:Math.round(minP+bSize*2),    color:'#00FF88', bg:'rgba(0,255,136,0.35)' },
+    { label:'Luxury',  emoji:'🧡', min:Math.round(minP+bSize*2)+1,  max:maxP,                        color:'#FFB800', bg:'rgba(255,184,0,0.35)'  },
   ];
 
   bands.forEach(b => {
@@ -3073,8 +3075,8 @@ Vary price points from budget to luxury. Be realistic for the city.`,
     });
     b.count      = inBand.length;
     b.totalPcts  = Math.round((b.count / hotels.length) * 100);
-    b.avgRating  = inBand.length ? (inBand.reduce((s,h)=>s+(h.overall_rating||h.review_score||0),0)/inBand.length).toFixed(1) : '—';
-    b.avgStars   = inBand.length ? (inBand.reduce((s,h)=>s+(h.hotel_class||h.stars||0),0)/inBand.length).toFixed(1) : '—';
+    b.avgRating  = inBand.length ? (inBand.reduce((s,h)=>s+(parseFloat(h.overall_rating||h.review_score)||0),0)/inBand.length).toFixed(1) : '—';
+    b.avgStars   = inBand.length ? (inBand.reduce((s,h)=>s+(parseFloat(h.hotel_class||h.stars)||0),0)/inBand.length).toFixed(1) : '—';
     b.freeCancCount = inBand.filter(h=>h.free_cancellation||h.amenities?.includes?.('free_cancellation')).length;
     b.breakfastCount = inBand.filter(h=>h.breakfast_included||h.amenities?.includes?.('breakfast')).length;
     b.totalStay  = Math.round(((b.min+b.max)/2) * nights);
@@ -3166,6 +3168,7 @@ Vary price points from budget to luxury. Be realistic for the city.`,
     ? (aiJson.warnings.map(w=>`<div style="font-size:11px;color:var(--gold);padding:6px 10px;background:rgba(255,184,0,0.08);border-radius:4px;border-left:2px solid var(--gold);">⚠ ${esc(w)}</div>`).join(''))
     : '';
 
+  container.dataset.mode = 'hotel';
   container.innerHTML = `<div class="fib-wrap">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       ${liveTag}
@@ -3281,9 +3284,9 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
   // Define 3 price bands dynamically
   const bandSize  = range / 3;
   const bands     = [
-    { label:'Budget', min: minP,               max: Math.round(minP + bandSize),   color:'#00FF88', bgColor:'rgba(0,255,136,0.22)' },
-    { label:'Mid',    min: Math.round(minP + bandSize)+1, max: Math.round(minP + bandSize*2), color:'#00C8FF', bgColor:'rgba(0,200,255,0.22)' },
-    { label:'Premium',min: Math.round(minP + bandSize*2)+1, max: maxP,             color:'#FFB800', bgColor:'rgba(255,184,0,0.22)' },
+    { label:'Budget', min: minP,               max: Math.round(minP + bandSize),   color:'#00FF88', bgColor:'rgba(0,255,136,0.40)' },
+    { label:'Mid',    min: Math.round(minP + bandSize)+1, max: Math.round(minP + bandSize*2), color:'#00C8FF', bgColor:'rgba(0,200,255,0.40)' },
+    { label:'Premium',min: Math.round(minP + bandSize*2)+1, max: maxP,             color:'#FFB800', bgColor:'rgba(255,184,0,0.40)' },
   ];
 
   bands.forEach(b => {
@@ -3404,6 +3407,7 @@ Return ONLY valid JSON (no markdown):
         💰 Budget verdict: ${esc(aiJson.budgetVerdict)}
       </div>` : '';
 
+  container.dataset.mode = 'flight';
   container.innerHTML = `<div class="fib-wrap">
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
