@@ -2716,6 +2716,13 @@ function switchBookingTab(type, el) {
 function renderAll() {
   updateStats();
   renderDashboard();
+  // Re-render active tab so deletes/updates reflect immediately
+  // Skip tabs that are heavy to re-init or don't show booking data
+  const skipTabs = ['dashboard', 'agent', 'planner', 'flights2', 'vault', 'gems'];
+  if (activeTab && !skipTabs.includes(activeTab)) {
+    if (activeTab === 'tower') renderTimeline(); // don't re-init map, just refresh timeline
+    else renderTab(activeTab);
+  }
   // Update visitors badge
   const visCount = bookings.filter(b=>b.isVisitor).length;
   const navVis = document.getElementById('nav-visitors');
