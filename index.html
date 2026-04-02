@@ -529,7 +529,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 
 /* ── CONTROL TOWER MAP ── */
 #map{width:100%;height:100%;z-index:1;}
-.map-container{flex:1;position:relative;display:flex;}
+.map-container{flex:1;position:relative;display:flex;overflow:hidden;}
+.map-timeline-panel{width:30%;min-width:260px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;}
+.map-timeline-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:0.12em;color:var(--cyan);font-weight:600;flex-shrink:0;}
 .map-sidebar{width:260px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;}
 .map-sidebar-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:0.12em;color:var(--cyan);font-weight:600;}
 .map-trip-item{padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;}
@@ -964,7 +966,6 @@ input[type="date"] {
     <div class="nav-btn"        id="nav-tower"        onclick="switchTab('tower')">🌐<div class="nav-tip">CONTROL TOWER</div></div>
     <div class="sidebar-sep"></div>
     <div class="nav-btn"        id="nav-bookings"     onclick="switchTab('bookings')">🎫<div class="nav-tip">BOOKINGS</div></div>
-    <div class="nav-btn"        id="nav-timeline"     onclick="switchTab('timeline')">📅<div class="nav-tip">TIMELINE</div></div>
     <div class="nav-btn"        id="nav-alerts"       onclick="switchTab('alerts')">⚠️<span class="nav-badge" id="alerts-badge" style="display:none;"></span><div class="nav-tip">ALERTS</div></div>
     <div class="sidebar-sep"></div>
     <div class="nav-btn"        id="nav-flights2"     onclick="switchTab('flights2')">⚡<div class="nav-tip">PRICE PULSE</div></div>
@@ -1047,22 +1048,27 @@ input[type="date"] {
       </div>
     </div>
 
-    <!-- TIMELINE -->
-    <div class="tab-view" id="tab-timeline">
+    <!-- CONTROL TOWER (includes timeline) -->
+    <div class="tab-view" id="tab-tower">
       <div class="sec-header">
-        <div><div class="sec-title">TRIP <span class="accent">TIMELINE</span></div></div>
-        <div style="font-size:10px;color:var(--text2);">CHRONOLOGICAL VIEW</div>
+        <div><div class="sec-title">CONTROL <span class="accent">TOWER</span></div><div class="sec-subtitle">INTERACTIVE TRAVEL MAP — ALL YOUR DESTINATIONS</div></div>
+        <button class="btn-secondary" onclick="refreshMap()">⟳ REFRESH MAP</button>
       </div>
-      <div id="timeline-list" style="overflow-y:auto;flex:1;"></div>
-    </div>
-
-    <!-- ALERTS -->
-    <div class="tab-view" id="tab-alerts">
-      <div class="sec-header">
-        <div><div class="sec-title">TRIP <span class="accent">ALERTS</span></div></div>
-        <button class="btn-secondary" onclick="runProactiveAnalysis()">⟳ REANALYZE</button>
+      <div class="map-container" style="flex:1;">
+        <div class="map-timeline-panel">
+          <div class="map-timeline-header">📅 TRIP TIMELINE</div>
+          <div id="timeline-list" style="flex:1;overflow-y:auto;"></div>
+        </div>
+        <div style="flex:1;position:relative;">
+          <div id="map"></div>
+          <div class="map-legend">
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--cyan);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Upcoming</span></div>
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--text3);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Past</span></div>
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green);animation:pulsePin 2s infinite;border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Home base</span></div>
+            <div class="map-legend-item"><div style="width:10px;height:10px;background:#FFB800;border:1.5px solid #fff;transform:rotate(45deg);border-radius:2px;flex-shrink:0;box-shadow:0 0 6px rgba(255,184,0,0.6);"></div><span style="font-size:10px;color:var(--text2);">Hotel</span></div>
+          </div>
+        </div>
       </div>
-      <div id="alerts-list" style="padding:12px 20px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;"></div>
     </div>
 
     <!-- FLIGHTS -->
@@ -1168,8 +1174,14 @@ input[type="date"] {
       </div>
     </div>
 
-    <!-- AI PLANNER -->
-    <!-- AI PLANNER -->
+    <!-- ALERTS -->
+    <div class="tab-view" id="tab-alerts">
+      <div class="sec-header">
+        <div><div class="sec-title">TRIP <span class="accent">ALERTS</span></div></div>
+        <button class="btn-secondary" onclick="runProactiveAnalysis()">⟳ REANALYZE</button>
+      </div>
+      <div id="alerts-list" style="padding:12px 20px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;"></div>
+    </div>
     <div class="tab-view" id="tab-planner">
       <div class="sec-header">
         <div><div class="sec-title">AI TRIP <span class="accent">PLANNER</span></div></div>
@@ -1888,7 +1900,7 @@ function buildMaraContext() {
 
   const tabLabels = {
     dashboard:'Dashboard (trip overview)', bookings:'Bookings (all reservations)',
-    timeline:'Timeline (chronological view)', alerts:'Alerts (gap analysis)',
+    tower:'Control Tower & Timeline (map + chronological view)', alerts:'Alerts (gap analysis)',
     flights:'Flight Search', hotels:'Hotel Search', restaurants:'Restaurant Search',
     tower:'Control Tower map', planner:'AI Planner', budget:'Budget Tracker',
     pack:'Pack List', vault:'Vault (documents & notes)', visitors:'Visitor Tracker',
@@ -2605,13 +2617,12 @@ function switchTab(tab) {
 
 function renderTab(tab) {
   if (tab === 'bookings')     renderBookings('all');
-  if (tab === 'timeline')     renderTimeline();
   if (tab === 'alerts')       renderAlerts();
   if (tab === 'flights2')     renderMyFlights2();
   if (tab === 'restaurants')  renderMyRestos();
   if (tab === 'pack')         renderPackList();
   if (tab === 'dashboard')    renderDashboard();
-  if (tab === 'tower')        initMap();
+  if (tab === 'tower')        { initMap(); renderTimeline(); }
   if (tab === 'vault')        renderVault();
   if (tab === 'agent')        initAgent();
   if (tab === 'visitors')     renderVisitors();
@@ -2969,9 +2980,15 @@ function setPulseMode(mode) {
   btnH.style.background = !isFlight ? 'var(--green)' : 'var(--bg3)';
   btnH.style.color      = !isFlight ? 'var(--bg)'    : 'var(--text2)';
   btnH.style.border     = !isFlight ? 'none'          : '1px solid var(--border)';
-  // Only clear results when switching modes, preserve within same mode
-  const curMode = document.getElementById('fl2-results').dataset.mode;
-  if (curMode && curMode !== mode) document.getElementById('fl2-results').innerHTML = '';
+  // Cache current results and restore previous results for incoming mode
+  const container = document.getElementById('fl2-results');
+  const curMode = container.dataset.mode;
+  if (!window._pulseCache) window._pulseCache = {};
+  if (curMode && curMode !== mode) {
+    window._pulseCache[curMode] = container.innerHTML;
+    container.innerHTML = window._pulseCache[mode] || '';
+    if (!window._pulseCache[mode]) container.dataset.mode = '';
+  }
 }
 
 async function searchHotelPulse() {
