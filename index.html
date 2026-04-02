@@ -1112,8 +1112,8 @@ input[type="date"] {
         <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-IN</div><input class="search-input" id="pp-ht-checkin" type="date" onchange="setMinDate('pp-ht-checkout',this.value)"></div>
         <div class="search-field" style="max-width:130px;"><div class="search-label">CHECK-OUT</div><input class="search-input" id="pp-ht-checkout" type="date"></div>
         <div class="search-field" style="max-width:80px;"><div class="search-label">GUESTS</div><input class="search-input" id="pp-ht-guests" type="number" value="2" min="1"></div>
-        <div class="search-field" style="max-width:160px;"><div class="search-label">CATEGORY</div>
-          <select class="search-input" id="pp-ht-cat"><option value="">All categories</option><option value="luxury">Luxury / 5-star</option><option value="boutique">Boutique / Design</option><option value="business">Business / Comfort</option><option value="budget">Budget / Value</option></select>
+        <div class="search-field" style="max-width:130px;"><div class="search-label">STAR RATING</div>
+          <select class="search-input" id="pp-ht-cat"><option value="">All stars</option><option value="5">★★★★★ 5-star</option><option value="4">★★★★ 4-star</option><option value="3">★★★ 3-star</option><option value="2">★★ 2-star</option><option value="1">★ 1-star</option></select>
         </div>
         <div class="search-field" style="max-width:120px;"><div class="search-label">BUDGET / NIGHT</div><input class="search-input" id="pp-ht-budget" type="number" placeholder="e.g. 200"></div>
         <div style="display:flex;align-items:flex-end;"><button class="btn-primary" style="background:var(--green);color:var(--bg);" onclick="searchHotelPulse()">GET BRIEF →</button></div>
@@ -2773,31 +2773,20 @@ function buildCard(b) {
 
 function deleteBooking(id, e) {
   e.stopPropagation();
-  e.preventDefault();
   const btn = e.currentTarget;
 
-  if (!btn.dataset.delConfirm) {
-    btn.dataset.delConfirm = '1';
-    const orig = btn.textContent;
-    btn.textContent = 'DEL?';
-    btn.style.background = 'var(--red)';
-    btn.style.color = '#fff';
-    btn.style.borderRadius = '3px';
-    btn.style.padding = '2px 6px';
-    btn.style.fontSize = '9px';
+  if (!btn.classList.contains('confirming')) {
+    btn.classList.add('confirming');
+    btn.textContent = 'DELETE?';
     btn._cancelTimer = setTimeout(() => {
-      delete btn.dataset.delConfirm;
-      btn.textContent = orig;
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.padding = '';
-      btn.style.fontSize = '';
+      btn.classList.remove('confirming');
+      btn.textContent = '✕';
     }, 3000);
     return;
   }
 
   clearTimeout(btn._cancelTimer);
-  bookings = bookings.filter(b => String(b.id) !== String(id));
+  bookings = bookings.filter(b => b.id != id);
   saveBookings();
   renderAll();
   showToast('Booking removed', 'warning');
@@ -3014,14 +3003,16 @@ async function searchHotelPulse() {
   try {
     setStatus('Step 1/3 — Calling Google Hotels via SerpApi…');
     const catPrefix = cat ? `${cat} ` : '';
-    const data = await serpSearch({
+    const serpParams = {
       engine:         'google_hotels',
-      q:              `${catPrefix}hotels in ${city}`,
+      q:              `hotels in ${city}`,
       check_in_date:  checkin,
       check_out_date: checkout,
       currency:       cur,
       adults:         String(guests),
-    });
+    };
+    if (cat) serpParams.hotel_class = cat;
+    const data = await serpSearch(serpParams);
     hotels = data.properties || [];
     isLive = hotels.length > 0;
   } catch(e) {
@@ -3036,7 +3027,7 @@ async function searchHotelPulse() {
         `Return ONLY a JSON array of 10 realistic hotels. Each:
 {"name":"","price_per_night":number,"total_price":number,"rating":number_out_of_5,"review_score":number_out_of_10,"stars":number,"location":"area name","free_cancellation":boolean,"breakfast_included":boolean,"amenities":["pool","gym","spa","restaurant","parking","wifi"]}
 Vary price points from budget to luxury. Be realistic for the city.`,
-        [{role:'user',content:`Hotels in ${city}, check-in ${checkin}, check-out ${checkout}, ${nights} nights, ${guests} guests${cat?' '+cat+' category':''}.`}], 1200
+        [{role:'user',content:`Hotels in ${city}, check-in ${checkin}, check-out ${checkout}, ${nights} nights, ${guests} guests${cat?' — '+cat+'-star hotels only':''}.`}], 1200
       );
       const est = parseArr(raw);
       if (est.length) { hotels = est.map(h => ({...h, _estimated:true})); isLive = false; }
