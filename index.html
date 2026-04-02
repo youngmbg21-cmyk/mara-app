@@ -429,9 +429,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .fx-chg.dn{color:var(--red);}
 
 /* ── SEARCH FORM ── */
-.search-form{display:flex;flex-wrap:wrap;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--bg2);}
+.search-form{display:flex;flex-wrap:wrap;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg2);align-items:flex-end;}
 .search-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px;}
-.search-label{font-size:8px;letter-spacing:0.14em;color:var(--text2);text-transform:uppercase;}
+.search-label{font-size:9px;letter-spacing:0.12em;color:var(--cyan);text-transform:uppercase;font-weight:600;margin-bottom:2px;}
 .search-input{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color 0.18s;}
 .search-input:focus{border-color:var(--cyan);}
 .search-input::placeholder{color:var(--text3);font-size:11px;}
@@ -727,8 +727,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #scan-overlay.active { display: flex; }
 
 /* ── CITY DROPDOWN ── */
-.city-dropdown-wrap{position:relative;}
-.city-search-input{background:transparent;border:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);width:160px;padding:0;}
+.city-dropdown-wrap{position:relative;width:100%;}
+.city-search-input{background:transparent;border:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);width:100%;padding:0;}
 .city-search-input::placeholder{color:var(--text3);}
 .city-drop{position:absolute;top:calc(100% + 4px);left:-8px;width:260px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;z-index:800;max-height:200px;overflow-y:auto;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
 .city-drop.open{display:block;}
@@ -809,6 +809,15 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .agent-add-btn { background:var(--cyan); color:var(--bg); border:none; border-radius:5px; padding:6px 16px; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; cursor:pointer; transition:opacity 0.2s; letter-spacing:0.06em; }
 .agent-add-btn:hover { opacity:0.85; }
 .agent-add-btn.added { background:var(--green); cursor:default; }
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+  cursor: pointer;
+}
+input[type="date"] {
+  color-scheme: dark;
+}
 </style>
 </head>
 <body>
@@ -2726,7 +2735,7 @@ function buildCard(b) {
           <div class="bcard-title">${esc(b.title||'Booking')}</div>
           ${dateLine?`<div class="bcard-date">${dateLine} ${dateLine2}</div>`:''}
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;margin-left:8px;">
           ${visitorBadge}
           <button class="delete-btn" onclick="deleteBooking(${b.id},event)">✕</button>
         </div>
@@ -2950,8 +2959,14 @@ async function searchFlights() {
 
   // ── SerpApi: real Google Flights data ──
   try {
-    const fromCode = (from.match(/\(([A-Z]{3})\)/)||[,''])[1] || from.split(/\s+/).pop();
-    const toCode   = (to.match(/\(([A-Z]{3})\)/)||[,''])[1]   || to.split(/\s+/).pop();
+    // Use hidden code fields first (set by city dropdown), fall back to parsing text
+    const fromCode = document.getElementById('fl-from-code')?.value ||
+                     (from.match(/\(([A-Z]{3})\)/)||[,''])[1] ||
+                     from.split(/\s+/).pop().replace(/[^A-Z]/g,'');
+    const toCode   = document.getElementById('fl-to-code')?.value ||
+                     (to.match(/\(([A-Z]{3})\)/)||[,''])[1] ||
+                     to.split(/\s+/).pop().replace(/[^A-Z]/g,'');
+    if (!fromCode || !toCode) throw new Error('Could not determine airport codes — please select cities from the dropdown');
     const data = await serpSearch({
       engine:       'google_flights',
       departure_id:  fromCode,
@@ -4901,7 +4916,9 @@ function filterCities(side, query) {
 function selectCity(side, iata, name, country) {
   const inputEl = document.getElementById(_cityInputId(side));
   const codeEl  = document.getElementById(_cityCodeId(side));
-  if (inputEl) inputEl.value = `${name} (${iata})`;
+  // For hotel/restaurant city fields, show clean city name without airport suffix
+  const isCodeField = ['from','to','fl-from','fl-to'].includes(side);
+  if (inputEl) inputEl.value = isCodeField ? `${name} (${iata})` : name;
   if (codeEl)  codeEl.value  = iata;
   const drop = document.getElementById('cdrop-'+side);
   if (drop) drop.classList.remove('open');
