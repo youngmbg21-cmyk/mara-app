@@ -4960,12 +4960,8 @@ function initIntel() {
 }
 
 async function runIntelSearch() {
-  // Refresh keys from localStorage in case they were saved this session
-  if (!serpApiKey) serpApiKey = localStorage.getItem('voy_serp_key') || '';
-  if (!proxyBase)  proxyBase  = (localStorage.getItem('voy_proxy_url') || '').replace(/\/$/, '');
-
   if (!proxyBase && !serpApiKey) {
-    showToast('Add your SerpApi key or Proxy URL in ⚙ Settings first','warning');
+    showToast('Add your Netlify Proxy URL in ⚙ Settings first','warning');
     openDrawer();
     return;
   }
