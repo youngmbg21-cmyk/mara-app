@@ -1995,6 +1995,26 @@ Always reference specific booking details, confirmation codes, and dates when av
       ctx += `\nResults on screen:\n${res.innerText.trim().slice(0,1500)}`;
   }
 
+  if (activeTab === 'flights2') {
+    if (window._lastPulseResult) {
+      const p = window._lastPulseResult;
+      ctx += `\n\n── PRICE PULSE ${p.mode.toUpperCase()} SEARCH (most recent) ──`;
+      if (p.mode === 'flight') {
+        ctx += `\nRoute: ${p.from} → ${p.to} | Depart: ${p.depart}${p.ret?' Return: '+p.ret:''} | ${p.cls} | ${p.pax} pax | Budget: ${p.budget||'not set'} | Days to departure: ${p.daysToTrip}`;
+      } else {
+        ctx += `\nCity: ${p.city} | Check-in: ${p.checkin} → ${p.checkout} | ${p.nights} nights | ${p.guests} guests | Budget/night: ${p.budget||'not set'} | Days to check-in: ${p.daysToTrip}`;
+      }
+      ctx += `\nResults: ${p.totalOptions} options | Live data: ${p.isLive?'yes':'no (AI estimated)'}`;
+      ctx += `\nPrice range: ${p.currency} ${p.minP?.toLocaleString()} – ${p.maxP?.toLocaleString()} | Average: ${p.currency} ${p.avgP?.toLocaleString()}`;
+      ctx += `\nSignal: ${p.signal} | Confidence: ${p.confidenceScore??'—'}/100`;
+      if (p.strategySummary) ctx += `\nStrategy: ${p.strategySummary}`;
+      if (p.riskFactor)      ctx += `\nRisk of waiting: ${p.riskFactor}`;
+      if (p.budgetVerdict)   ctx += `\nBudget verdict: ${p.budgetVerdict}`;
+      if (p.sweetSpot)       ctx += `\nSweet spot: ${p.sweetSpot}`;
+      if (p.bands?.length)   ctx += `\nPrice bands: ${p.bands.map(b=>`${b.label} (${p.currency} ${b.min}–${b.max}, ${b.count} options)`).join(' | ')}`;
+    }
+  }
+
   if (activeTab === 'restaurants') {
     const city=document.getElementById('rs-city')?.value, vibe=document.getElementById('rs-vibe')?.value,
           bud=document.getElementById('rs-budget')?.value;
@@ -2016,6 +2036,16 @@ Always reference specific booking details, confirmation codes, and dates when av
     const fl = myBookings.filter(b=>b.type==='flight').length;
     const ht = myBookings.filter(b=>b.type==='hotel').length;
     ctx += `\n\nUser is viewing the Control Tower map: ${fl} flight routes and ${ht} hotel pins plotted.`;
+  }
+
+  // ── Price Pulse last search (always included regardless of active tab) ──
+  if (window._lastPulseResult && activeTab !== 'flights2') {
+    const p = window._lastPulseResult;
+    ctx += `\n\n── PRICE PULSE LAST SEARCH (${p.mode === 'hotel' ? 'Hotel: '+p.city : 'Flight: '+p.from+'→'+p.to}) ──`;
+    ctx += `\nSignal: ${p.signal} | Confidence: ${p.confidenceScore??'—'}/100 | ${p.totalOptions} options | Price range: ${p.currency} ${p.minP?.toLocaleString()}–${p.maxP?.toLocaleString()} | Avg: ${p.currency} ${p.avgP?.toLocaleString()}`;
+    if (p.strategySummary) ctx += `\nAnalysis: ${p.strategySummary}`;
+    if (p.budgetVerdict)   ctx += `\nBudget: ${p.budgetVerdict}`;
+    if (p.riskFactor)      ctx += `\nRisk: ${p.riskFactor}`;
   }
 
   // ── SerpApi status ────────────────────────────
@@ -3174,6 +3204,20 @@ Return ONLY valid JSON:
   if (!aiJson) aiJson = {};
   if (forcedSignal) aiJson.bookSignal = forcedSignal;
 
+  // ── Store structured result for chat context ──
+  window._lastPulseResult = {
+    mode: 'hotel', city, checkin, checkout, nights, guests,
+    budget: budgetPerNight||null, daysToTrip, isLive,
+    currency: cur, totalOptions: hotels.length,
+    minP, maxP, avgP, signal: aiJson.bookSignal,
+    confidenceScore: aiJson.confidenceScore||null,
+    strategySummary: aiJson.strategySummary||null,
+    budgetVerdict: aiJson.budgetVerdict||null,
+    riskFactor: aiJson.riskFactor||null,
+    sweetSpot: aiJson.sweetSpot||null,
+    bands: bands.map(b=>({label:b.label, min:b.min, max:b.max, count:b.count}))
+  };
+
   // ── Render ──
   const liveTag = isLive
     ? `<span style="font-size:9px;color:var(--green);font-weight:700;">● LIVE · Google Hotels · ${getSerpUsage().calls}/${SERP_FREE_LIMIT} searches used</span>`
@@ -3475,6 +3519,20 @@ Return ONLY valid JSON (no markdown):
   // Enforce 14-day panic rule regardless of what Claude returned
   if (!aiJson) aiJson = {};
   if (forcedSignal) aiJson.buySignal = forcedSignal;
+
+  // ── Store structured result for chat context ──
+  window._lastPulseResult = {
+    mode: 'flight', from, to, depart, ret, cls, pax,
+    budget: budget||null, daysToTrip, isLive,
+    currency: cur, totalOptions: flights.length,
+    minP, maxP, avgP, signal: aiJson.buySignal,
+    confidenceScore: aiJson.confidenceScore||null,
+    strategySummary: aiJson.strategySummary||null,
+    budgetVerdict: aiJson.budgetVerdict||null,
+    riskFactor: aiJson.riskFactor||null,
+    sweetSpot: aiJson.sweetSpot||null,
+    bands: bands.map(b=>({label:b.label, min:b.min, max:b.max, count:b.count}))
+  };
 
   // ── Render ──
   const liveTag = isLive
