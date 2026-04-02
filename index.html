@@ -811,8 +811,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .agent-add-btn.added { background:var(--green); cursor:default; }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.7;
+  filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg);
+  opacity: 0.8;
   cursor: pointer;
 }
 input[type="date"] {
@@ -4960,21 +4960,23 @@ function initIntel() {
 }
 
 async function runIntelSearch() {
-  // Check proxy/key before doing anything
   if (!proxyBase && !serpApiKey) {
     showToast('Add your Netlify Proxy URL in ⚙ Settings first','warning');
     openDrawer();
     return;
   }
-  const toCode   = document.getElementById('city-to-code').value   || document.getElementById('city-to').value.match(/\(([A-Z]{3})\)/)?.[1];
+
+  const fromCode = document.getElementById('city-from-code')?.value || document.getElementById('city-from')?.value.match(/\(([A-Z]{3})\)/)?.[1];
+  const toCode   = document.getElementById('city-to-code')?.value   || document.getElementById('city-to')?.value.match(/\(([A-Z]{3})\)/)?.[1];
   const depart   = document.getElementById('intel-depart').value;
   const ret      = document.getElementById('intel-return').value;
   const pax      = document.getElementById('intel-pax').value || '1';
   const cls      = document.getElementById('intel-class').value || 'economy';
   const cur      = settings.currency || 'USD';
 
-  if (!fromCode || !toCode) { showToast('Select origin and destination cities','warning'); return; }
-  if (!depart) { showToast('Select a departure date','warning'); return; }
+  if (!fromCode) { showToast('Select an origin city from the dropdown','warning'); return; }
+  if (!toCode)   { showToast('Select a destination city from the dropdown','warning'); return; }
+  if (!depart)   { showToast('Select a departure date','warning'); return; }
 
   document.getElementById('intel-empty').style.display   = 'none';
   document.getElementById('intel-results').style.display = 'none';
