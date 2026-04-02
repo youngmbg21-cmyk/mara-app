@@ -3012,16 +3012,18 @@ async function searchFlights2() {
   const budget  = parseFloat(document.getElementById('fl2-budget').value)||0;
   if (!to) { showToast('Select a destination city','warning'); return; }
   const cur = settings.currency||'USD';
+  const isRoundTrip = !!ret;
   const container = document.getElementById('fl2-results');
 
   container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:40px;">
     <div class="spinner"></div>
-    <span style="color:var(--text2);font-size:12px;">Fetching live data — 2 SerpApi calls…</span>
+    <span style="color:var(--text2);font-size:12px;">Fetching ${isRoundTrip ? 'round trip' : 'one-way'} data — 1 SerpApi call…</span>
   </div>`;
 
-  // ── SERP CALL 1: One-way (unchanged from searchFlights) ──
-  let owFlights = [], rtFlights = [];
-  let isLive = false;
+  // ── EXACTLY 1 SERP CALL ──
+  // Round trip if return date set, one-way otherwise
+  let flights = [];
+  let isLive  = false;
 
   try {
     const fromCode = document.getElementById('fl2-from-code')?.value ||
@@ -3032,130 +3034,129 @@ async function searchFlights2() {
                      to.split(/\s+/).pop().replace(/[^A-Z]/g,'');
     if (!fromCode || !toCode) throw new Error('Select cities from the dropdown');
 
-    const owData = await serpSearch({
-      engine: 'google_flights', departure_id: fromCode, arrival_id: toCode,
-      outbound_date: depart, currency: cur, adults: pax,
-      travel_class: cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
-    });
-    owFlights = owData.best_flights || owData.other_flights || [];
-
-    // ── SERP CALL 2: Round trip (unchanged from searchFlights) ──
-    if (ret) {
-      const rtData = await serpSearch({
-        engine: 'google_flights', departure_id: fromCode, arrival_id: toCode,
-        outbound_date: depart, return_date: ret, type: '1', currency: cur, adults: pax,
-        travel_class: cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
-      });
-      rtFlights = rtData.best_flights || rtData.other_flights || [];
+    const serpParams = {
+      engine:        'google_flights',
+      departure_id:   fromCode,
+      arrival_id:     toCode,
+      outbound_date:  depart,
+      currency:       cur,
+      adults:         pax,
+      travel_class:   cls==='economy'?'1':cls==='premium'?'2':cls==='business'?'3':'4',
+    };
+    if (isRoundTrip) {
+      serpParams.return_date = ret;
+      serpParams.type        = '1';
     }
-    isLive = true;
+
+    const data = await serpSearch(serpParams);
+    flights = data.best_flights || data.other_flights || [];
+    isLive  = true;
+
   } catch(e) {
     if (e.message !== 'NO_SERP_KEY' && e.message !== 'QUOTA_EXCEEDED') {
-      container.innerHTML = `<div style="padding:8px 0 12px;">
-        <div style="padding:8px 12px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:6px;font-size:10px;color:var(--gold);">
-          ⚠ Live data unavailable: ${esc(e.message)} — using AI estimates
-        </div></div>`;
+      container.innerHTML += `<div style="padding:8px 0 4px;"><div style="padding:8px 12px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:6px;font-size:10px;color:var(--gold);">⚠ ${esc(e.message)} — using AI estimates</div></div>`;
     }
   }
 
-  // ── Claude fallback if no live data ──
-  if (!owFlights.length && apiKey) {
+  // ── Claude fallback if SerpApi failed ──
+  if (!flights.length && apiKey) {
     try {
       const raw = await callClaude(
-        `Return ONLY a valid JSON array of 5 realistic flights. Each object:
-{"airline":"name","airline_logo":"","price":number,"total_duration":number_minutes,"stops":number,"rt_price":number_or_null}`,
-        [{role:'user',content:`Flights from ${from} to ${to}, departing ${depart}${ret?', returning '+ret:''}, ${pax} pax ${cls}.`}], 800
+        `Return ONLY a valid JSON array of 5 realistic flights. Each:
+{"airline":"name","price":number,"total_duration":number_in_minutes,"stops":number}`,
+        [{role:'user',content:`${isRoundTrip?'Round trip':'One-way'} flights from ${from} to ${to}, departing ${depart}${isRoundTrip?', returning '+ret:''}, ${pax} pax ${cls}.`}], 600
       );
       const est = parseArr(raw);
       if (est.length) {
-        owFlights = est.map(e => ({ price: e.price, total_duration: e.total_duration, flights: Array(e.stops+1).fill({airline: e.airline}), _estimated: true }));
-        rtFlights = est.filter(e=>e.rt_price).map(e => ({ price: e.rt_price, flights: Array(e.stops+1).fill({airline: e.airline}) }));
+        flights = est.map(e => ({
+          price: e.price,
+          total_duration: e.total_duration,
+          flights: Array(e.stops + 1).fill({ airline: e.airline }),
+          _estimated: true
+        }));
       }
     } catch(_) {}
   }
 
-  if (!owFlights.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No results</div><div class="empty-body">Try different dates or check your API keys.</div></div>`;
+  if (!flights.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No results</div><div class="empty-body">Try different dates or check your API keys in ⚙ Settings.</div></div>`;
     return;
   }
 
   // ── Build comparison rows ──
-  const rows = owFlights.slice(0,8).map((f, i) => {
-    const airline   = f.flights?.[0]?.airline || `Option ${i+1}`;
-    const logo      = f.flights?.[0]?.airline_logo || '';
-    const owPrice   = f.price || 0;
-    const dur       = f.total_duration || 0;
-    const stops     = (f.flights?.length || 1) - 1;
-    const durStr    = dur ? `${Math.floor(dur/60)}h ${dur%60}m` : '—';
-    // Find matching RT price
-    const rtMatch   = rtFlights.find(r => r.flights?.[0]?.airline === airline);
-    const rtPrice   = rtMatch?.price || null;
-    return { airline, logo, owPrice, rtPrice, dur, durStr, stops, estimated: !!f._estimated };
+  const rows = flights.slice(0, 8).map(f => {
+    const airline = f.flights?.[0]?.airline || '—';
+    const logo    = f.flights?.[0]?.airline_logo || '';
+    const price   = f.price || 0;
+    const dur     = f.total_duration || 0;
+    const stops   = (f.flights?.length || 1) - 1;
+    return { airline, logo, price, dur, durStr: dur ? `${Math.floor(dur/60)}h ${dur%60}m` : '—', stops, estimated: !!f._estimated };
   });
 
-  // ── Column 6: Cost rank ──
-  const sorted = [...rows].sort((a,b) => a.owPrice - b.owPrice);
-  rows.forEach(r => { r.costRank = sorted.findIndex(s => s.airline === r.airline) + 1; });
+  // Sort by price for cost rank
+  const sortedByPrice = [...rows].sort((a, b) => a.price - b.price);
+  rows.forEach(r => { r.costRank = sortedByPrice.findIndex(s => s.airline === r.airline) + 1; });
 
-  // ── Column 8: AI rank score ──
-  const maxPrice = Math.max(...rows.map(r=>r.owPrice));
-  const minPrice = Math.min(...rows.map(r=>r.owPrice));
-  const maxDur   = Math.max(...rows.map(r=>r.dur||999));
-  const minDur   = Math.min(...rows.map(r=>r.dur||999));
+  // AI score
+  const maxPrice = Math.max(...rows.map(r => r.price));
+  const minPrice = Math.min(...rows.map(r => r.price));
+  const maxDur   = Math.max(...rows.map(r => r.dur || 999));
+  const minDur   = Math.min(...rows.map(r => r.dur || 0));
   rows.forEach(r => {
-    const priceScore = maxPrice===minPrice ? 100 : Math.round(100 - ((r.owPrice-minPrice)/(maxPrice-minPrice))*50);
-    const durScore   = maxDur===minDur     ? 100 : Math.round(100 - ((r.dur-minDur)/(maxDur-minDur))*30);
-    const stopScore  = r.stops===0 ? 20 : r.stops===1 ? 10 : 0;
-    const rtScore    = r.rtPrice && r.rtPrice < r.owPrice*1.8 ? 10 : 0;
-    r.aiScore = Math.min(100, priceScore + durScore * 0.3 + stopScore + rtScore);
-    r.aiScore = Math.round(r.aiScore);
+    const ps = maxPrice === minPrice ? 60 : Math.round(60 - ((r.price - minPrice) / (maxPrice - minPrice)) * 60);
+    const ds = maxDur   === minDur   ? 30 : Math.round(30 - ((r.dur   - minDur)   / (maxDur   - minDur))   * 30);
+    const ss = r.stops === 0 ? 10 : 0;
+    r.aiScore = Math.min(100, ps + ds + ss);
   });
-  const aiSorted = [...rows].sort((a,b) => b.aiScore - a.aiScore);
+  const aiSorted = [...rows].sort((a, b) => b.aiScore - a.aiScore);
   rows.forEach(r => { r.aiRank = aiSorted.findIndex(s => s.airline === r.airline) + 1; });
 
+  // Sort display by cost rank
+  rows.sort((a, b) => a.costRank - b.costRank);
+
   // ── Summary KPIs ──
-  const bestOW  = rows[sorted[0] ? sorted.findIndex(s=>true) : 0]?.owPrice || 0;
-  const bestRT  = rows.filter(r=>r.rtPrice).sort((a,b)=>a.rtPrice-b.rtPrice)[0]?.rtPrice || 0;
-  const avgOW   = Math.round(rows.reduce((s,r)=>s+r.owPrice,0)/rows.length);
-  const fastest = rows.slice().sort((a,b)=>a.dur-b.dur)[0];
+  const best    = rows[0];
+  const avg     = Math.round(rows.reduce((s, r) => s + r.price, 0) / rows.length);
+  const fastest = [...rows].sort((a, b) => a.dur - b.dur)[0];
+  const priceLabel = isRoundTrip ? 'Best round trip' : 'Best one-way';
 
   const summaryHtml = `<div class="fig-summary">
-    <div class="fig-kpi"><div class="fig-kpi-label">Best one-way</div><div class="fig-kpi-val fig-green">${cur} ${Math.min(...rows.map(r=>r.owPrice)).toLocaleString()}</div><div class="fig-kpi-sub">${rows.find(r=>r.owPrice===Math.min(...rows.map(r=>r.owPrice)))?.airline||''}</div></div>
-    <div class="fig-kpi"><div class="fig-kpi-label">Best round trip</div><div class="fig-kpi-val fig-green">${bestRT ? cur+' '+bestRT.toLocaleString() : '—'}</div><div class="fig-kpi-sub">${bestRT ? rows.find(r=>r.rtPrice===bestRT)?.airline||'' : 'No return set'}</div></div>
-    <div class="fig-kpi"><div class="fig-kpi-label">Market avg</div><div class="fig-kpi-val">${cur} ${avgOW.toLocaleString()}</div><div class="fig-kpi-sub">${rows.length} airlines</div></div>
-    <div class="fig-kpi"><div class="fig-kpi-label">Fastest</div><div class="fig-kpi-val">${fastest?.durStr||'—'}</div><div class="fig-kpi-sub">${fastest?.stops===0?'Direct':fastest?.stops+' stop'} · ${fastest?.airline||''}</div></div>
+    <div class="fig-kpi"><div class="fig-kpi-label">${priceLabel}</div><div class="fig-kpi-val fig-green">${cur} ${best.price.toLocaleString()}</div><div class="fig-kpi-sub">${esc(best.airline)}</div></div>
+    <div class="fig-kpi"><div class="fig-kpi-label">Market average</div><div class="fig-kpi-val">${cur} ${avg.toLocaleString()}</div><div class="fig-kpi-sub">${rows.length} airlines · ${isRoundTrip?'round trip':'one-way'}</div></div>
+    <div class="fig-kpi"><div class="fig-kpi-label">Fastest option</div><div class="fig-kpi-val">${fastest.durStr}</div><div class="fig-kpi-sub">${fastest.stops === 0 ? 'Direct' : fastest.stops + ' stop'} · ${esc(fastest.airline)}</div></div>
+    <div class="fig-kpi"><div class="fig-kpi-label">${budget ? 'Budget status' : 'Trip type'}</div>
+      <div class="fig-kpi-val" style="color:${budget ? (best.price<=budget?'var(--green)':'var(--red)') : 'var(--text)'}">${budget ? (best.price<=budget?'Within budget':'Over budget') : (isRoundTrip?'Round trip':'One-way')}</div>
+      <div class="fig-kpi-sub">${budget ? cur+' '+budget.toLocaleString()+' budget' : depart+(ret?' → '+ret:'')}</div>
+    </div>
   </div>`;
 
-  // ── Build table rows ──
-  const rankClass = r => r<=1?'fig-rank-1':r===2?'fig-rank-2':r===3?'fig-rank-3':'fig-rank-n';
-  const aiBadge = score => score>=80?'fig-badge-best':score>=65?'fig-badge-good':score>=50?'fig-badge-fair':'fig-badge-poor';
-  const aiLabel = score => score>=80?'EXCELLENT':score>=65?'GOOD':score>=50?'FAIR':'POOR';
+  // ── Table rows ──
+  const rankClass = n => n===1?'fig-rank-1':n===2?'fig-rank-2':n===3?'fig-rank-3':'fig-rank-n';
+  const aiBadge   = s => s>=80?'fig-badge-best':s>=65?'fig-badge-good':s>=50?'fig-badge-fair':'fig-badge-poor';
+  const aiLabel   = s => s>=80?'EXCELLENT':s>=65?'GOOD':s>=50?'FAIR':'POOR';
+  const scoreColor= s => s>=80?'var(--green)':s>=65?'var(--cyan)':s>=50?'var(--gold)':'var(--red)';
 
   const tableRows = rows.map((r, i) => {
-    const budgetDiff = budget > 0 ? r.owPrice - budget : null;
-    const budgetHtml = budgetDiff === null ? '<span style="color:var(--text3);">—</span>'
+    const budgetDiff = budget > 0 ? r.price - budget : null;
+    const budgetHtml = budgetDiff === null
+      ? '<span style="color:var(--text3);">—</span>'
       : budgetDiff <= 0
-        ? `<span class="fig-green">-${cur} ${Math.abs(budgetDiff).toLocaleString()} under</span>`
-        : `<span class="fig-red">+${cur} ${budgetDiff.toLocaleString()} over</span>`;
-
-    const scoreColor = r.aiScore>=80?'var(--green)':r.aiScore>=65?'var(--cyan)':r.aiScore>=50?'var(--gold)':'var(--red)';
+        ? `<span class="fig-green">-${cur} ${Math.abs(budgetDiff).toLocaleString()}</span>`
+        : `<span class="fig-red">+${cur} ${budgetDiff.toLocaleString()}</span>`;
 
     return `<tr class="${i===0?'fig-best':''}">
       <td><span class="fig-rank ${rankClass(r.costRank)}">${r.costRank}</span></td>
       <td><div class="fig-airline">${r.logo?`<img src="${r.logo}" onerror="this.style.display='none'">`:''}${esc(r.airline)}${r.estimated?` <span style="font-size:9px;color:var(--gold);">~est</span>`:''}</div></td>
-      <td class="${i===0?'fig-green':''}" style="font-weight:${i===0?700:400}">${cur} ${r.owPrice.toLocaleString()}</td>
-      <td>${r.rtPrice ? `<span style="color:var(--cyan)">${cur} ${r.rtPrice.toLocaleString()}</span>` : '<span style="color:var(--text3);">—</span>'}</td>
+      <td class="${i===0?'fig-green':''}" style="font-weight:${i===0?700:400}">${cur} ${r.price.toLocaleString()}</td>
       <td>${r.durStr}</td>
       <td>${r.stops===0?'<span class="fig-green">Direct</span>':`<span class="fig-gold">${r.stops} stop${r.stops>1?'s':''}</span>`}</td>
       <td><span class="fig-rank ${rankClass(r.costRank)}" style="width:auto;padding:0 8px;border-radius:4px;">#${r.costRank} of ${rows.length}</span></td>
       <td>${budgetHtml}</td>
-      <td>
-        <div class="fig-score-bar">
-          <div class="fig-score-track"><div class="fig-score-fill" style="width:${r.aiScore}%;background:${scoreColor}"></div></div>
-          <span class="fig-badge ${aiBadge(r.aiScore)}">${aiLabel(r.aiScore)}</span>
-          <span style="font-size:10px;color:var(--text2);">${r.aiScore}</span>
-        </div>
-      </td>
+      <td><div class="fig-score-bar">
+        <div class="fig-score-track"><div class="fig-score-fill" style="width:${r.aiScore}%;background:${scoreColor(r.aiScore)}"></div></div>
+        <span class="fig-badge ${aiBadge(r.aiScore)}">${aiLabel(r.aiScore)}</span>
+        <span style="font-size:10px;color:var(--text2);">${r.aiScore}</span>
+      </div></td>
     </tr>`;
   }).join('');
 
@@ -3166,15 +3167,14 @@ async function searchFlights2() {
   container.innerHTML = summaryHtml + `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
       ${liveTag}
-      <span style="font-size:10px;color:var(--text3);">${from} → ${to} · ${depart}${ret?' → '+ret:''} · ${pax} pax · ${cls}</span>
+      <span style="font-size:10px;color:var(--text3);">${esc(from)} → ${esc(to)} · ${depart}${ret?' → '+ret:''} · ${pax} pax · ${cls}</span>
     </div>
     <div class="fig-wrap">
       <table class="fig-table">
         <thead><tr>
           <th>#</th>
           <th>Airline</th>
-          <th>One-way</th>
-          <th>Round trip</th>
+          <th>${isRoundTrip ? 'Round trip' : 'One-way'}</th>
           <th>Total time</th>
           <th>Stops</th>
           <th>Cost rank</th>
@@ -3185,6 +3185,7 @@ async function searchFlights2() {
       </table>
     </div>`;
 }
+
 
 
 async function searchFlights() {
