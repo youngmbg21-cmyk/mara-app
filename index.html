@@ -1968,7 +1968,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadGems();
   updateGemsBadge();
   populateSettingsDrawer();
-  renderAll();
+  try { renderAll(); } catch(e) { console.error('renderAll init error:', e); }
   const today = new Date().toISOString().split('T')[0];
   const elFlDepart = document.getElementById('fl-depart'); if(elFlDepart) elFlDepart.value = today;
   const elHtCheckin = document.getElementById('fl2-depart'); if(elHtCheckin) elHtCheckin.value = today;
@@ -2527,7 +2527,7 @@ function launchTerminal(hasGmail = false) {
     document.getElementById('topbar-status').textContent = 'GMAIL CONNECTED';
     showToast(`✓ Gmail connected — ${userName||'ready'}`, 'success');
   }
-  renderAll();
+  try { renderAll(); } catch(e) { console.error('renderAll launch error:', e); }
   if (bookings.length > 0) switchTab('dashboard');
 }
 
