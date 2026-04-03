@@ -1228,30 +1228,28 @@ input[type="date"] { color-scheme: dark; }
       </div>
       <div id="alerts-list" style="padding:12px 20px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;"></div>
     </div>
-    <div class="tab-view" id="tab-planner" style="display:flex;flex-direction:column;overflow:hidden;">
-      <div style="flex-shrink:0;">
-        <div class="sec-header">
-          <div><div class="sec-title">AI TRIP <span class="accent">PLANNER</span></div></div>
-          <span class="pill cyan">CLAUDE POWERED</span>
-        </div>
-        <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-          <div class="search-field" style="flex:2;min-width:180px;"><div class="search-label">DESTINATION</div><input class="search-input" id="planner-dest" placeholder="e.g. Nairobi, Cape Town"></div>
-          <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">TRAVEL DATES</div><input class="search-input" id="planner-dates" placeholder="e.g. May 15–22"></div>
-          <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">ACTIVITIES / INTERESTS</div><input class="search-input" id="planner-context" placeholder="e.g. safari, beach, fine dining"></div>
-          <div style="display:flex;align-items:flex-end;"><button class="btn-primary" id="planner-run-all-btn" onclick="runAllModules()">RUN ALL →</button></div>
-        </div>
-        <div class="planner-modules" id="planner-module-grid">
-          <div class="module-card cyan-theme" id="pmod-itinerary" onclick="showModuleResult('itinerary')"><div class="module-status" id="pstat-itinerary"></div><div class="module-icon">📋</div><div class="module-name">Day-by-Day Itinerary</div><div class="module-desc">Generate a full optimized itinerary for your trip based on your bookings and interests.</div></div>
-          <div class="module-card green-theme" id="pmod-neighborhoods" onclick="showModuleResult('neighborhoods')"><div class="module-status" id="pstat-neighborhoods"></div><div class="module-icon">🗺️</div><div class="module-name">Neighborhood Guide</div><div class="module-desc">Discover the best neighborhoods — where to stay, eat, explore, and experience local life.</div></div>
-          <div class="module-card gold-theme" id="pmod-transport" onclick="showModuleResult('transport')"><div class="module-status" id="pstat-transport"></div><div class="module-icon">🚌</div><div class="module-name">Transport Intelligence</div><div class="module-desc">Airport transfers, local transport apps, costs, and pro tips for getting around.</div></div>
-          <div class="module-card red-theme" id="pmod-culture" onclick="showModuleResult('culture')"><div class="module-status" id="pstat-culture"></div><div class="module-icon">🎭</div><div class="module-name">Culture & Etiquette</div><div class="module-desc">Local customs, tipping norms, dress codes, safety tips, and cultural nuances.</div></div>
-          <div class="module-card cyan-theme" id="pmod-weather" onclick="showModuleResult('weather')"><div class="module-status" id="pstat-weather"></div><div class="module-icon">🌤️</div><div class="module-name">Weather & Packing Tips</div><div class="module-desc">Expected weather for your dates, plus packing recommendations.</div></div>
-          <div class="module-card green-theme" id="pmod-hidden_gems" onclick="showModuleResult('hidden_gems')"><div class="module-status" id="pstat-hidden_gems"></div><div class="module-icon">💎</div><div class="module-name">Hidden Gems</div><div class="module-desc">Off-the-beaten-path experiences and secret spots most tourists never find.</div></div>
-          <div class="module-card gold-theme" id="pmod-day_trips" onclick="showModuleResult('day_trips')"><div class="module-status" id="pstat-day_trips"></div><div class="module-icon">🚗</div><div class="module-name">Day Trips</div><div class="module-desc">Best excursions from your base city with transport, duration, and highlights.</div></div>
-          <div class="module-card red-theme" id="pmod-visa_health" onclick="showModuleResult('visa_health')"><div class="module-status" id="pstat-visa_health"></div><div class="module-icon">🛂</div><div class="module-name">Visa & Health Checks</div><div class="module-desc">Visa requirements, vaccinations, travel insurance, and entry requirements.</div></div>
-        </div>
+    <div class="tab-view" id="tab-planner">
+      <div class="sec-header">
+        <div><div class="sec-title">AI TRIP <span class="accent">PLANNER</span></div></div>
+        <span class="pill cyan">CLAUDE POWERED</span>
       </div>
-      <div id="planner-result" class="ai-result-panel" style="overflow-y:auto;flex:1;"></div>
+      <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="search-field" style="flex:2;min-width:180px;"><div class="search-label">DESTINATION</div><input class="search-input" id="planner-dest" placeholder="e.g. Nairobi, Cape Town"></div>
+        <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">TRAVEL DATES</div><input class="search-input" id="planner-dates" placeholder="e.g. May 15–22"></div>
+        <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">ACTIVITIES / INTERESTS</div><input class="search-input" id="planner-context" placeholder="e.g. safari, beach, fine dining"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" id="planner-run-all-btn" onclick="runAllModules()">RUN ALL →</button></div>
+      </div>
+      <div class="planner-modules" id="planner-module-grid">
+        <div class="module-card cyan-theme" id="pmod-itinerary" onclick="showModuleResult('itinerary')"><div class="module-status" id="pstat-itinerary"></div><div class="module-icon">📋</div><div class="module-name">Day-by-Day Itinerary</div><div class="module-desc">Generate a full optimized itinerary for your trip based on your bookings and interests.</div></div>
+        <div class="module-card green-theme" id="pmod-neighborhoods" onclick="showModuleResult('neighborhoods')"><div class="module-status" id="pstat-neighborhoods"></div><div class="module-icon">🗺️</div><div class="module-name">Neighborhood Guide</div><div class="module-desc">Discover the best neighborhoods — where to stay, eat, explore, and experience local life.</div></div>
+        <div class="module-card gold-theme" id="pmod-transport" onclick="showModuleResult('transport')"><div class="module-status" id="pstat-transport"></div><div class="module-icon">🚌</div><div class="module-name">Transport Intelligence</div><div class="module-desc">Airport transfers, local transport apps, costs, and pro tips for getting around.</div></div>
+        <div class="module-card red-theme" id="pmod-culture" onclick="showModuleResult('culture')"><div class="module-status" id="pstat-culture"></div><div class="module-icon">🎭</div><div class="module-name">Culture & Etiquette</div><div class="module-desc">Local customs, tipping norms, dress codes, safety tips, and cultural nuances.</div></div>
+        <div class="module-card cyan-theme" id="pmod-weather" onclick="showModuleResult('weather')"><div class="module-status" id="pstat-weather"></div><div class="module-icon">🌤️</div><div class="module-name">Weather & Packing Tips</div><div class="module-desc">Expected weather for your dates, plus packing recommendations.</div></div>
+        <div class="module-card green-theme" id="pmod-hidden_gems" onclick="showModuleResult('hidden_gems')"><div class="module-status" id="pstat-hidden_gems"></div><div class="module-icon">💎</div><div class="module-name">Hidden Gems</div><div class="module-desc">Off-the-beaten-path experiences and secret spots most tourists never find.</div></div>
+        <div class="module-card gold-theme" id="pmod-day_trips" onclick="showModuleResult('day_trips')"><div class="module-status" id="pstat-day_trips"></div><div class="module-icon">🚗</div><div class="module-name">Day Trips</div><div class="module-desc">Best excursions from your base city with transport, duration, and highlights.</div></div>
+        <div class="module-card red-theme" id="pmod-visa_health" onclick="showModuleResult('visa_health')"><div class="module-status" id="pstat-visa_health"></div><div class="module-icon">🛂</div><div class="module-name">Visa & Health Checks</div><div class="module-desc">Visa requirements, vaccinations, travel insurance, and entry requirements.</div></div>
+      </div>
+      <div id="planner-result" class="ai-result-panel"></div>
     </div>
 
     <!-- PACK LIST -->
@@ -5864,7 +5862,7 @@ function rerunGem(id) {
       if (p.dest)    document.getElementById('planner-dest').value    = p.dest;
       if (p.dates)   document.getElementById('planner-dates').value   = p.dates;
       if (p.context) document.getElementById('planner-context').value = p.context;
-      // inputs are always visible in new planner layout
+      document.getElementById('planner-input-area').style.display = 'block';
     }, 200);
     return;
   }
