@@ -3171,15 +3171,15 @@ Vary price points from budget to luxury. Be realistic for the city.`,
   const p66 = prices[Math.floor(prices.length * 0.66)];
 
   const bands = [
-    { label:'Bottom 33%', emoji:'', min:minP,    max:p33,   color:'#00C8FF', bg:'rgba(0,200,255,0.35)' },
-    { label:'Middle 33%', emoji:'', min:p33+1,   max:p66,   color:'#00FF88', bg:'rgba(0,255,136,0.35)' },
-    { label:'Top 33%',    emoji:'', min:p66+1,   max:maxP,  color:'#FFB800', bg:'rgba(255,184,0,0.35)'  },
+    { label:'Bottom 33%', emoji:'', min:minP,    max:p33,   exclMin:false, color:'#00C8FF', bg:'rgba(0,200,255,0.35)' },
+    { label:'Middle 33%', emoji:'', min:p33,     max:p66,   exclMin:true,  color:'#00FF88', bg:'rgba(0,255,136,0.35)' },
+    { label:'Top 33%',    emoji:'', min:p66,     max:maxP,  exclMin:true,  color:'#FFB800', bg:'rgba(255,184,0,0.35)'  },
   ];
 
   bands.forEach(b => {
     const inBand = hotels.filter(h => {
       const p = getHotelPrice(h);
-      return p >= b.min && p <= b.max;
+      return (b.exclMin ? p > b.min : p >= b.min) && p <= b.max;
     });
     b.count      = inBand.length;
     b.totalPcts  = Math.round((b.count / hotels.length) * 100);
@@ -3262,6 +3262,10 @@ Return ONLY valid JSON:
   // Enforce 14-day panic rule regardless of what Claude returned
   if (!aiJson) aiJson = {};
   if (forcedSignal) aiJson.bookSignal = forcedSignal;
+
+  // Compute confidence score deterministically — don't trust Claude's number
+  const computedConf = (isLive ? 40 : 0) + (daysToTrip <= 30 ? 30 : 0) + (hotels.length >= 5 ? 30 : 0);
+  aiJson.confidenceScore = computedConf;
 
   // ── Store structured result for chat context ──
   window._lastPulseResult = {
@@ -3527,13 +3531,13 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
   const fp33 = prices[Math.floor(prices.length * 0.33)];
   const fp66 = prices[Math.floor(prices.length * 0.66)];
   const bands = [
-    { label:'Bottom 33%', min: minP,      max: fp33,  color:'#00FF88', bgColor:'rgba(0,255,136,0.40)' },
-    { label:'Middle 33%', min: fp33+1,    max: fp66,  color:'#00C8FF', bgColor:'rgba(0,200,255,0.40)' },
-    { label:'Top 33%',    min: fp66+1,    max: maxP,  color:'#FFB800', bgColor:'rgba(255,184,0,0.40)'  },
+    { label:'Bottom 33%', min: minP,    max: fp33,  exclMin:false, color:'#00FF88', bgColor:'rgba(0,255,136,0.40)' },
+    { label:'Middle 33%', min: fp33,    max: fp66,  exclMin:true,  color:'#00C8FF', bgColor:'rgba(0,200,255,0.40)' },
+    { label:'Top 33%',    min: fp66,    max: maxP,  exclMin:true,  color:'#FFB800', bgColor:'rgba(255,184,0,0.40)'  },
   ];
 
   bands.forEach(b => {
-    const inBand = flights.filter(f => f.price >= b.min && f.price <= b.max);
+    const inBand = flights.filter(f => (b.exclMin ? f.price > b.min : f.price >= b.min) && f.price <= b.max);
     b.count     = inBand.length;
     b.avgDur    = inBand.length ? Math.round(inBand.reduce((s,f)=>s+(f.total_duration||0),0)/inBand.length) : 0;
     b.avgStops  = inBand.length ? (inBand.reduce((s,f)=>s+(f.stops||(f.flights?.length||1)-1),0)/inBand.length).toFixed(1) : '—';
@@ -3616,6 +3620,10 @@ Return ONLY valid JSON (no markdown):
   // Enforce 14-day panic rule regardless of what Claude returned
   if (!aiJson) aiJson = {};
   if (forcedSignal) aiJson.buySignal = forcedSignal;
+
+  // Compute confidence score deterministically — don't trust Claude's number
+  const computedConf = (isLive ? 40 : 0) + (daysToTrip <= 30 ? 30 : 0) + (competitionCount >= 5 ? 30 : 0);
+  aiJson.confidenceScore = computedConf;
 
   // ── Store structured result for chat context ──
   window._lastPulseResult = {
