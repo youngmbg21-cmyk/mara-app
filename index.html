@@ -5440,8 +5440,8 @@ function showModuleResult(mod) {
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Legacy support — keep activePlannerModule for any external references
-let activePlannerModule = null;
+// Legacy support — keep activePlannerModule for external references
+activePlannerModule = null;
 function runModule(module) { showModuleResult(module); }
 function executePlanner() { runAllModules(); }
 
