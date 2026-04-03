@@ -1034,6 +1034,7 @@ input[type="date"] { color-scheme: dark; }
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <button class="btn-secondary" onclick="exportTripPrint()" style="font-size:10px;padding:5px 12px;">🖨️ EXPORT TRIP</button>
+          <button class="btn-secondary" id="demo-flight-btn" onclick="showFlightStatusDemo()" style="font-size:10px;padding:5px 12px;">✈️ FLIGHT STATUS PREVIEW</button>
           <div id="dash-date" style="font-size:11px;color:var(--text2);"></div>
         </div>
       </div>
@@ -3112,6 +3113,44 @@ async function renderFlightStatus() {
   }
 
   container.innerHTML = `<div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">✈️ LIVE FLIGHT STATUS <span style="color:var(--green);font-weight:400;">· AviationStack</span></div>${cards}`;
+}
+
+// ── Flight Status Demo Mode ──────────────────
+function showFlightStatusDemo() {
+  const container = document.getElementById('dash-flight-status');
+  if (!container) return;
+  const demoFlights = [
+    { route:'ARN → NBO', airline:'Kenya Airways', flight:'KQ102', status:'scheduled', label:'ON TIME', color:'var(--text2)', gate:'42A', terminal:'5', delay:0, date:'Today at 22:15' },
+    { route:'NBO → CPT', airline:'Ethiopian Airlines', flight:'ET858', status:'delayed', label:'DELAYED', color:'var(--gold)', gate:'12', terminal:'1', delay:35, date:'Tomorrow at 09:30' },
+  ];
+  const cards = demoFlights.map(f => {
+    const delay = f.delay > 0 ? `<span style="color:var(--gold);"> +${f.delay}min</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;border-left:3px solid ${f.color};margin-bottom:6px;">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;font-weight:700;color:var(--text);">${f.route}</span>
+          <span style="font-size:9px;font-weight:700;color:${f.color};letter-spacing:0.08em;background:${f.color}22;padding:2px 6px;border-radius:4px;">${f.label}</span>
+          ${delay}
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:3px;">${f.airline} ${f.flight} · ${f.date}</div>
+      </div>
+      <div style="text-align:right;font-size:10px;color:var(--text3);">
+        <div>Gate <span style="color:var(--cyan);font-weight:700;">${f.gate}</span></div>
+        <div>Terminal ${f.terminal}</div>
+      </div>
+    </div>`;
+  }).join('');
+  container.style.display = 'block';
+  container.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;">✈️ LIVE FLIGHT STATUS <span style="color:var(--gold);font-weight:400;">· DEMO PREVIEW</span></div>
+    <button onclick="closeFlightStatusDemo()" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:9px;padding:2px 8px;cursor:pointer;font-family:inherit;">✕ CLOSE</button>
+  </div>${cards}
+  <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:4px;opacity:0.6;">This is demo data · Add your AviationStack API key in ⚙ Settings for live status</div>`;
+}
+
+function closeFlightStatusDemo() {
+  const container = document.getElementById('dash-flight-status');
+  if (container) { container.style.display = 'none'; container.innerHTML = ''; }
 }
 
 // ═══════════════════════════════════════════════
