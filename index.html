@@ -1035,7 +1035,7 @@ input[type="date"] { color-scheme: dark; }
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <button class="btn-secondary" onclick="exportTripPrint()" style="font-size:10px;padding:5px 12px;">🖨️ EXPORT TRIP</button>
-          <button class="btn-secondary" id="demo-flight-btn" onclick="showFlightStatusDemo()" style="font-size:10px;padding:5px 12px;">✈️ FLIGHT STATUS PREVIEW</button>
+          <button class="btn-secondary" id="demo-flight-btn" onclick="toggleFlightStatusDemo()" style="font-size:10px;padding:5px 12px;">✈️ FLIGHT STATUS PREVIEW</button>
           <div id="dash-date" style="font-size:11px;color:var(--text2);"></div>
         </div>
       </div>
@@ -3279,6 +3279,15 @@ function showFlightStatusDemo() {
 function closeFlightStatusDemo() {
   const container = document.getElementById('dash-flight-status');
   if (container) { container.style.display = 'none'; container.innerHTML = ''; }
+}
+
+function toggleFlightStatusDemo() {
+  const container = document.getElementById('dash-flight-status');
+  if (container && container.style.display !== 'none' && container.innerHTML) {
+    closeFlightStatusDemo();
+  } else {
+    showFlightStatusDemo();
+  }
 }
 
 // ═══════════════════════════════════════════════
