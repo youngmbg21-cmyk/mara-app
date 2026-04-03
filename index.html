@@ -1113,7 +1113,6 @@ input[type="date"] { color-scheme: dark; }
         </div>
         <div class="search-field" style="max-width:130px;"><div class="search-label">DEPART</div><input class="search-input" id="fl2-depart" type="date" onchange="setMinDate('fl2-return',this.value)"></div>
         <div class="search-field" style="max-width:130px;"><div class="search-label">RETURN</div><input class="search-input" id="fl2-return" type="date"></div>
-        <div class="search-field" style="max-width:80px;"><div class="search-label">PAX</div><input class="search-input" id="fl2-pax" type="number" value="1" min="1"></div>
         <div class="search-field" style="max-width:110px;"><div class="search-label">CLASS</div>
           <select class="search-input" id="fl2-class"><option value="economy">Economy</option><option value="premium">Premium Eco</option><option value="business">Business</option><option value="first">First</option></select>
         </div>
@@ -2037,7 +2036,7 @@ Always reference specific booking details, confirmation codes, and dates when av
       const p = window._lastPulseResult;
       ctx += `\n\n── PRICE PULSE ${p.mode.toUpperCase()} SEARCH (most recent) ──`;
       if (p.mode === 'flight') {
-        ctx += `\nRoute: ${p.from} → ${p.to} | Depart: ${p.depart}${p.ret?' Return: '+p.ret:''} | ${p.cls} | ${p.pax} pax | Budget: ${p.budget||'not set'} | Days to departure: ${p.daysToTrip}`;
+        ctx += `\nRoute: ${p.from} → ${p.to} | Depart: ${p.depart}${p.ret?' Return: '+p.ret:''} | ${p.cls} | Budget: ${p.budget||'not set'} | Days to departure: ${p.daysToTrip}`;
       } else {
         ctx += `\nCity: ${p.city} | Check-in: ${p.checkin} → ${p.checkout} | ${p.nights} nights | ${p.guests} guests | Budget/night: ${p.budget||'not set'} | Days to check-in: ${p.daysToTrip}`;
       }
@@ -3449,7 +3448,7 @@ async function searchFlights2() {
   const to      = document.getElementById('fl2-to').value || '';
   const depart  = document.getElementById('fl2-depart').value;
   const ret     = document.getElementById('fl2-return').value;
-  const pax     = document.getElementById('fl2-pax').value || '1';
+  const pax     = '1';
   const cls     = document.getElementById('fl2-class').value || 'economy';
   const budget  = parseFloat(document.getElementById('fl2-budget').value) || 0;
   const fromCode = document.getElementById('fl2-from-code')?.value || (from.match(/\(([A-Z]{3})\)/)||[,''])[1];
@@ -3563,21 +3562,16 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
       const flightSummary = JSON.stringify({
         route: `${from} → ${to}`, todayDate: today.toISOString().split('T')[0],
         departureDate: depart, returnDate: ret||null, daysToTrip,
-        isRoundTrip: isRT, class: cls, pax: Number(pax), currency: cur,
+        isRoundTrip: isRT, class: cls, currency: cur,
         budget: budget||null, budgetFlightsAvailable: budgetFlights,
         budgetCoversPercent: budgetPct,
         totalOptions: flights.length, isLiveData: isLive,
         competitionCount, airlines,
-        priceRange: {
-          minPerPerson: minP, maxPerPerson: maxP, avgPerPerson: avgP, medianPerPerson: medianP,
-          minTotal: minP * Number(pax), maxTotal: maxP * Number(pax), avgTotal: Math.round(avgP * Number(pax))
-        },
-        note: `All prices are PER PERSON. Total cost for ${pax} passengers = price × ${pax}. Always reference total cost (${pax} pax) in your analysis.`,
+        priceRange: { min: minP, max: maxP, avg: avgP, median: medianP },
         priceSpreadPct: Math.round(spread),
         bands: bands.map(b => ({
           label: b.label,
-          priceRangePerPerson: `${cur} ${b.min}–${b.max}`,
-          priceRangeTotal: `${cur} ${b.min * Number(pax)}–${b.max * Number(pax)} for ${pax} pax`,
+          priceRange: `${cur} ${b.min}–${b.max}`,
           count: b.count, avgDuration: b.avgDur ? Math.floor(b.avgDur/60)+'h '+b.avgDur%60+'m' : '—',
           avgStops: b.avgStops, directFlights: b.directCount, earlyDepartures: b.earlyDep
         }))
@@ -3589,7 +3583,7 @@ Decision rules:
 1. PANIC RULE: If daysToTrip < 14 → signal MUST be BUY_NOW. Inventory is critical.
 2. SWEET SPOT (21–60 days): If price > 10% below average → BUY_NOW. If price is average → FAIR_PRICE but warn drops are unlikely.
 3. PATIENCE WINDOW (90+ days): Unless price is 25%+ below average → CONSIDER_WAITING. Flash sales likely in 2–3 months.
-4. BUDGET CHECK: Compare budget to market floor (minTotal for all pax). State how much inventory the budget covers per person and total for ${pax} passenger(s).
+4. BUDGET CHECK: Compare budget to market floor (minP). State how much inventory the budget covers.
 5. CONFIDENCE SCORE: +40 if isLiveData=true, +30 if daysToTrip<=30, +30 if competitionCount>=5.
 
 ${forcedSignal ? `OVERRIDE: daysToTrip is ${daysToTrip}. Signal is FORCED to BUY_NOW. Do not change it.` : ''}
@@ -3598,7 +3592,7 @@ Return ONLY valid JSON (no markdown):
 {
   "buySignal": "${forcedSignal || 'BUY_NOW|FAIR_PRICE|CONSIDER_WAITING'}",
   "confidenceScore": 0-100,
-  "strategySummary": "2-3 sentences using specific daysToTrip, pax count, total cost (not per-person) and budget figures to explain the signal. Always multiply prices by pax count when referencing cost.",
+  "strategySummary": "2-3 sentences using specific daysToTrip, budget and price figures to explain the signal.",
   "budgetVerdict": "Is budget realistic vs market floor? State % of inventory covered. Null if no budget.",
   "riskFactor": "The #1 risk of waiting (price spike / inventory loss / no risk)",
   "sweetSpot": "One sentence on best value price point",
@@ -3731,13 +3725,13 @@ Return ONLY valid JSON (no markdown):
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       ${liveTag}
-      <span style="font-size:10px;color:var(--text3);">${esc(from)} → ${esc(to)} · ${depart}${ret?' → '+ret:''} · ${pax} pax · ${cls}</span>
+      <span style="font-size:10px;color:var(--text3);">${esc(from)} → ${esc(to)} · ${depart}${ret?' → '+ret:''} · ${cls}</span>
     </div>
 
     <div class="fib-summary">
-      <div class="fib-kpi"><div class="fib-kpi-label">Lowest price</div><div class="fib-kpi-val" style="color:var(--green)">${cur} ${minP.toLocaleString()}</div><div class="fib-kpi-sub">${Number(pax)>1?`×${pax} = ${cur} ${(minP*Number(pax)).toLocaleString()} total`:isRT?'round trip':'one-way'}</div></div>
-      <div class="fib-kpi"><div class="fib-kpi-label">Average price</div><div class="fib-kpi-val">${cur} ${avgP.toLocaleString()}</div><div class="fib-kpi-sub">${Number(pax)>1?`per person · ${cur} ${(avgP*Number(pax)).toLocaleString()} total`:flights.length+' options'} · ${daysToTrip} days away</div></div>
-      <div class="fib-kpi"><div class="fib-kpi-label">Highest price</div><div class="fib-kpi-val" style="color:var(--text2)">${cur} ${maxP.toLocaleString()}</div><div class="fib-kpi-sub">${Number(pax)>1?`×${pax} = ${cur} ${(maxP*Number(pax)).toLocaleString()} total`:'price ceiling today'}</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Lowest price</div><div class="fib-kpi-val" style="color:var(--green)">${cur} ${minP.toLocaleString()}</div><div class="fib-kpi-sub">${isRT?'round trip':'one-way'}</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Average price</div><div class="fib-kpi-val">${cur} ${avgP.toLocaleString()}</div><div class="fib-kpi-sub">${flights.length} options · ${daysToTrip} days away</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Highest price</div><div class="fib-kpi-val" style="color:var(--text2)">${cur} ${maxP.toLocaleString()}</div><div class="fib-kpi-sub">price ceiling today</div></div>
       <div class="fib-kpi"><div class="fib-kpi-label">Buy signal</div><div class="fib-kpi-val" style="color:${buyColor}">${buyLabel}</div><div class="fib-kpi-sub">${confScore !== null ? `<span style="color:${confColor};">confidence ${confScore}/100</span>` : 'Based on current pricing'}</div></div>
     </div>
 
@@ -3777,7 +3771,7 @@ Return ONLY valid JSON (no markdown):
   // Inject Save to Gems button
   const gemContent = [
     `## Route: ${from} → ${to}`,
-    `**Dates:** ${depart}${ret?' → '+ret:''}  |  **Class:** ${cls}  |  **Pax:** ${pax}  |  **Days to departure:** ${daysToTrip}`,
+    `**Dates:** ${depart}${ret?' → '+ret:''}  |  **Class:** ${cls}  |  **Days to departure:** ${daysToTrip}`,
     `**Price range:** ${cur} ${minP.toLocaleString()} – ${maxP.toLocaleString()}  |  **Average:** ${cur} ${avgP.toLocaleString()}`,
     `**Signal:** ${buyLabel}  |  **Confidence:** ${confScore??'—'}/100`,
     aiJson?.strategySummary ? `### Strategy\n${aiJson.strategySummary}` : '',
@@ -3787,7 +3781,7 @@ Return ONLY valid JSON (no markdown):
     `### Price Bands\n${bands.map(b=>`- **${b.label}:** ${cur} ${b.min.toLocaleString()}–${b.max.toLocaleString()} (${b.count} flights)`).join('\n')}`,
   ].filter(Boolean).join('\n');
 
-  const gemParams = { mode:'flight', from, to, depart, ret, cls, pax: String(pax), budget: budget ? String(budget) : '' };
+  const gemParams = { mode:'flight', from, to, depart, ret, cls, budget: budget ? String(budget) : '' };
   const saveDiv = document.createElement('div');
   saveDiv.style.cssText = 'padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
   saveDiv.innerHTML = `<button class="save-gem-btn" id="flight-gem-btn">💎 Save to Gems</button>
