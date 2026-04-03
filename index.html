@@ -871,6 +871,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 input[type="date"] { color-scheme: dark; }
+
+/* ── Print export overlay ── */
+#print-overlay{display:none;position:fixed;inset:0;z-index:9999;background:#fff;color:#111;overflow-y:auto;padding:40px;font-family:'JetBrains Mono',monospace;}
+#print-overlay.open{display:block;}
+#print-overlay h1{font-size:22px;margin:0 0 4px;color:#111;}
+#print-overlay h2{font-size:14px;margin:20px 0 8px;color:#333;border-bottom:1px solid #ddd;padding-bottom:4px;}
+#print-overlay .print-item{padding:6px 0;border-bottom:1px solid #eee;font-size:11px;display:flex;gap:12px;}
+#print-overlay .print-item span{color:#666;}
+#print-overlay .print-close{position:fixed;top:12px;right:16px;background:#111;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px;z-index:10000;}
+#print-overlay .print-btn{position:fixed;top:12px;right:100px;background:#0066cc;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px;z-index:10000;}
+@media print{
+  body>*:not(#print-overlay){display:none!important;}
+  #print-overlay{position:static;padding:20px;}
+  #print-overlay .print-close,#print-overlay .print-btn{display:none!important;}
+}
 </style>
 </head>
 <body>
@@ -1017,7 +1032,10 @@ input[type="date"] { color-scheme: dark; }
           <div class="sec-title">VOYAGE <span class="accent">COMMAND</span></div>
           <div class="sec-subtitle">YOUR COMPLETE TRAVEL INTELLIGENCE HUB</div>
         </div>
-        <div id="dash-date" style="font-size:11px;color:var(--text2);"></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-secondary" onclick="exportTripPrint()" style="font-size:10px;padding:5px 12px;">🖨️ EXPORT TRIP</button>
+          <div id="dash-date" style="font-size:11px;color:var(--text2);"></div>
+        </div>
       </div>
       <div class="stats-strip">
         <div class="stat-item"><div class="stat-val cyan" id="stat-total">0</div><div class="stat-lbl">BOOKINGS</div></div>
@@ -1043,6 +1061,7 @@ input[type="date"] { color-scheme: dark; }
       <div id="dash-content" style="display:none;">
         <!-- Next destination banner -->
         <div id="dash-next-dest" style="display:none;flex-direction:column;margin:12px 20px 0;padding:14px 18px;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:10px;border-left:3px solid var(--cyan);"></div>
+        <div id="dash-flight-status" style="display:none;margin:12px 20px 0;"></div>
         <div class="section-label">UPCOMING BOOKINGS</div>
         <div class="cards-grid" id="upcoming-cards"></div>
         <div id="dash-alerts-bar" style="display:none;padding:0 20px 12px;"></div>
@@ -1660,6 +1679,17 @@ input[type="date"] { color-scheme: dark; }
       <div id="serp-test-result" style="font-size:9px;margin-top:4px;"></div>
     </div>
 
+    <div class="field-group">
+      <div class="field-label">AVIATIONSTACK API KEY
+        <span style="color:var(--text3);font-weight:400;letter-spacing:0;text-transform:none;"> · aviationstack.com</span>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <input class="field-input" id="s-aviation-key" type="password" style="flex:1;" placeholder="your-aviationstack-key…">
+        <button class="btn-secondary" style="padding:8px 10px;font-size:11px;" onclick="toggleFieldVis('s-aviation-key',this)">👁</button>
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-top:3px;">Live flight status tracking · free tier: 100 calls/month</div>
+    </div>
+
     <!-- DIVIDER -->
     <div style="font-size:9px;letter-spacing:0.16em;color:var(--cyan);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);margin-top:4px;">PREFERENCES</div>
 
@@ -1736,8 +1766,9 @@ input[type="date"] { color-scheme: dark; }
 // ═══════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════
-let apiKey     = localStorage.getItem('voy_api_key') || '';
-let serpApiKey = localStorage.getItem('voy_serp_key') || '';
+let apiKey      = localStorage.getItem('voy_api_key') || '';
+let serpApiKey  = localStorage.getItem('voy_serp_key') || '';
+let aviationKey = localStorage.getItem('voy_aviation_key') || '';
 let proxyBase  = (localStorage.getItem('voy_proxy_url') || '').replace(/\/$/, '');
 let bookings = JSON.parse(localStorage.getItem('voy_bookings') || '[]');
 
@@ -2798,11 +2829,42 @@ function renderDashboard() {
     if (nextEvent) {
       const meta = TYPE_META[nextEvent.type] || TYPE_META.other;
       const subLine = meta.sub(nextEvent);
+      // Countdown calculation
+      const evtDate = new Date(nextEvent.date + (nextEvent.time ? 'T' + nextEvent.time : 'T00:00'));
+      const nowMs = Date.now();
+      const diffMs = Math.max(0, evtDate - nowMs);
+      const totalDays = Math.ceil(diffMs / 86400000);
+      const days  = Math.floor(diffMs / 86400000);
+      const hours = Math.floor((diffMs % 86400000) / 3600000);
+      const mins  = Math.floor((diffMs % 3600000) / 60000);
+      // Ring: 90 days = full circle, closer = more filled
+      const maxDays = 90;
+      const pct = Math.max(0, Math.min(1, 1 - totalDays / maxDays));
+      const circumference = 2 * Math.PI * 40;
+      const dashOffset = circumference * (1 - pct);
+      const ringColor = totalDays <= 3 ? 'var(--red)' : totalDays <= 14 ? 'var(--gold)' : meta.color;
+      const countdownLabel = days > 0 ? `${days}d ${hours}h` : hours > 0 ? `${hours}h ${mins}m` : diffMs > 0 ? `${mins}m` : 'NOW';
       nextDest.style.display = 'flex';
-      nextDest.innerHTML = `<div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:2px;">${meta.label}</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text);">${esc(nextEvent.to||nextEvent.hotelName||nextEvent.restaurantName||nextEvent.title||'')}</div>
-        <div style="font-size:11px;color:${meta.color};margin-top:2px;">${meta.detail(nextEvent)}</div>
-        ${subLine?`<div style="font-size:10px;color:var(--text3);">${subLine}</div>`:''}`;
+      nextDest.innerHTML = `<div style="display:flex;align-items:center;gap:16px;">
+        <div style="position:relative;width:90px;height:90px;flex-shrink:0;">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="40" fill="none" stroke="var(--border)" stroke-width="4"/>
+            <circle cx="45" cy="45" r="40" fill="none" stroke="${ringColor}" stroke-width="4"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"
+              stroke-linecap="round" transform="rotate(-90 45 45)" style="transition:stroke-dashoffset 1s;"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="dash-countdown-val" style="font-size:16px;font-weight:700;color:${ringColor};line-height:1.1;">${countdownLabel}</div>
+            <div style="font-size:8px;color:var(--text3);letter-spacing:0.08em;">UNTIL</div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:2px;">${meta.label}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(nextEvent.to||nextEvent.hotelName||nextEvent.restaurantName||nextEvent.title||'')}</div>
+          <div style="font-size:11px;color:${meta.color};margin-top:2px;">${meta.detail(nextEvent)}</div>
+          ${subLine?`<div style="font-size:10px;color:var(--text3);">${subLine}</div>`:''}
+        </div>
+      </div>`;
     } else {
       nextDest.style.display = 'none';
     }
@@ -2826,6 +2888,230 @@ function renderDashboard() {
         </div>
       </div>`).join('');
   } else { bar.style.display='none'; }
+
+  // Start live countdown ticker
+  startCountdownTicker(nextEvent);
+
+  // Live flight status (async, non-blocking)
+  renderFlightStatus();
+}
+
+let _countdownTimer = null;
+function startCountdownTicker(nextEvent) {
+  if (_countdownTimer) clearInterval(_countdownTimer);
+  if (!nextEvent) return;
+  const evtDate = new Date(nextEvent.date + (nextEvent.time ? 'T' + nextEvent.time : 'T00:00'));
+  _countdownTimer = setInterval(() => {
+    const el = document.getElementById('dash-countdown-val');
+    if (!el) { clearInterval(_countdownTimer); return; }
+    const diff = Math.max(0, evtDate - Date.now());
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    el.textContent = d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${m}m` : diff > 0 ? `${m}m` : 'NOW';
+  }, 60000);
+}
+
+// ═══════════════════════════════════════════════
+// EXPORT TRIP TO PRINT
+// ═══════════════════════════════════════════════
+function exportTripPrint() {
+  const cur = settings.currency || 'USD';
+  const all = getVisibleBookings().sort((a,b) => new Date(a.date||'2099') - new Date(b.date||'2099'));
+  const flights = all.filter(b => b.type === 'flight');
+  const hotels  = all.filter(b => b.type === 'hotel');
+  const restos  = all.filter(b => b.type === 'restaurant');
+
+  let html = `<button class="print-close" onclick="closePrintOverlay()">✕ CLOSE</button>`;
+  html += `<button class="print-btn" onclick="window.print()">🖨️ PRINT</button>`;
+  html += `<h1>MARA — Trip Itinerary</h1>`;
+  html += `<div style="font-size:11px;color:#666;margin-bottom:16px;">Exported ${new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} · ${all.length} bookings</div>`;
+
+  if (flights.length) {
+    html += `<h2>✈️ Flights (${flights.length})</h2>`;
+    flights.forEach(f => {
+      html += `<div class="print-item">
+        <strong>${f.from||''} → ${f.to||''}</strong>
+        <span>${fd(f.date)}${f.time ? ' at ' + f.time : ''}</span>
+        <span>${f.airline||''} ${f.flightNumber||''}</span>
+        <span>Ref: ${f.confirmationCode||'—'}</span>
+      </div>`;
+    });
+  }
+
+  if (hotels.length) {
+    html += `<h2>🏨 Hotels (${hotels.length})</h2>`;
+    hotels.forEach(h => {
+      const nights = h.date && h.endDate ? Math.max(1, Math.round((new Date(h.endDate) - new Date(h.date)) / 86400000)) : '';
+      html += `<div class="print-item">
+        <strong>${h.hotelName||h.title||''}</strong>
+        <span>${fd(h.date)}${h.endDate ? ' → ' + fd(h.endDate) : ''}${nights ? ' (' + nights + ' nights)' : ''}</span>
+        <span>${h.address||''}</span>
+        <span>Ref: ${h.confirmationCode||'—'}</span>
+      </div>`;
+    });
+  }
+
+  if (restos.length) {
+    html += `<h2>🍽️ Restaurants (${restos.length})</h2>`;
+    restos.forEach(r => {
+      html += `<div class="print-item">
+        <strong>${r.restaurantName||r.title||''}</strong>
+        <span>${fd(r.date)}${r.time ? ' at ' + r.time : ''}</span>
+        <span>${r.address||''}</span>
+        <span>${r.covers ? r.covers + ' guests' : ''}</span>
+      </div>`;
+    });
+  }
+
+  // Budget summary
+  if (expenses.length || tripBudget) {
+    const spent = expenses.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+    html += `<h2>💰 Budget</h2>`;
+    if (tripBudget) html += `<div class="print-item"><strong>Budget</strong><span>${cur} ${tripBudget.toLocaleString()}</span><span>Spent: ${cur} ${spent.toLocaleString()}</span><span>Remaining: ${cur} ${(tripBudget - spent).toLocaleString()}</span></div>`;
+    expenses.forEach(e => {
+      html += `<div class="print-item"><span>${e.cat||'Other'}</span><span>${e.desc||''}</span><span>${parseFloat(e.amount||0).toFixed(2)} ${e.currency||cur}</span></div>`;
+    });
+  }
+
+  // Pack list
+  if (packList.length) {
+    const done = packList.filter(i => i.checked).length;
+    html += `<h2>🎒 Pack List (${done}/${packList.length} packed)</h2>`;
+    html += `<div style="columns:2;font-size:11px;">`;
+    packList.forEach(p => {
+      html += `<div style="padding:2px 0;">${p.checked ? '☑' : '☐'} ${p.text}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div style="margin-top:30px;font-size:9px;color:#999;border-top:1px solid #ddd;padding-top:8px;">Generated by Mara Travel Intelligence</div>`;
+
+  const overlay = document.getElementById('print-overlay');
+  overlay.innerHTML = html;
+  overlay.classList.add('open');
+}
+
+function closePrintOverlay() {
+  document.getElementById('print-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════
+// LIVE FLIGHT STATUS TRACKER
+// ═══════════════════════════════════════════════
+const _flightStatusCache = {};
+
+async function fetchFlightStatus(flightIata, date) {
+  const cacheKey = `${flightIata}_${date}`;
+  if (_flightStatusCache[cacheKey]) return _flightStatusCache[cacheKey];
+  if (!aviationKey) return null;
+  try {
+    const res = await fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationKey}&flight_iata=${flightIata}&flight_date=${date}`);
+    const data = await res.json();
+    if (data.data && data.data.length > 0) {
+      const f = data.data[0];
+      const result = {
+        status: f.flight_status || 'unknown',
+        depTerminal: f.departure?.terminal || null,
+        depGate: f.departure?.gate || null,
+        depDelay: f.departure?.delay || 0,
+        arrTerminal: f.arrival?.terminal || null,
+        arrGate: f.arrival?.gate || null,
+        arrDelay: f.arrival?.delay || 0,
+        depScheduled: f.departure?.scheduled || null,
+        depEstimated: f.departure?.estimated || null,
+        arrScheduled: f.arrival?.scheduled || null,
+        arrEstimated: f.arrival?.estimated || null,
+        airline: f.airline?.name || null,
+        flightIata: f.flight?.iata || flightIata,
+      };
+      _flightStatusCache[cacheKey] = result;
+      return result;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function getStatusColor(status) {
+  switch(status) {
+    case 'active': case 'en-route': return 'var(--green)';
+    case 'landed': return 'var(--cyan)';
+    case 'scheduled': return 'var(--text2)';
+    case 'cancelled': return 'var(--red)';
+    case 'diverted': case 'incident': return 'var(--red)';
+    case 'delayed': return 'var(--gold)';
+    default: return 'var(--text3)';
+  }
+}
+
+function getStatusLabel(status) {
+  switch(status) {
+    case 'active': case 'en-route': return 'IN FLIGHT';
+    case 'landed': return 'LANDED';
+    case 'scheduled': return 'ON TIME';
+    case 'cancelled': return 'CANCELLED';
+    case 'diverted': return 'DIVERTED';
+    case 'delayed': return 'DELAYED';
+    default: return status ? status.toUpperCase() : 'UNKNOWN';
+  }
+}
+
+async function renderFlightStatus() {
+  const container = document.getElementById('dash-flight-status');
+  if (!container) return;
+  if (!aviationKey) { container.style.display = 'none'; return; }
+
+  // Find flights within the next 48 hours
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + 48 * 3600000);
+  const upcoming = bookings.filter(b => {
+    if (b.type !== 'flight' || !b.flightNumber) return false;
+    const d = new Date(b.date + (b.time ? 'T' + b.time : 'T23:59'));
+    return d >= new Date(now.getTime() - 12 * 3600000) && d <= cutoff;
+  }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  if (!upcoming.length) { container.style.display = 'none'; return; }
+
+  container.style.display = 'block';
+  container.innerHTML = `<div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">✈️ LIVE FLIGHT STATUS</div>
+    <div style="font-size:10px;color:var(--text3);padding:8px;text-align:center;">Checking flight status…</div>`;
+
+  let cards = '';
+  for (const flight of upcoming.slice(0, 4)) {
+    const iata = flight.flightNumber.replace(/\s+/g, '');
+    const status = await fetchFlightStatus(iata, flight.date);
+    if (status) {
+      const sColor = getStatusColor(status.status);
+      const sLabel = getStatusLabel(status.status);
+      const delay = status.depDelay > 0 ? `<span style="color:var(--gold);"> +${status.depDelay}min</span>` : '';
+      cards += `<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;border-left:3px solid ${sColor};margin-bottom:6px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text);">${esc(flight.from||'')} → ${esc(flight.to||'')}</span>
+            <span style="font-size:9px;font-weight:700;color:${sColor};letter-spacing:0.08em;background:${sColor}22;padding:2px 6px;border-radius:4px;">${sLabel}</span>
+            ${delay}
+          </div>
+          <div style="font-size:10px;color:var(--text2);margin-top:3px;">
+            ${esc(status.airline||flight.airline||'')} ${esc(status.flightIata)} · ${fd(flight.date)}${flight.time ? ' at ' + flight.time : ''}
+          </div>
+        </div>
+        <div style="text-align:right;font-size:10px;color:var(--text3);">
+          ${status.depGate ? `<div>Gate <span style="color:var(--cyan);font-weight:700;">${esc(status.depGate)}</span></div>` : ''}
+          ${status.depTerminal ? `<div>Terminal ${esc(status.depTerminal)}</div>` : ''}
+        </div>
+      </div>`;
+    } else {
+      cards += `<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">
+        <div style="flex:1;">
+          <span style="font-size:13px;font-weight:700;color:var(--text);">${esc(flight.from||'')} → ${esc(flight.to||'')}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:8px;">${esc(flight.airline||'')} ${esc(flight.flightNumber||'')}</span>
+        </div>
+        <div style="font-size:9px;color:var(--text3);">Status unavailable</div>
+      </div>`;
+    }
+  }
+
+  container.innerHTML = `<div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">✈️ LIVE FLIGHT STATUS <span style="color:var(--green);font-weight:400;">· AviationStack</span></div>${cards}`;
 }
 
 // ═══════════════════════════════════════════════
@@ -5582,6 +5868,7 @@ function maybeCloseDrawer(e) { if(e.target===document.getElementById('drawer-ove
 function populateSettingsDrawer() {
   if (apiKey)     document.getElementById('s-api-key').value  = apiKey ? '••••••••••••' + apiKey.slice(-4) : '';
   if (serpApiKey) document.getElementById('s-serp-key').value = serpApiKey ? '••••••••••••' + serpApiKey.slice(-4) : '';
+  if (aviationKey) document.getElementById('s-aviation-key').value = aviationKey ? '••••••••••••' + aviationKey.slice(-4) : '';
   if (proxyBase)  document.getElementById('s-proxy-url').value = proxyBase;
   if (settings.home)     document.getElementById('s-home').value     = settings.home;
   if (settings.passport) document.getElementById('s-passport').value = settings.passport;
@@ -5612,6 +5899,12 @@ function saveSettings() {
   if (newSerpKey && !newSerpKey.startsWith('••')) {
     serpApiKey = newSerpKey;
     localStorage.setItem('voy_serp_key', serpApiKey);
+  }
+  // AviationStack key
+  const newAvKey = document.getElementById('s-aviation-key').value.trim();
+  if (newAvKey && !newAvKey.startsWith('••')) {
+    aviationKey = newAvKey;
+    localStorage.setItem('voy_aviation_key', aviationKey);
   }
   // Preferences
   settings.home     = document.getElementById('s-home').value;
@@ -7061,5 +7354,6 @@ function initAgent() {
   renderAgentHistory();
 }
 </script>
+<div id="print-overlay"></div>
 </body>
 </html>
