@@ -1012,6 +1012,7 @@ input[type="date"] { color-scheme: dark; }
     <div class="nav-btn"        id="nav-vault"        onclick="switchTab('vault')">🔐<div class="nav-tip">VAULT</div></div>
     <div class="nav-btn"        id="nav-gems"         onclick="switchTab('gems')">💎<div class="nav-tip">SAVED GEMS</div><span class="nav-badge" id="gems-badge" style="display:none;"></span></div>
     <div class="nav-btn"        id="nav-visitors"     onclick="switchTab('visitors')">👥<div class="nav-tip">VISITORS</div></div>
+    <div class="nav-btn"        id="nav-guide"        onclick="switchTab('guide')">📖<div class="nav-tip">GUIDE</div></div>
   </div>
 
   <!-- MAIN CONTENT -->
@@ -1374,6 +1375,133 @@ input[type="date"] { color-scheme: dark; }
         </div>
       </div>
     </div><!-- end tab-gems -->
+
+    <!-- GUIDE -->
+    <div class="tab-view" id="tab-guide">
+      <div class="sec-header">
+        <div><div class="sec-title">USER <span class="accent">GUIDE</span></div><div class="sec-subtitle">EVERYTHING YOU NEED TO KNOW ABOUT MARA</div></div>
+      </div>
+      <div style="padding:16px 20px;overflow-y:auto;flex:1;">
+
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:8px;">GETTING STARTED</div>
+          <div style="font-size:11px;color:var(--text);line-height:1.7;">
+            <strong style="color:var(--text);">1. Add your API keys</strong> — Click the ⚙ gear icon (bottom-left) to open Settings. You'll need:<br>
+            <span style="color:var(--text2);margin-left:16px;">• <strong>Claude API Key</strong> (anthropic.com) — powers AI chat, booking extraction, and all intelligence features</span><br>
+            <span style="color:var(--text2);margin-left:16px;">• <strong>SerpApi Key</strong> (serpapi.com) — enables live Google Flights and Hotels data in Price Pulse</span><br>
+            <span style="color:var(--text2);margin-left:16px;">• <strong>AviationStack Key</strong> (aviationstack.com) — optional, enables live flight status tracking on dashboard</span><br>
+            <strong style="color:var(--text);">2. Connect Gmail</strong> — Click "Scan Gmail Inbox" on the dashboard. Create Gmail labels called <strong>Travel</strong> and <strong>Tracker</strong>, then move your booking confirmation emails there. Mara will auto-extract flights, hotels, and restaurants.<br>
+            <strong style="color:var(--text);">3. Or add manually</strong> — Click "+ Add Manually" to paste any booking confirmation text. Claude will extract the details automatically.
+          </div>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:8px;">TABS EXPLAINED</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;">
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--cyan);">
+              <div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:4px;">🗺 DASHBOARD</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Your command center. Shows booking stats, countdown to next trip, upcoming bookings carousel, and proactive alerts for missing flights or hotels. The "Export Trip" button creates a printable itinerary.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--cyan);">
+              <div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:4px;">🌐 CONTROL TOWER</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Interactive map showing all your flight routes and hotel locations. Toggle the weather overlay to see live conditions at each destination. Sidebar lists all flights and hotels.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--cyan);">
+              <div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:4px;">🎫 BOOKINGS</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">All your bookings in one place. Filter by type (flights, hotels, restaurants). Each card shows key details and confirmation codes. Bookings come from Gmail scanning or manual entry.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--gold);">
+              <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:4px;">⚠️ ALERTS</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">AI-powered gap analysis. Mara detects missing flights (hotel booked but no transport), missing hotels (arriving with nowhere to stay), and transit tips between cities.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--green);">
+              <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px;">⚡ PRICE PULSE</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Flight and hotel search with AI intelligence. Shows live prices from Google via SerpApi, price bands (Bottom/Middle/Top 33%), budget matching, and a "right time to buy" signal with confidence score. Set a budget to see how many options you can afford.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--gold);">
+              <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:4px;">🍽️ RESTAURANTS</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Search restaurants by city, cuisine, and budget level. Uses SerpApi for real data or Claude AI for recommendations when quota is exceeded.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--cyan);">
+              <div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:4px;">🤖 AGENT</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Natural language search. Type things like "Find me a flight to Nairobi under $600" and the agent searches live data using Claude + SerpApi.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--cyan);">
+              <div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:4px;">🧠 AI PLANNER</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Destination guides powered by Claude. Get itineraries, neighborhood guides, transport tips, culture briefings, weather expectations, hidden gems, day trip ideas, and visa/health requirements.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--green);">
+              <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px;">💰 BUDGET</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Set a trip budget and track expenses by category. The progress bar changes color as you approach your limit. Mara AI knows your budget status and factors it into advice.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--green);">
+              <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px;">🎒 PACK LIST</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">AI-generated packing suggestions based on your destination, dates, and activities. Check items off as you pack. Mara AI knows your packing progress.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--gold);">
+              <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:4px;">🔐 VAULT</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Store travel documents (PDFs, tickets, passport scans), notes, and important links. Organized by category. Vault notes are included in Mara AI's context.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--cyan);">
+              <div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:4px;">💎 SAVED GEMS</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Bookmark interesting finds from searches — flights, hotels, restaurants, or AI planner results — for later reference.</div>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--text2);">
+              <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px;">👥 VISITORS</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Track friends and family travel plans. Create a Gmail label called "Tracker" and move their travel emails there. Mara scans and extracts their bookings separately.</div>
+            </div>
+
+          </div>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:8px;">MARA AI CHAT</div>
+          <div style="font-size:11px;color:var(--text);line-height:1.7;">
+            The floating chat bubble (bottom-right) opens Mara AI — your context-aware travel assistant. Mara knows about:<br>
+            <span style="color:var(--text2);margin-left:16px;">• All your bookings, dates, and confirmation codes</span><br>
+            <span style="color:var(--text2);margin-left:16px;">• Detected gaps and alerts</span><br>
+            <span style="color:var(--text2);margin-left:16px;">• Your budget and spending</span><br>
+            <span style="color:var(--text2);margin-left:16px;">• Your packing progress</span><br>
+            <span style="color:var(--text2);margin-left:16px;">• Whatever is on screen (search results, planner content)</span><br>
+            <span style="color:var(--text2);margin-left:16px;">• Your vault notes</span><br>
+            Ask things like "What am I missing?", "Visa requirements for Kenya?", or "Best restaurants near my hotel in Nairobi?"
+          </div>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:8px;">PRIVACY &amp; DATA</div>
+          <div style="font-size:11px;color:var(--text);line-height:1.7;">
+            <strong style="color:var(--green);">All your data stays in your browser.</strong> Mara stores everything in localStorage — bookings, expenses, pack lists, vault items, and API keys. Nothing is sent to any server except the API calls you explicitly trigger (Claude, SerpApi, AviationStack, Gmail). You can clear all data anytime by clearing your browser's local storage.
+          </div>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:8px;">TIPS</div>
+          <div style="font-size:11px;color:var(--text);line-height:1.7;">
+            <span style="color:var(--text2);">•</span> SerpApi free tier gives you 100 searches/month — use Price Pulse strategically<br>
+            <span style="color:var(--text2);">•</span> The 14-day panic rule: if your trip is under 14 days away, Price Pulse always says "Buy/Book Now"<br>
+            <span style="color:var(--text2);">•</span> Confidence scores are computed from real factors: +40 for live data, +30 for near-term trips, +30 for sufficient results<br>
+            <span style="color:var(--text2);">•</span> Weather overlay on the Control Tower map uses Open-Meteo (free, no key needed)<br>
+            <span style="color:var(--text2);">•</span> Flight status tracking checks flights within 48 hours of departure automatically<br>
+            <span style="color:var(--text2);">•</span> Use the Export Trip button on the dashboard for a printable itinerary before you travel
+          </div>
+        </div>
+
+      </div>
+    </div>
 
     <!-- AGENT -->
     <div class="tab-view" id="tab-agent">
