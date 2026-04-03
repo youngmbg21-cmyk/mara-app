@@ -3305,7 +3305,7 @@ Return ONLY valid JSON:
     </div>`).join('');
 
   const _bv = budget;
-  const _bvMatched = _bv ? hotels.filter(h => (h.rate_per_night?.lowest || h.price || 0) <= _bv) : [];
+  const _bvMatched = _bv ? hotels.filter(h => getHotelPrice(h) <= _bv) : [];
   const _bvBarW = _bv && hotels.length ? Math.max(4, Math.round((_bvMatched.length / hotels.length) * 100)) : 0;
   const _bvLabel = !_bv ? '' : _bvMatched.length === 0 ? '0 hotels · below market' : `${_bvMatched.length} hotel${_bvMatched.length > 1 ? 's' : ''}`;
   const budgetRowHtml = `<div class="fib-band" id="fib-hotel-budget-row" style="${!_bv ? 'display:none;' : ''}border-top:1px solid rgba(0,200,255,0.2);padding-top:10px;margin-top:4px;">
@@ -3429,7 +3429,7 @@ Return ONLY valid JSON:
         if (!row) return;
         const bv = parseFloat(inputEl.value) || 0;
         if (!bv) { row.style.display = 'none'; return; }
-        const matched = hotels.filter(h => (h.rate_per_night?.lowest || h.price || 0) <= bv);
+        const matched = hotels.filter(h => getHotelPrice(h) <= bv);
         const barW = Math.max(4, Math.round((matched.length / hotels.length) * 100));
         row.style.display = '';
         row.querySelector('.fib-budget-bar').style.width = barW + '%';
