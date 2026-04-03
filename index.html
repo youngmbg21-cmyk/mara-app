@@ -1031,28 +1031,30 @@ input[type="date"] { color-scheme: dark; }
 
     <!-- DASHBOARD -->
     <div class="tab-view active" id="tab-dashboard">
-      <div class="sec-header">
-        <div>
-          <div class="sec-title">VOYAGE <span class="accent">COMMAND</span></div>
-          <div class="sec-subtitle">YOUR COMPLETE TRAVEL INTELLIGENCE HUB</div>
+      <div style="flex-shrink:0;">
+        <div class="sec-header">
+          <div>
+            <div class="sec-title">VOYAGE <span class="accent">COMMAND</span></div>
+            <div class="sec-subtitle">YOUR COMPLETE TRAVEL INTELLIGENCE HUB</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn-secondary" onclick="exportTripPrint()" style="font-size:10px;padding:5px 12px;">🖨️ EXPORT TRIP</button>
+            <button class="btn-secondary" id="demo-flight-btn" onclick="toggleFlightStatusDemo()" style="font-size:10px;padding:5px 12px;">✈️ FLIGHT STATUS PREVIEW</button>
+            <div id="dash-date" style="font-size:11px;color:var(--text2);"></div>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <button class="btn-secondary" onclick="exportTripPrint()" style="font-size:10px;padding:5px 12px;">🖨️ EXPORT TRIP</button>
-          <button class="btn-secondary" id="demo-flight-btn" onclick="toggleFlightStatusDemo()" style="font-size:10px;padding:5px 12px;">✈️ FLIGHT STATUS PREVIEW</button>
-          <div id="dash-date" style="font-size:11px;color:var(--text2);"></div>
+        <div class="stats-strip">
+          <div class="stat-item"><div class="stat-val cyan" id="stat-total">0</div><div class="stat-lbl">BOOKINGS</div></div>
+          <div class="stat-item"><div class="stat-val" id="stat-flights">0</div><div class="stat-lbl">FLIGHTS</div></div>
+          <div class="stat-item"><div class="stat-val green" id="stat-hotels">0</div><div class="stat-lbl">HOTELS</div></div>
+          <div class="stat-item"><div class="stat-val gold" id="stat-nights">—</div><div class="stat-lbl">NIGHTS</div></div>
+          <div class="stat-item"><div class="stat-val gold" id="stat-restos">0</div><div class="stat-lbl">RESTAURANTS</div></div>
+          <div class="stat-item"><div class="stat-val red" id="stat-alerts">0</div><div class="stat-lbl">ALERTS</div></div>
         </div>
-      </div>
-      <div class="stats-strip">
-        <div class="stat-item"><div class="stat-val cyan" id="stat-total">0</div><div class="stat-lbl">BOOKINGS</div></div>
-        <div class="stat-item"><div class="stat-val" id="stat-flights">0</div><div class="stat-lbl">FLIGHTS</div></div>
-        <div class="stat-item"><div class="stat-val green" id="stat-hotels">0</div><div class="stat-lbl">HOTELS</div></div>
-        <div class="stat-item"><div class="stat-val gold" id="stat-nights">—</div><div class="stat-lbl">NIGHTS</div></div>
-        <div class="stat-item"><div class="stat-val gold" id="stat-restos">0</div><div class="stat-lbl">RESTAURANTS</div></div>
-        <div class="stat-item"><div class="stat-val red" id="stat-alerts">0</div><div class="stat-lbl">ALERTS</div></div>
-      </div>
-      <div class="fx-strip" id="fx-strip">
-        <div class="fx-label">COST OF LIVING</div>
-        <div class="fx-track" id="fx-track"></div>
+        <div class="fx-strip" id="fx-strip">
+          <div class="fx-label">COST OF LIVING</div>
+          <div class="fx-track" id="fx-track"></div>
+        </div>
       </div>
       <div id="dash-empty" class="scan-area">
         <div class="scan-icon">📧</div>
@@ -1063,7 +1065,7 @@ input[type="date"] { color-scheme: dark; }
           <button class="btn-secondary" onclick="openManualAdd()">+ ADD MANUALLY</button>
         </div>
       </div>
-      <div id="dash-content" style="display:none;">
+      <div id="dash-content" style="display:none;overflow-y:auto;flex:1;">
         <!-- Next destination banner -->
         <div id="dash-next-dest" style="display:none;flex-direction:column;margin:12px 20px 0;padding:14px 18px;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:10px;border-left:3px solid var(--cyan);"></div>
         <div id="dash-flight-status" style="display:none;margin:12px 20px 0;"></div>
@@ -1075,21 +1077,25 @@ input[type="date"] { color-scheme: dark; }
 
     <!-- BOOKINGS -->
     <div class="tab-view" id="tab-bookings">
-      <div class="sec-header">
-        <div><div class="sec-title">ALL <span class="accent">BOOKINGS</span></div></div>
-        <button class="btn-secondary" onclick="openManualAdd()">+ ADD BOOKING</button>
+      <div style="flex-shrink:0;">
+        <div class="sec-header">
+          <div><div class="sec-title">ALL <span class="accent">BOOKINGS</span></div></div>
+          <button class="btn-secondary" onclick="openManualAdd()">+ ADD BOOKING</button>
+        </div>
+        <div class="inner-tabs">
+          <div class="inner-tab active" onclick="switchBookingTab('all',this)">ALL</div>
+          <div class="inner-tab" onclick="switchBookingTab('flight',this)">FLIGHTS</div>
+          <div class="inner-tab" onclick="switchBookingTab('hotel',this)">HOTELS</div>
+          <div class="inner-tab" onclick="switchBookingTab('restaurant',this)">RESTAURANTS</div>
+          <div class="inner-tab" onclick="switchBookingTab('other',this)">OTHER</div>
+        </div>
       </div>
-      <div class="inner-tabs">
-        <div class="inner-tab active" onclick="switchBookingTab('all',this)">ALL</div>
-        <div class="inner-tab" onclick="switchBookingTab('flight',this)">FLIGHTS</div>
-        <div class="inner-tab" onclick="switchBookingTab('hotel',this)">HOTELS</div>
-        <div class="inner-tab" onclick="switchBookingTab('restaurant',this)">RESTAURANTS</div>
-        <div class="inner-tab" onclick="switchBookingTab('other',this)">OTHER</div>
-      </div>
-      <div class="cards-grid" id="bookings-cards"></div>
-      <div id="bookings-empty" class="empty-state" style="display:none;">
-        <div class="empty-icon">🎫</div><div class="empty-title">No bookings yet</div>
-        <div class="empty-body">Scan your inbox or add a booking manually.</div>
+      <div style="overflow-y:auto;flex:1;">
+        <div class="cards-grid" id="bookings-cards"></div>
+        <div id="bookings-empty" class="empty-state" style="display:none;">
+          <div class="empty-icon">🎫</div><div class="empty-title">No bookings yet</div>
+          <div class="empty-body">Scan your inbox or add a booking manually.</div>
+        </div>
       </div>
     </div>
 
@@ -1174,24 +1180,28 @@ input[type="date"] { color-scheme: dark; }
 
     <!-- RESTAURANTS -->
     <div class="tab-view" id="tab-restaurants">
-      <div class="sec-header">
-        <div><div class="sec-title">RESTAURANT <span class="accent">DISCOVERY</span></div></div>
-        <span class="pill gold">AI POWERED</span>
-      </div>
-      <div class="search-form">
-        <div class="search-field" style="flex:2;min-width:200px;"><div class="search-label">CITY</div>
-          <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="rs-city" placeholder="Search city…" autocomplete="off" oninput="filterCities('rs-city',this.value)" onfocus="openCityDrop('rs-city')" onblur="closeCityDrop('rs-city')"><div class="city-drop" id="cdrop-rs-city"></div></div>
-          <input type="hidden" id="rs-city-code">
+      <div style="flex-shrink:0;">
+        <div class="sec-header">
+          <div><div class="sec-title">RESTAURANT <span class="accent">DISCOVERY</span></div></div>
+          <span class="pill gold">AI POWERED</span>
         </div>
-        <div class="search-field" style="flex:2;"><div class="search-label">CUISINE / VIBE</div><input class="search-input" id="rs-vibe" placeholder="e.g. romantic fine dining, sushi, rooftop"></div>
-        <div class="search-field" style="max-width:130px;"><div class="search-label">BUDGET PP</div>
-          <select class="search-input" id="rs-budget"><option value="$$">$$ — Casual</option><option value="$$$">$$$ — Mid-range</option><option value="$$$$" selected>$$$$ — Fine Dining</option></select>
+        <div class="search-form">
+          <div class="search-field" style="flex:2;min-width:200px;"><div class="search-label">CITY</div>
+            <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="rs-city" placeholder="Search city…" autocomplete="off" oninput="filterCities('rs-city',this.value)" onfocus="openCityDrop('rs-city')" onblur="closeCityDrop('rs-city')"><div class="city-drop" id="cdrop-rs-city"></div></div>
+            <input type="hidden" id="rs-city-code">
+          </div>
+          <div class="search-field" style="flex:2;"><div class="search-label">CUISINE / VIBE</div><input class="search-input" id="rs-vibe" placeholder="e.g. romantic fine dining, sushi, rooftop"></div>
+          <div class="search-field" style="max-width:130px;"><div class="search-label">BUDGET PP</div>
+            <select class="search-input" id="rs-budget"><option value="$$">$$ — Casual</option><option value="$$$">$$$ — Mid-range</option><option value="$$$$" selected>$$$$ — Fine Dining</option></select>
+          </div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn-primary" style="background:var(--gold);color:var(--bg);" onclick="searchRestaurants()">FIND RESTAURANTS</button></div>
         </div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" style="background:var(--gold);color:var(--bg);" onclick="searchRestaurants()">FIND RESTAURANTS</button></div>
       </div>
-      <div id="rs-results" class="results-container" style="overflow-y:auto;flex:1;"></div>
-      <div class="section-label">MY RESTAURANT BOOKINGS</div>
-      <div class="cards-grid" id="my-restos"></div>
+      <div style="overflow-y:auto;flex:1;">
+        <div id="rs-results" class="results-container"></div>
+        <div class="section-label">MY RESTAURANT BOOKINGS</div>
+        <div class="cards-grid" id="my-restos"></div>
+      </div>
     </div>
 
     <!-- CONTROL TOWER -->
@@ -1229,44 +1239,50 @@ input[type="date"] { color-scheme: dark; }
       <div id="alerts-list" style="padding:12px 20px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;"></div>
     </div>
     <div class="tab-view" id="tab-planner">
-      <div class="sec-header">
-        <div><div class="sec-title">AI TRIP <span class="accent">PLANNER</span></div></div>
-        <span class="pill cyan">CLAUDE POWERED</span>
+      <div style="flex-shrink:0;">
+        <div class="sec-header">
+          <div><div class="sec-title">AI TRIP <span class="accent">PLANNER</span></div></div>
+          <span class="pill cyan">CLAUDE POWERED</span>
+        </div>
+        <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="search-field" style="flex:2;min-width:180px;"><div class="search-label">DESTINATION</div><input class="search-input" id="planner-dest" placeholder="e.g. Nairobi, Cape Town"></div>
+          <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">TRAVEL DATES</div><input class="search-input" id="planner-dates" placeholder="e.g. May 15–22"></div>
+          <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">ACTIVITIES / INTERESTS</div><input class="search-input" id="planner-context" placeholder="e.g. safari, beach, fine dining"></div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn-primary" id="planner-run-all-btn" onclick="runAllModules()">RUN ALL →</button></div>
+        </div>
       </div>
-      <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-        <div class="search-field" style="flex:2;min-width:180px;"><div class="search-label">DESTINATION</div><input class="search-input" id="planner-dest" placeholder="e.g. Nairobi, Cape Town"></div>
-        <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">TRAVEL DATES</div><input class="search-input" id="planner-dates" placeholder="e.g. May 15–22"></div>
-        <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">ACTIVITIES / INTERESTS</div><input class="search-input" id="planner-context" placeholder="e.g. safari, beach, fine dining"></div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" id="planner-run-all-btn" onclick="runAllModules()">RUN ALL →</button></div>
+      <div style="overflow-y:auto;flex:1;">
+        <div class="planner-modules" id="planner-module-grid">
+          <div class="module-card cyan-theme" id="pmod-itinerary" onclick="showModuleResult('itinerary')"><div class="module-status" id="pstat-itinerary"></div><div class="module-icon">📋</div><div class="module-name">Day-by-Day Itinerary</div><div class="module-desc">Generate a full optimized itinerary for your trip based on your bookings and interests.</div></div>
+          <div class="module-card green-theme" id="pmod-neighborhoods" onclick="showModuleResult('neighborhoods')"><div class="module-status" id="pstat-neighborhoods"></div><div class="module-icon">🗺️</div><div class="module-name">Neighborhood Guide</div><div class="module-desc">Discover the best neighborhoods — where to stay, eat, explore, and experience local life.</div></div>
+          <div class="module-card gold-theme" id="pmod-transport" onclick="showModuleResult('transport')"><div class="module-status" id="pstat-transport"></div><div class="module-icon">🚌</div><div class="module-name">Transport Intelligence</div><div class="module-desc">Airport transfers, local transport apps, costs, and pro tips for getting around.</div></div>
+          <div class="module-card red-theme" id="pmod-culture" onclick="showModuleResult('culture')"><div class="module-status" id="pstat-culture"></div><div class="module-icon">🎭</div><div class="module-name">Culture & Etiquette</div><div class="module-desc">Local customs, tipping norms, dress codes, safety tips, and cultural nuances.</div></div>
+          <div class="module-card cyan-theme" id="pmod-weather" onclick="showModuleResult('weather')"><div class="module-status" id="pstat-weather"></div><div class="module-icon">🌤️</div><div class="module-name">Weather & Packing Tips</div><div class="module-desc">Expected weather for your dates, plus packing recommendations.</div></div>
+          <div class="module-card green-theme" id="pmod-hidden_gems" onclick="showModuleResult('hidden_gems')"><div class="module-status" id="pstat-hidden_gems"></div><div class="module-icon">💎</div><div class="module-name">Hidden Gems</div><div class="module-desc">Off-the-beaten-path experiences and secret spots most tourists never find.</div></div>
+          <div class="module-card gold-theme" id="pmod-day_trips" onclick="showModuleResult('day_trips')"><div class="module-status" id="pstat-day_trips"></div><div class="module-icon">🚗</div><div class="module-name">Day Trips</div><div class="module-desc">Best excursions from your base city with transport, duration, and highlights.</div></div>
+          <div class="module-card red-theme" id="pmod-visa_health" onclick="showModuleResult('visa_health')"><div class="module-status" id="pstat-visa_health"></div><div class="module-icon">🛂</div><div class="module-name">Visa & Health Checks</div><div class="module-desc">Visa requirements, vaccinations, travel insurance, and entry requirements.</div></div>
+        </div>
+        <div id="planner-result" class="ai-result-panel"></div>
       </div>
-      <div class="planner-modules" id="planner-module-grid">
-        <div class="module-card cyan-theme" id="pmod-itinerary" onclick="showModuleResult('itinerary')"><div class="module-status" id="pstat-itinerary"></div><div class="module-icon">📋</div><div class="module-name">Day-by-Day Itinerary</div><div class="module-desc">Generate a full optimized itinerary for your trip based on your bookings and interests.</div></div>
-        <div class="module-card green-theme" id="pmod-neighborhoods" onclick="showModuleResult('neighborhoods')"><div class="module-status" id="pstat-neighborhoods"></div><div class="module-icon">🗺️</div><div class="module-name">Neighborhood Guide</div><div class="module-desc">Discover the best neighborhoods — where to stay, eat, explore, and experience local life.</div></div>
-        <div class="module-card gold-theme" id="pmod-transport" onclick="showModuleResult('transport')"><div class="module-status" id="pstat-transport"></div><div class="module-icon">🚌</div><div class="module-name">Transport Intelligence</div><div class="module-desc">Airport transfers, local transport apps, costs, and pro tips for getting around.</div></div>
-        <div class="module-card red-theme" id="pmod-culture" onclick="showModuleResult('culture')"><div class="module-status" id="pstat-culture"></div><div class="module-icon">🎭</div><div class="module-name">Culture & Etiquette</div><div class="module-desc">Local customs, tipping norms, dress codes, safety tips, and cultural nuances.</div></div>
-        <div class="module-card cyan-theme" id="pmod-weather" onclick="showModuleResult('weather')"><div class="module-status" id="pstat-weather"></div><div class="module-icon">🌤️</div><div class="module-name">Weather & Packing Tips</div><div class="module-desc">Expected weather for your dates, plus packing recommendations.</div></div>
-        <div class="module-card green-theme" id="pmod-hidden_gems" onclick="showModuleResult('hidden_gems')"><div class="module-status" id="pstat-hidden_gems"></div><div class="module-icon">💎</div><div class="module-name">Hidden Gems</div><div class="module-desc">Off-the-beaten-path experiences and secret spots most tourists never find.</div></div>
-        <div class="module-card gold-theme" id="pmod-day_trips" onclick="showModuleResult('day_trips')"><div class="module-status" id="pstat-day_trips"></div><div class="module-icon">🚗</div><div class="module-name">Day Trips</div><div class="module-desc">Best excursions from your base city with transport, duration, and highlights.</div></div>
-        <div class="module-card red-theme" id="pmod-visa_health" onclick="showModuleResult('visa_health')"><div class="module-status" id="pstat-visa_health"></div><div class="module-icon">🛂</div><div class="module-name">Visa & Health Checks</div><div class="module-desc">Visa requirements, vaccinations, travel insurance, and entry requirements.</div></div>
-      </div>
-      <div id="planner-result" class="ai-result-panel"></div>
     </div>
 
     <!-- PACK LIST -->
     <div class="tab-view" id="tab-pack">
-      <div class="sec-header">
-        <div><div class="sec-title">PACK <span class="accent">LIST</span></div></div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn-secondary" onclick="generatePackList()">🧠 AI GENERATE</button>
-          <button class="btn-secondary" onclick="clearPackList()">CLEAR ALL</button>
+      <div style="flex-shrink:0;">
+        <div class="sec-header">
+          <div><div class="sec-title">PACK <span class="accent">LIST</span></div></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-secondary" onclick="generatePackList()">🧠 AI GENERATE</button>
+            <button class="btn-secondary" onclick="clearPackList()">CLEAR ALL</button>
+          </div>
+        </div>
+        <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;">
+          <input class="field-input" style="flex:1;" id="pack-trip-context" placeholder="Trip context (e.g. 7 days Cape Town, beach + safari, hot weather)">
+          <button class="btn-primary" onclick="generatePackList()">GENERATE LIST</button>
         </div>
       </div>
-      <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;">
-        <input class="field-input" style="flex:1;" id="pack-trip-context" placeholder="Trip context (e.g. 7 days Cape Town, beach + safari, hot weather)">
-        <button class="btn-primary" onclick="generatePackList()">GENERATE LIST</button>
-      </div>
       <div id="pack-categories" style="overflow-y:auto;flex:1;"></div>
-      <div class="pack-add-row">
+      <div class="pack-add-row" style="flex-shrink:0;">
         <input class="field-input" style="flex:1;" id="pack-new-item" placeholder="Add item...">
         <select class="field-input" id="pack-new-cat" style="width:150px;"><option>Clothing</option><option>Documents</option><option>Electronics</option><option>Toiletries</option><option>Health</option><option>Other</option></select>
         <button class="btn-secondary" onclick="addPackItem()">ADD</button>
@@ -1275,9 +1291,11 @@ input[type="date"] { color-scheme: dark; }
 
     <!-- VISITORS -->
     <div class="tab-view" id="tab-visitors">
-      <div class="sec-header"><div><div class="sec-title">VISITOR <span class="accent">TRACKER</span></div></div></div>
-      <div class="banner info">📁 Create a Gmail label <strong style="margin:0 4px;">"Tracker"</strong> and move friends/family travel emails there. Mara scans it automatically.</div>
-      <div id="visitors-list" style="padding:12px 20px;">
+      <div style="flex-shrink:0;">
+        <div class="sec-header"><div><div class="sec-title">VISITOR <span class="accent">TRACKER</span></div></div></div>
+        <div class="banner info">📁 Create a Gmail label <strong style="margin:0 4px;">"Tracker"</strong> and move friends/family travel emails there. Mara scans it automatically.</div>
+      </div>
+      <div id="visitors-list" style="padding:12px 20px;overflow-y:auto;flex:1;">
         <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No visitor trips found</div><div class="empty-body">Set up a Tracker folder and rescan.</div></div>
       </div>
     </div>
