@@ -1792,7 +1792,7 @@ let currentBookingId = null;
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('dash-date').textContent =
     new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  if (GOOGLE_CLIENT_ID) document.getElementById('googleClientId').value = GOOGLE_CLIENT_ID;
+  if (GOOGLE_CLIENT_ID) { const el = document.getElementById('googleClientId'); if (el) el.value = GOOGLE_CLIENT_ID; }
   // Restore valid saved token instantly — skip login screen
   if (restoreSavedToken()) { launchTerminal(true); }
   // Init GIS auth (renders sign-in button, handles silent re-auth)
@@ -1994,7 +1994,7 @@ Always reference specific booking details, confirmation codes, and dates when av
     ctx += `\n\n── BUDGET ──`;
     ctx += `\nTotal: ${cur} ${tripBudget.toLocaleString()} | Spent: ${cur} ${spent.toLocaleString()} (${pct}%) | Remaining: ${cur} ${rem.toLocaleString()}`;
     if (expenses.length)
-      ctx += `\nExpenses: ` + expenses.slice(0,10).map(e=>`${e.category||'Other'} ${e.description||''} ${cur}${e.amount||0}`).join('; ');
+      ctx += `\nExpenses: ` + expenses.slice(0,10).map(e=>`${e.cat||'Other'} ${e.desc||''} ${cur}${e.amount||0}`).join('; ');
   }
 
   // ── Pack list ─────────────────────────────────
@@ -4429,7 +4429,6 @@ function refreshMap() {
 }
 
 // ── Hotel pins via Nominatim geocoding ────────
-const hotelGeoCache = {}; // address → [lat, lng]
 
 async function renderMapHotels() {
   const hotels = bookings.filter(b => b.type === 'hotel');
@@ -4450,21 +4449,6 @@ async function renderMapHotels() {
       if (coords && mapInstance) placeHotelPin(hotel, coords);
     } catch(e) {}
   }
-}
-
-async function geocodeAddress(address) {
-  if (hotelGeoCache[address]) return hotelGeoCache[address];
-  try {
-    const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
-    const res  = await fetch(url, { headers: { 'Accept-Language': 'en', 'User-Agent': 'Mara-Travel-App' } });
-    const data = await res.json();
-    if (data && data[0]) {
-      const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-      hotelGeoCache[address] = coords;
-      return coords;
-    }
-  } catch(e) {}
-  return null;
 }
 
 function placeHotelPin(hotel, coords) {
@@ -6773,7 +6757,7 @@ async function agentHotelSearch(p, container, headerEl) {
         currency: cur, adults: '2',
       });
       const hotels = (data.properties||[])
-        .filter(h => !p.budget || !h.rate_per_night?.lowest || parseFloat(h.rate_per_night.lowest) <= p.budget);
+        .filter(h => !p.budget || !h.rate_per_night?.lowest || parseFloat(h.rate_per_night?.lowest) <= p.budget);
       if (!hotels.length) throw new Error('No hotels matching your criteria');
 
       const time = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
