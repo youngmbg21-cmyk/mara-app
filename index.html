@@ -549,6 +549,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .map-legend{position:absolute;bottom:20px;right:20px;z-index:10;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:10px;}
 .map-legend-item{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
 .map-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.map-weather-badge{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:2px 6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);white-space:nowrap;display:flex;align-items:center;gap:3px;box-shadow:0 2px 8px rgba(0,0,0,0.4);}
+.map-weather-toggle{position:absolute;top:12px;right:12px;z-index:10;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+.map-weather-toggle:hover{border-color:var(--cyan);color:var(--text);}
+.map-weather-toggle.active{border-color:var(--cyan);color:var(--cyan);}
 
 /* Leaflet dark theme overrides */
 .leaflet-tile{filter:brightness(0.6) saturate(0.7) hue-rotate(180deg) invert(1);}
@@ -1078,6 +1082,7 @@ input[type="date"] { color-scheme: dark; }
         </div>
         <div style="flex:1;position:relative;">
           <div id="map"></div>
+          <button class="map-weather-toggle" id="map-weather-btn" onclick="toggleWeatherOverlay()">🌤️ Weather</button>
           <div class="map-legend">
             <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--cyan);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Upcoming</span></div>
             <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--text3);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Past</span></div>
@@ -1180,6 +1185,7 @@ input[type="date"] { color-scheme: dark; }
         </div>
         <div style="flex:1;position:relative;">
           <div id="map"></div>
+          <button class="map-weather-toggle" id="map-weather-btn2" onclick="toggleWeatherOverlay()">🌤️ Weather</button>
           <div class="map-legend">
             <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--cyan);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Upcoming</span></div>
             <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--text3);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Past</span></div>
@@ -4430,10 +4436,12 @@ function initMap() {
 
 function refreshMap() {
   if (!mapInstance) return;
+  _weatherMarkers = [];
   mapInstance.eachLayer(layer => { if (layer instanceof L.Marker || layer instanceof L.Polyline) mapInstance.removeLayer(layer); });
   renderMapTrips();
   renderMapHotels(); // async — geocodes and places pins as results come in
   renderMapSidebar();
+  if (_weatherVisible) setTimeout(() => loadWeatherOverlay(), 1500);
 }
 
 // ── Hotel pins via Nominatim geocoding ────────
@@ -4635,6 +4643,107 @@ function drawArc(from, to, isPast) {
     pts.push([lat,lng]);
   }
   L.polyline(pts, { color, weight:1.5, opacity: isPast?0.3:0.7, dashArray: isPast?'4,4':null }).addTo(mapInstance);
+}
+
+// ── Weather Overlay ─────────────────────────────
+const _weatherCache = {};
+let _weatherMarkers = [];
+let _weatherVisible = false;
+
+const WMO_ICONS = {
+  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
+  51:'🌦️',53:'🌦️',55:'🌧️',56:'🌧️',57:'🌧️',
+  61:'🌧️',63:'🌧️',65:'🌧️',66:'🌧️',67:'🌧️',
+  71:'🌨️',73:'🌨️',75:'❄️',77:'❄️',
+  80:'🌦️',81:'🌧️',82:'🌧️',85:'🌨️',86:'🌨️',
+  95:'⛈️',96:'⛈️',99:'⛈️'
+};
+
+async function fetchWeather(lat, lon) {
+  const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  if (_weatherCache[key]) return _weatherCache[key];
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto`);
+    const data = await res.json();
+    if (data.current) {
+      const result = {
+        temp: Math.round(data.current.temperature_2m),
+        code: data.current.weather_code,
+        wind: Math.round(data.current.wind_speed_10m),
+        icon: WMO_ICONS[data.current.weather_code] || '🌡️'
+      };
+      _weatherCache[key] = result;
+      return result;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function placeWeatherBadge(coords, weather) {
+  if (!mapInstance || !weather) return;
+  const icon = L.divIcon({
+    html: `<div class="map-weather-badge">${weather.icon} ${weather.temp}°C</div>`,
+    iconSize: [0, 0],
+    iconAnchor: [-10, 12],
+    className: ''
+  });
+  const marker = L.marker(coords, { icon, interactive: false }).addTo(mapInstance);
+  _weatherMarkers.push(marker);
+}
+
+function clearWeatherMarkers() {
+  _weatherMarkers.forEach(m => { if (mapInstance) mapInstance.removeLayer(m); });
+  _weatherMarkers = [];
+}
+
+async function loadWeatherOverlay() {
+  clearWeatherMarkers();
+  if (!mapInstance) return;
+
+  // Collect unique locations: flight destinations + hotel pins
+  const locations = new Map(); // "lat,lon" → {coords, label}
+
+  // Flight city pins
+  const flights = bookings.filter(b => b.type === 'flight' && b.to);
+  flights.forEach(b => {
+    const coords = getCityCoords(b.to);
+    if (coords) {
+      const key = `${coords[0].toFixed(2)},${coords[1].toFixed(2)}`;
+      if (!locations.has(key)) locations.set(key, coords);
+    }
+  });
+
+  // Home base
+  const homeCoords = getCityCoords('ARN') || [59.3, 18.1];
+  const homeKey = `${homeCoords[0].toFixed(2)},${homeCoords[1].toFixed(2)}`;
+  if (!locations.has(homeKey)) locations.set(homeKey, homeCoords);
+
+  // Hotel pins from geocode cache
+  for (const [, coords] of Object.entries(_geocodeCache)) {
+    if (coords) {
+      const key = `${coords[0].toFixed(2)},${coords[1].toFixed(2)}`;
+      if (!locations.has(key)) locations.set(key, coords);
+    }
+  }
+
+  // Fetch weather for each unique location (with small delay to be polite to API)
+  for (const [, coords] of locations) {
+    const weather = await fetchWeather(coords[0], coords[1]);
+    if (weather) placeWeatherBadge(coords, weather);
+  }
+}
+
+function toggleWeatherOverlay() {
+  _weatherVisible = !_weatherVisible;
+  const btn = document.getElementById('map-weather-btn');
+  const btn2 = document.getElementById('map-weather-btn2');
+  if (btn) btn.classList.toggle('active', _weatherVisible);
+  if (btn2) btn2.classList.toggle('active', _weatherVisible);
+  if (_weatherVisible) {
+    loadWeatherOverlay();
+  } else {
+    clearWeatherMarkers();
+  }
 }
 
 function renderMapSidebar() {
