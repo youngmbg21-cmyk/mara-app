@@ -1103,11 +1103,11 @@ input[type="date"] { color-scheme: dark; }
 
       <!-- Flight search form -->
       <div id="pp-form-flight" class="search-form">
-        <div class="search-field"><div class="search-label">FROM</div>
+        <div class="search-field" style="min-width:180px;"><div class="search-label">FROM</div>
           <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="fl2-from" placeholder="Search city…" autocomplete="off" oninput="filterCities('fl2-from',this.value)" onfocus="openCityDrop('fl2-from')" onblur="closeCityDrop('fl2-from')"><div class="city-drop" id="cdrop-fl2-from"></div></div>
           <input type="hidden" id="fl2-from-code">
         </div>
-        <div class="search-field"><div class="search-label">TO</div>
+        <div class="search-field" style="min-width:180px;"><div class="search-label">TO</div>
           <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="fl2-to" placeholder="Search city…" autocomplete="off" oninput="filterCities('fl2-to',this.value)" onfocus="openCityDrop('fl2-to')" onblur="closeCityDrop('fl2-to')"><div class="city-drop" id="cdrop-fl2-to"></div></div>
           <input type="hidden" id="fl2-to-code">
         </div>
@@ -1122,7 +1122,7 @@ input[type="date"] { color-scheme: dark; }
 
       <!-- Hotel search form (hidden by default) -->
       <div id="pp-form-hotel" class="search-form" style="display:none;">
-        <div class="search-field" style="flex:2;"><div class="search-label">CITY / DESTINATION</div>
+        <div class="search-field" style="flex:2;min-width:200px;"><div class="search-label">CITY / DESTINATION</div>
           <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="pp-ht-city" placeholder="Search city…" autocomplete="off" oninput="filterCities('pp-ht-city',this.value)" onfocus="openCityDrop('pp-ht-city')" onblur="closeCityDrop('pp-ht-city')"><div class="city-drop" id="cdrop-pp-ht-city"></div></div>
           <input type="hidden" id="pp-ht-city-code">
         </div>
@@ -1146,7 +1146,7 @@ input[type="date"] { color-scheme: dark; }
         <span class="pill gold">AI POWERED</span>
       </div>
       <div class="search-form">
-        <div class="search-field" style="flex:2;"><div class="search-label">CITY</div>
+        <div class="search-field" style="flex:2;min-width:200px;"><div class="search-label">CITY</div>
           <div class="city-dropdown-wrap"><input class="city-search-input search-input" id="rs-city" placeholder="Search city…" autocomplete="off" oninput="filterCities('rs-city',this.value)" onfocus="openCityDrop('rs-city')" onblur="closeCityDrop('rs-city')"><div class="city-drop" id="cdrop-rs-city"></div></div>
           <input type="hidden" id="rs-city-code">
         </div>
