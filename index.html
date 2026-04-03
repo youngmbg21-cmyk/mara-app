@@ -3379,6 +3379,7 @@ function deleteBooking(id, e) {
   saveBookings();
   renderAll();
   showToast('Booking removed', 'warning');
+  runProactiveAnalysis();
 }
 
 function fd(d) { if(!d) return ''; return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
@@ -4902,6 +4903,21 @@ function getCityCoords(iata) {
   return null;
 }
 
+async function resolveCityCoords(iata) {
+  // Try hardcoded lookup first
+  const quick = getCityCoords(iata);
+  if (quick) return quick;
+  // Fall back to geocoding via Nominatim using city name from WORLD_CITIES
+  const city = WORLD_CITIES.find(c => c.iata === iata);
+  const query = city ? `${city.name}, ${city.country}` : iata;
+  const coords = await geocodeAddress(query);
+  if (coords) {
+    // Cache in CITY_COORDS for future lookups
+    CITY_COORDS[iata] = [coords[1], coords[0]];
+  }
+  return coords;
+}
+
 function initMap() {
   if (mapInstance) { refreshMap(); return; }
   setTimeout(() => {
@@ -5004,7 +5020,7 @@ function renderMapHotelSidebar(hotels) {
   }).join('');
 }
 
-function renderMapTrips() {
+async function renderMapTrips() {
   if (!mapInstance) return;
   const now = new Date();
   const flights = bookings.filter(b => b.type==='flight' && b.from && b.to);
@@ -5020,10 +5036,11 @@ function renderMapTrips() {
 
   const plotted = new Set();
 
-  flights.forEach(b => {
-    const fromC = getCityCoords(b.from);
-    const toC   = getCityCoords(b.to);
+  for (const b of flights) {
+    const fromC = await resolveCityCoords(b.from);
+    const toC   = await resolveCityCoords(b.to);
     const isPast = b.date && new Date(b.date) < now;
+    if (!mapInstance) return;
 
     if (fromC && !plotted.has(b.from)) {
       plotted.add(b.from);
@@ -5034,7 +5051,7 @@ function renderMapTrips() {
       addCityPin(b.to, toC, isPast, b);
     }
     if (fromC && toC) drawArc(fromC, toC, isPast);
-  });
+  }
 
   // Hotel pins — geocode addresses via Nominatim
   const hotels = bookings.filter(b => b.type === 'hotel' && (b.address || b.hotelName));
@@ -5314,9 +5331,10 @@ function parseArr(raw) {
 // PROACTIVE ANALYSIS
 // ═══════════════════════════════════════════════
 async function runProactiveAnalysis() {
-  if (!apiKey) return;
+  if (!apiKey) { showToast('Add your Claude API key in ⚙ Settings to enable trip analysis','warning'); openDrawer(); return; }
   const sorted = [...bookings].filter(b=>b.date).sort((a,b)=>new Date(a.date)-new Date(b.date));
-  if (!sorted.length) return;
+  if (!sorted.length) { showToast('No bookings to analyze','info'); return; }
+  showToast('Analyzing your trips for gaps…','info');
   try {
     const raw = await callClaude(
       `Analyze bookings for travel gaps. Return ONLY a JSON array (no markdown). Empty array if no issues.
@@ -5329,7 +5347,9 @@ Each item: { "type":"missing_flight"|"missing_hotel"|"transit"|"gap", "severity"
     updateStats();
     renderAlerts();
     if (remindersEnabled) setupCheckInReminders();
-  } catch(e) {}
+    const total = proactiveGaps.length + proactiveAlerts.length;
+    showToast(total > 0 ? `Found ${total} issue${total>1?'s':''}` : 'No issues found — all clear!', total > 0 ? 'warning' : 'success');
+  } catch(e) { showToast('Analysis failed: ' + (e.message||'unknown error'), 'error'); }
 }
 
 // ═══════════════════════════════════════════════
