@@ -3563,15 +3563,21 @@ Vary the options realistically — include direct, 1-stop, and 2-stop options at
       const flightSummary = JSON.stringify({
         route: `${from} → ${to}`, todayDate: today.toISOString().split('T')[0],
         departureDate: depart, returnDate: ret||null, daysToTrip,
-        isRoundTrip: isRT, class: cls, pax, currency: cur,
+        isRoundTrip: isRT, class: cls, pax: Number(pax), currency: cur,
         budget: budget||null, budgetFlightsAvailable: budgetFlights,
         budgetCoversPercent: budgetPct,
         totalOptions: flights.length, isLiveData: isLive,
         competitionCount, airlines,
-        priceRange: { min: minP, max: maxP, avg: avgP, median: medianP },
+        priceRange: {
+          minPerPerson: minP, maxPerPerson: maxP, avgPerPerson: avgP, medianPerPerson: medianP,
+          minTotal: minP * Number(pax), maxTotal: maxP * Number(pax), avgTotal: Math.round(avgP * Number(pax))
+        },
+        note: `All prices are PER PERSON. Total cost for ${pax} passengers = price × ${pax}. Always reference total cost (${pax} pax) in your analysis.`,
         priceSpreadPct: Math.round(spread),
         bands: bands.map(b => ({
-          label: b.label, priceRange: `${cur} ${b.min}–${b.max}`,
+          label: b.label,
+          priceRangePerPerson: `${cur} ${b.min}–${b.max}`,
+          priceRangeTotal: `${cur} ${b.min * Number(pax)}–${b.max * Number(pax)} for ${pax} pax`,
           count: b.count, avgDuration: b.avgDur ? Math.floor(b.avgDur/60)+'h '+b.avgDur%60+'m' : '—',
           avgStops: b.avgStops, directFlights: b.directCount, earlyDepartures: b.earlyDep
         }))
@@ -3583,7 +3589,7 @@ Decision rules:
 1. PANIC RULE: If daysToTrip < 14 → signal MUST be BUY_NOW. Inventory is critical.
 2. SWEET SPOT (21–60 days): If price > 10% below average → BUY_NOW. If price is average → FAIR_PRICE but warn drops are unlikely.
 3. PATIENCE WINDOW (90+ days): Unless price is 25%+ below average → CONSIDER_WAITING. Flash sales likely in 2–3 months.
-4. BUDGET CHECK: Compare budget to market floor (minP). State how much inventory the budget covers.
+4. BUDGET CHECK: Compare budget to market floor (minTotal for all pax). State how much inventory the budget covers per person and total for ${pax} passenger(s).
 5. CONFIDENCE SCORE: +40 if isLiveData=true, +30 if daysToTrip<=30, +30 if competitionCount>=5.
 
 ${forcedSignal ? `OVERRIDE: daysToTrip is ${daysToTrip}. Signal is FORCED to BUY_NOW. Do not change it.` : ''}
@@ -3592,7 +3598,7 @@ Return ONLY valid JSON (no markdown):
 {
   "buySignal": "${forcedSignal || 'BUY_NOW|FAIR_PRICE|CONSIDER_WAITING'}",
   "confidenceScore": 0-100,
-  "strategySummary": "2-3 sentences using specific daysToTrip, budget and price figures to explain the signal",
+  "strategySummary": "2-3 sentences using specific daysToTrip, pax count, total cost (not per-person) and budget figures to explain the signal. Always multiply prices by pax count when referencing cost.",
   "budgetVerdict": "Is budget realistic vs market floor? State % of inventory covered. Null if no budget.",
   "riskFactor": "The #1 risk of waiting (price spike / inventory loss / no risk)",
   "sweetSpot": "One sentence on best value price point",
@@ -3729,9 +3735,9 @@ Return ONLY valid JSON (no markdown):
     </div>
 
     <div class="fib-summary">
-      <div class="fib-kpi"><div class="fib-kpi-label">Lowest price</div><div class="fib-kpi-val" style="color:var(--green)">${cur} ${minP.toLocaleString()}</div><div class="fib-kpi-sub">${isRT?'round trip':'one-way'}</div></div>
-      <div class="fib-kpi"><div class="fib-kpi-label">Average price</div><div class="fib-kpi-val">${cur} ${avgP.toLocaleString()}</div><div class="fib-kpi-sub">${flights.length} options · ${daysToTrip} days away</div></div>
-      <div class="fib-kpi"><div class="fib-kpi-label">Highest price</div><div class="fib-kpi-val" style="color:var(--text2)">${cur} ${maxP.toLocaleString()}</div><div class="fib-kpi-sub">price ceiling today</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Lowest price</div><div class="fib-kpi-val" style="color:var(--green)">${cur} ${minP.toLocaleString()}</div><div class="fib-kpi-sub">${Number(pax)>1?`×${pax} = ${cur} ${(minP*Number(pax)).toLocaleString()} total`:isRT?'round trip':'one-way'}</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Average price</div><div class="fib-kpi-val">${cur} ${avgP.toLocaleString()}</div><div class="fib-kpi-sub">${Number(pax)>1?`per person · ${cur} ${(avgP*Number(pax)).toLocaleString()} total`:flights.length+' options'} · ${daysToTrip} days away</div></div>
+      <div class="fib-kpi"><div class="fib-kpi-label">Highest price</div><div class="fib-kpi-val" style="color:var(--text2)">${cur} ${maxP.toLocaleString()}</div><div class="fib-kpi-sub">${Number(pax)>1?`×${pax} = ${cur} ${(maxP*Number(pax)).toLocaleString()} total`:'price ceiling today'}</div></div>
       <div class="fib-kpi"><div class="fib-kpi-label">Buy signal</div><div class="fib-kpi-val" style="color:${buyColor}">${buyLabel}</div><div class="fib-kpi-sub">${confScore !== null ? `<span style="color:${confColor};">confidence ${confScore}/100</span>` : 'Based on current pricing'}</div></div>
     </div>
 
