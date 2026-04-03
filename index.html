@@ -456,6 +456,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .module-icon{font-size:28px;margin-bottom:10px;}
 .module-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px;}
 .module-desc{font-size:10px;color:var(--text2);line-height:1.5;}
+.module-status{position:absolute;top:10px;right:10px;font-size:12px;}
+.module-card.active-module{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,200,255,0.15);}
+.module-card.done{opacity:1;} .module-card.loading{opacity:0.7;}
 .module-tag{display:inline-block;margin-top:8px;padding:2px 8px;border-radius:10px;font-size:8px;letter-spacing:0.12em;font-weight:600;text-transform:uppercase;}
 .module-tag.cyan{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(0,200,255,0.2);}
 .module-tag.green{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,255,136,0.2);}
@@ -1230,23 +1233,21 @@ input[type="date"] { color-scheme: dark; }
         <div><div class="sec-title">AI TRIP <span class="accent">PLANNER</span></div></div>
         <span class="pill cyan">CLAUDE POWERED</span>
       </div>
-      <div class="planner-modules">
-        <div class="module-card cyan-theme" onclick="runModule('itinerary')"><div class="module-icon">📋</div><div class="module-name">Day-by-Day Itinerary</div><div class="module-desc">Generate a full optimized itinerary for your trip based on your bookings and interests.</div><span class="module-tag cyan">GENERATE</span></div>
-        <div class="module-card green-theme" onclick="runModule('neighborhoods')"><div class="module-icon">🗺️</div><div class="module-name">Neighborhood Guide</div><div class="module-desc">Discover the best neighborhoods — where to stay, eat, explore, and experience local life.</div><span class="module-tag green">EXPLORE</span></div>
-        <div class="module-card gold-theme" onclick="runModule('transport')"><div class="module-icon">🚌</div><div class="module-name">Transport Intelligence</div><div class="module-desc">Airport transfers, local transport apps, costs, and pro tips for getting around.</div><span class="module-tag gold">NAVIGATE</span></div>
-        <div class="module-card red-theme" onclick="runModule('culture')"><div class="module-icon">🎭</div><div class="module-name">Culture & Etiquette</div><div class="module-desc">Local customs, tipping norms, dress codes, safety tips, and cultural nuances.</div><span class="module-tag cyan">PREPARE</span></div>
-        <div class="module-card cyan-theme" onclick="runModule('weather')"><div class="module-icon">🌤️</div><div class="module-name">Weather & Packing Tips</div><div class="module-desc">Expected weather for your dates, plus packing recommendations.</div><span class="module-tag green">PREPARE</span></div>
-        <div class="module-card green-theme" onclick="runModule('hidden_gems')"><div class="module-icon">💎</div><div class="module-name">Hidden Gems</div><div class="module-desc">Off-the-beaten-path experiences and secret spots most tourists never find.</div><span class="module-tag gold">DISCOVER</span></div>
-        <div class="module-card gold-theme" onclick="runModule('day_trips')"><div class="module-icon">🚗</div><div class="module-name">Day Trips</div><div class="module-desc">Best excursions from your base city with transport, duration, and highlights.</div><span class="module-tag cyan">EXPLORE</span></div>
-        <div class="module-card red-theme" onclick="runModule('visa_health')"><div class="module-icon">🛂</div><div class="module-name">Visa & Health Checks</div><div class="module-desc">Visa requirements, vaccinations, travel insurance, and entry requirements.</div><span class="module-tag gold">CHECKLIST</span></div>
+      <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="search-field" style="flex:2;min-width:180px;"><div class="search-label">DESTINATION</div><input class="search-input" id="planner-dest" placeholder="e.g. Nairobi, Cape Town"></div>
+        <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">TRAVEL DATES</div><input class="search-input" id="planner-dates" placeholder="e.g. May 15–22"></div>
+        <div class="search-field" style="flex:1;min-width:140px;"><div class="search-label">ACTIVITIES / INTERESTS</div><input class="search-input" id="planner-context" placeholder="e.g. safari, beach, fine dining"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn-primary" id="planner-run-all-btn" onclick="runAllModules()">RUN ALL →</button></div>
       </div>
-      <div id="planner-input-area" style="display:none;padding:0 20px 20px;">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-          <input class="field-input" style="flex:2;" id="planner-dest" placeholder="Destination">
-          <input class="field-input" style="flex:1;" id="planner-dates" placeholder="Dates">
-          <input class="field-input" style="flex:1;" id="planner-context" placeholder="Extra context (optional)">
-          <button class="btn-primary" id="planner-run-btn" onclick="executePlanner()">RUN →</button>
-        </div>
+      <div class="planner-modules" id="planner-module-grid">
+        <div class="module-card cyan-theme" id="pmod-itinerary" onclick="showModuleResult('itinerary')"><div class="module-status" id="pstat-itinerary"></div><div class="module-icon">📋</div><div class="module-name">Day-by-Day Itinerary</div><div class="module-desc">Generate a full optimized itinerary for your trip based on your bookings and interests.</div></div>
+        <div class="module-card green-theme" id="pmod-neighborhoods" onclick="showModuleResult('neighborhoods')"><div class="module-status" id="pstat-neighborhoods"></div><div class="module-icon">🗺️</div><div class="module-name">Neighborhood Guide</div><div class="module-desc">Discover the best neighborhoods — where to stay, eat, explore, and experience local life.</div></div>
+        <div class="module-card gold-theme" id="pmod-transport" onclick="showModuleResult('transport')"><div class="module-status" id="pstat-transport"></div><div class="module-icon">🚌</div><div class="module-name">Transport Intelligence</div><div class="module-desc">Airport transfers, local transport apps, costs, and pro tips for getting around.</div></div>
+        <div class="module-card red-theme" id="pmod-culture" onclick="showModuleResult('culture')"><div class="module-status" id="pstat-culture"></div><div class="module-icon">🎭</div><div class="module-name">Culture & Etiquette</div><div class="module-desc">Local customs, tipping norms, dress codes, safety tips, and cultural nuances.</div></div>
+        <div class="module-card cyan-theme" id="pmod-weather" onclick="showModuleResult('weather')"><div class="module-status" id="pstat-weather"></div><div class="module-icon">🌤️</div><div class="module-name">Weather & Packing Tips</div><div class="module-desc">Expected weather for your dates, plus packing recommendations.</div></div>
+        <div class="module-card green-theme" id="pmod-hidden_gems" onclick="showModuleResult('hidden_gems')"><div class="module-status" id="pstat-hidden_gems"></div><div class="module-icon">💎</div><div class="module-name">Hidden Gems</div><div class="module-desc">Off-the-beaten-path experiences and secret spots most tourists never find.</div></div>
+        <div class="module-card gold-theme" id="pmod-day_trips" onclick="showModuleResult('day_trips')"><div class="module-status" id="pstat-day_trips"></div><div class="module-icon">🚗</div><div class="module-name">Day Trips</div><div class="module-desc">Best excursions from your base city with transport, duration, and highlights.</div></div>
+        <div class="module-card red-theme" id="pmod-visa_health" onclick="showModuleResult('visa_health')"><div class="module-status" id="pstat-visa_health"></div><div class="module-icon">🛂</div><div class="module-name">Visa & Health Checks</div><div class="module-desc">Visa requirements, vaccinations, travel insurance, and entry requirements.</div></div>
       </div>
       <div id="planner-result" class="ai-result-panel"></div>
     </div>
@@ -5316,33 +5317,13 @@ Each item: { "type":"missing_flight"|"missing_hotel"|"transit"|"gap", "severity"
 // ═══════════════════════════════════════════════
 // PLANNER
 // ═══════════════════════════════════════════════
-function runModule(module) {
-  activePlannerModule = module;
-  document.getElementById('planner-input-area').style.display='block';
-  const HINTS = {
-    itinerary:{dest:'Destination',dates:'Travel dates',ctx:'Interests & pace'},
-    neighborhoods:{dest:'City',dates:'When you visit',ctx:'What you like'},
-    transport:{dest:'City/Airport',dates:'Travel dates',ctx:'Hotel location'},
-    culture:{dest:'Country/City',dates:'',ctx:'Any concerns?'},
-    weather:{dest:'Destination',dates:'Travel dates',ctx:'Activities planned'},
-    hidden_gems:{dest:'City',dates:'Days available',ctx:'Your interests'},
-    day_trips:{dest:'Base city',dates:'Days available',ctx:'Transport preference'},
-    visa_health:{dest:'Destination country',dates:'Departure date',ctx:'Your passport'},
-  };
-  const h=HINTS[module]||{};
-  document.getElementById('planner-dest').placeholder=h.dest||'Destination';
-  document.getElementById('planner-dates').placeholder=h.dates||'Dates';
-  document.getElementById('planner-context').placeholder=h.ctx||'Extra context';
-  document.getElementById('planner-run-btn').textContent='RUN '+module.replace(/_/g,' ').toUpperCase()+' →';
-}
+// ── Planner: Run All Modules in Parallel ──
+const PLANNER_MODULES = ['itinerary','neighborhoods','transport','culture','weather','hidden_gems','day_trips','visa_health'];
+const _plannerResults = {};
+let _plannerDest = '', _plannerDates = '', _plannerContext = '';
 
-async function executePlanner() {
-  if (!apiKey) { showToast('API key required','warning'); return; }
-  const dest    = document.getElementById('planner-dest').value;
-  const dates   = document.getElementById('planner-dates').value;
-  const context = document.getElementById('planner-context').value;
-  if (!dest) { showToast('Enter a destination','warning'); return; }
-  const PROMPTS = {
+function getPlannerPrompts(dest, dates, context) {
+  return {
     itinerary:`Create a detailed day-by-day itinerary for ${dest} (${dates}). Context: ${context}. Include morning/afternoon/evening activities, meals, transport, and timings.`,
     neighborhoods:`Guide me through the best neighborhoods in ${dest}${dates?' during '+dates:''}. Context: ${context}. Include what each is known for, best spots, and insider tips.`,
     transport:`Complete transport guide for ${dest}. Airport transfers, local transport, apps, costs, tips. Hotel area: ${context||'city center'}.`,
@@ -5352,42 +5333,117 @@ async function executePlanner() {
     day_trips:`Best day trips from ${dest}. Available: ${dates||'a few days'}. Include transport, duration, highlights, costs. Preference: ${context}.`,
     visa_health:`Visiting ${dest}: visa requirements for ${context||settings.passport||'US'} passport, vaccinations, travel insurance, health precautions.`,
   };
+}
+
+async function runAllModules() {
+  if (!apiKey) { showToast('API key required — add it in ⚙ Settings','warning'); openDrawer(); return; }
+  const dest = document.getElementById('planner-dest').value.trim();
+  const dates = document.getElementById('planner-dates').value.trim();
+  const context = document.getElementById('planner-context').value.trim();
+  if (!dest) { showToast('Enter a destination','warning'); return; }
+  _plannerDest = dest; _plannerDates = dates; _plannerContext = context;
+
+  // Clear previous results
+  Object.keys(_plannerResults).forEach(k => delete _plannerResults[k]);
+  const panel = document.getElementById('planner-result');
+  panel.classList.remove('active');
+  panel.innerHTML = '';
+
+  // Reset all card states
+  PLANNER_MODULES.forEach(m => {
+    const card = document.getElementById('pmod-' + m);
+    const stat = document.getElementById('pstat-' + m);
+    if (card) { card.classList.remove('done','active-module'); card.classList.add('loading'); }
+    if (stat) stat.innerHTML = '<div class="spinner" style="width:14px;height:14px;"></div>';
+  });
+
+  // Disable button
+  const btn = document.getElementById('planner-run-all-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'RUNNING…'; }
+
+  const prompts = getPlannerPrompts(dest, dates, context);
+  const sysPrompt = `You are an expert travel consultant. Return ONLY a valid JSON array (no markdown, no preamble) of sections. Each section:
+{"emoji":"🤝","title":"SECTION TITLE","paragraphs":["paragraph 1","paragraph 2"]}
+Use 4-6 sections. Be specific, practical, and insightful. No markdown symbols inside text.`;
+
+  // Fire all 8 calls in parallel
+  const promises = PLANNER_MODULES.map(async (mod) => {
+    try {
+      const result = await callClaude(sysPrompt, [{role:'user', content: prompts[mod] || `Tell me about ${dest}.`}], 1800);
+      let sections = null;
+      try { sections = JSON.parse(result.replace(/```json|```/g,'').trim()); } catch(_) {}
+      _plannerResults[mod] = { sections, raw: result, error: null };
+    } catch(e) {
+      _plannerResults[mod] = { sections: null, raw: null, error: e.message };
+    }
+    // Update card status
+    const card = document.getElementById('pmod-' + mod);
+    const stat = document.getElementById('pstat-' + mod);
+    if (card) { card.classList.remove('loading'); card.classList.add('done'); }
+    if (stat) stat.textContent = _plannerResults[mod].error ? '✗' : '✓';
+  });
+
+  await Promise.all(promises);
+
+  // Re-enable button
+  if (btn) { btn.disabled = false; btn.textContent = 'RUN ALL →'; }
+  showToast('All 8 modules complete — click any card to view results', 'success');
+}
+
+function showModuleResult(mod) {
+  const data = _plannerResults[mod];
+  if (!data) { showToast('Run all modules first — enter a destination and click RUN ALL', 'info'); return; }
+
+  // Highlight active card
+  PLANNER_MODULES.forEach(m => {
+    const card = document.getElementById('pmod-' + m);
+    if (card) card.classList.toggle('active-module', m === mod);
+  });
+
+  const moduleLabel = mod.replace(/_/g,' ').toUpperCase();
   const panel = document.getElementById('planner-result');
   panel.classList.add('active');
-  panel.innerHTML=`<div class="ai-result-header"><div class="ai-result-title">🧠 ${(activePlannerModule||'RESULT').replace(/_/g,' ').toUpperCase()}</div><button class="btn-secondary" style="font-size:9px;padding:3px 8px;" onclick="this.closest('.ai-result-panel').classList.remove('active')">✕</button></div><div class="ai-result-body"><div style="display:flex;align-items:center;gap:10px;"><div class="spinner" style="width:20px;height:20px;"></div>Generating…</div></div>`;
-  try {
-    const result = await callClaude(`You are an expert travel consultant. Return ONLY a valid JSON array (no markdown, no preamble) of sections. Each section:
-{"emoji":"🤝","title":"SECTION TITLE","paragraphs":["paragraph 1","paragraph 2"]}
-Use 4-6 sections. Be specific, practical, and insightful. No markdown symbols inside text.`, [{role:'user',content:PROMPTS[activePlannerModule]||`Tell me about ${dest}.`}], 1800);
-    let sections = [];
-    try { sections = JSON.parse(result.replace(/```json|```/g,'').trim()); } catch(_) { sections = null; }
-    const moduleLabel = (activePlannerModule||'').replace(/_/g,' ').toUpperCase();
-    panel.innerHTML=`<div class="ai-result-header"><div class="ai-result-title">🧠 ${moduleLabel}</div><button class="btn-secondary" style="font-size:9px;padding:3px 8px;" onclick="this.closest('.ai-result-panel').classList.remove('active')">✕</button></div><div class="ai-result-body">${sections ? formatAiSections(sections) : formatAiText(result)}</div>`;
-    // Add Save to Gems button
-    const plannerGemContent = sections
-      ? sections.map(s => `## ${s.emoji||''} ${s.title||''}\n${(s.paragraphs||[]).join('\n\n')}`).join('\n\n')
-      : result;
-    const plannerHeader = panel.querySelector('.ai-result-header');
-    if (plannerHeader) {
-      const saveBtn = document.createElement('button');
-      saveBtn.className = 'save-gem-btn';
-      saveBtn.style.cssText = 'margin-left:auto;font-size:9px;padding:3px 10px;';
-      saveBtn.innerHTML = '💎 Save to Gems';
-      saveBtn.onclick = () => {
-        saveGem({
-          title: `🧠 ${moduleLabel}: ${dest}`,
-          type: `🧠 ${moduleLabel}`,
-          content: plannerGemContent,
-          sourceParams: { module: activePlannerModule, dest, dates, context }
-        });
-        saveBtn.textContent = '✓ Saved!';
-        saveBtn.classList.add('saved');
-        saveBtn.disabled = true;
-      };
-      plannerHeader.appendChild(saveBtn);
-    }
-  } catch(e) { panel.innerHTML=`<div class="ai-result-header"><div class="ai-result-title">ERROR</div></div><div class="ai-result-body">${esc(e.message)}</div>`; }
+
+  if (data.error) {
+    panel.innerHTML = `<div class="ai-result-header"><div class="ai-result-title">🧠 ${moduleLabel}</div><button class="btn-secondary" style="font-size:9px;padding:3px 8px;" onclick="this.closest('.ai-result-panel').classList.remove('active')">✕</button></div><div class="ai-result-body" style="color:var(--red);">${esc(data.error)}</div>`;
+    return;
+  }
+
+  const body = data.sections ? formatAiSections(data.sections) : formatAiText(data.raw);
+  panel.innerHTML = `<div class="ai-result-header"><div class="ai-result-title">🧠 ${moduleLabel}</div><button class="btn-secondary" style="font-size:9px;padding:3px 8px;" onclick="this.closest('.ai-result-panel').classList.remove('active')">✕</button></div><div class="ai-result-body">${body}</div>`;
+
+  // Save to Gems button
+  const gemContent = data.sections
+    ? data.sections.map(s => `## ${s.emoji||''} ${s.title||''}\n${(s.paragraphs||[]).join('\n\n')}`).join('\n\n')
+    : data.raw;
+  const header = panel.querySelector('.ai-result-header');
+  if (header) {
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'save-gem-btn';
+    saveBtn.style.cssText = 'margin-left:auto;font-size:9px;padding:3px 10px;';
+    saveBtn.innerHTML = '💎 Save to Gems';
+    saveBtn.onclick = () => {
+      saveGem({
+        title: `🧠 ${moduleLabel}: ${_plannerDest}`,
+        type: `🧠 ${moduleLabel}`,
+        content: gemContent,
+        sourceParams: { module: mod, dest: _plannerDest, dates: _plannerDates, context: _plannerContext }
+      });
+      saveBtn.textContent = '✓ Saved!';
+      saveBtn.classList.add('saved');
+      saveBtn.disabled = true;
+    };
+    header.appendChild(saveBtn);
+  }
+
+  // Scroll result into view
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
+
+// Legacy support — keep activePlannerModule for any external references
+let activePlannerModule = null;
+function runModule(module) { showModuleResult(module); }
+function executePlanner() { runAllModules(); }
 
 function formatAiText(t) { return t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>'); }
 
