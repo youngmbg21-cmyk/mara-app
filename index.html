@@ -1001,6 +1001,7 @@ input[type="date"] { color-scheme: dark; }
     <button class="ai-toggle-btn" id="aiToggleBtn" onclick="openChat()" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 10px;cursor:pointer;font-size:10px;color:var(--text);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;transition:all 0.18s;" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='';this.style.color='var(--text)'">🧭 MARA AI</button>
     <button class="btn-topbar" onclick="openDrawer()">⚙ SETTINGS</button>
     <button class="btn-topbar" onclick="triggerScan()">⟳ SCAN GMAIL</button>
+    <button class="btn-topbar" onclick="triggerForceScan()" style="border-color:rgba(255,165,0,0.3);color:var(--gold);" onmouseover="this.style.background='rgba(255,165,0,0.1)'" onmouseout="this.style.background=''">⟳ FORCE RESCAN</button>
     <button class="btn-topbar" id="signout-btn" onclick="signOut()" style="display:none;border-color:rgba(255,69,96,0.3);color:var(--red);" onmouseover="this.style.background='rgba(255,69,96,0.1)'" onmouseout="this.style.background=''">⏻ SIGN OUT</button>
   </div>
 </div>
@@ -1068,9 +1069,10 @@ input[type="date"] { color-scheme: dark; }
       <div id="dash-empty" class="scan-area">
         <div class="scan-icon">📧</div>
         <div class="scan-title">Scan Your Travel Emails</div>
-        <div class="scan-sub">Connect Gmail to auto-extract flights, hotels, and reservations from your inbox. Or add bookings manually.</div>
+        <div class="scan-sub">Connect Gmail to auto-extract flights, hotels, and reservations from your "Travel" label. Or add bookings manually.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-          <button class="btn-primary" onclick="triggerScan()">⟳ SCAN GMAIL INBOX</button>
+          <button class="btn-primary" onclick="triggerScan()">⟳ SCAN GMAIL</button>
+          <button class="btn-secondary" onclick="triggerForceScan()">⟳ FORCE RESCAN</button>
           <button class="btn-secondary" onclick="openManualAdd()">+ ADD MANUALLY</button>
         </div>
       </div>
@@ -1103,7 +1105,7 @@ input[type="date"] { color-scheme: dark; }
         <div class="cards-grid" id="bookings-cards"></div>
         <div id="bookings-empty" class="empty-state" style="display:none;">
           <div class="empty-icon">🎫</div><div class="empty-title">No bookings yet</div>
-          <div class="empty-body">Scan your inbox or add a booking manually.</div>
+          <div class="empty-body">Scan your Gmail "Travel" label or add a booking manually.</div>
         </div>
       </div>
     </div>
@@ -1872,6 +1874,7 @@ input[type="date"] { color-scheme: dark; }
 
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
       <button class="btn-primary" style="width:100%;" onclick="saveSettings()">SAVE ALL SETTINGS</button>
+      <button class="btn-secondary" style="width:100%;" onclick="clearScanHistory()">CLEAR SCAN HISTORY</button>
       <button class="btn-secondary" style="width:100%;" onclick="clearAllData()">CLEAR ALL DATA</button>
       <button class="btn-secondary" style="width:100%;" onclick="signOut()">SIGN OUT</button>
     </div>
@@ -1979,6 +1982,7 @@ let excludedBookingExpenses = JSON.parse(localStorage.getItem('voy_excluded_book
 let packList   = JSON.parse(localStorage.getItem('voy_pack') || '[]');
 let tripBudget = parseFloat(localStorage.getItem('voy_budget') || '0');
 let settings   = JSON.parse(localStorage.getItem('voy_settings') || '{}');
+if (!settings.gmailLabel) { settings.gmailLabel = 'Travel'; localStorage.setItem('voy_settings', JSON.stringify(settings)); }
 function getCurrency() { return settings.currency || 'USD'; }
 let activeTab  = 'dashboard';
 let activePlannerModule = null;
@@ -2581,6 +2585,13 @@ function launchTerminal(hasGmail = false) {
 // Single Claude call · PDF attachments · 50 emails
 // Non-blocking Tracker · Specific error messages
 // ═══════════════════════════════════════════════
+async function triggerForceScan() {
+  localStorage.removeItem('voy_scanned_email_ids');
+  localStorage.removeItem('voy_scanned_tracker_ids');
+  showToast('Scan history cleared — rescanning all emails', 'info');
+  await triggerScan();
+}
+
 async function triggerScan() {
   if (!apiKey) { showToast('Add Claude API key in ⚙ Settings first','warning'); openDrawer(); return; }
   if (!gmailAccessToken || Date.now() > gmailTokenExpiry) {
@@ -2605,7 +2616,7 @@ async function triggerScan() {
     if (!travelEmails.length) {
       clearTimeout(safetyTimer);
       overlay.classList.remove('active');
-      showScanError('No new emails to scan.', 'All previously scanned emails have been processed. Move new booking confirmation emails into your configured Gmail label, or clear scan history in Settings → Clear All Data to rescan.');
+      showScanError('No new emails to scan.', 'All previously scanned emails have been processed. To rescan all emails, use the ⟳ FORCE RESCAN button or go to Settings → Clear Scan History.');
       return;
     }
 
@@ -2791,6 +2802,8 @@ async function fetchTravelEmails() {
       const listRes = await gmailGet(`/messages?labelIds=${match.id}&maxResults=50`);
       messages = listRes.messages || [];
       scanSource = `"${settings.gmailLabel}" label`;
+    } else {
+      throw new Error(`Gmail label "${settings.gmailLabel}" not found. Create this label in Gmail, or go to ⚙ Settings and update the Gmail Label to Scan field to match an existing label.`);
     }
   }
 
@@ -2826,8 +2839,8 @@ async function fetchTravelEmails() {
 
   if (!messages.length) {
     const hint = userLabel
-      ? `No emails found in your "${settings.gmailLabel}" label. Move booking confirmation emails into this label, or clear the label field in Settings to let Mara search your inbox automatically.`
-      : `No travel booking emails found. Mara searched your Gmail labels and inbox for booking confirmations but found nothing. You can create a Gmail label (e.g. "Travel") and move your booking emails into it, then set it in ⚙ Settings → Gmail Label to Scan.`;
+      ? `No emails found in your "${settings.gmailLabel}" label. Add booking confirmation emails to your Gmail "${settings.gmailLabel}" label and tap Scan. If the label doesn't exist, create it in Gmail first or update the label name in ⚙ Settings.`
+      : `No travel booking emails found. Create a Gmail label called "Travel", move your booking emails into it, and set it in ⚙ Settings → Gmail Label to Scan.`;
     throw new Error(hint);
   }
 
@@ -6659,6 +6672,12 @@ function saveSettings() {
   showToast('✓ Settings saved', 'success');
 }
 
+function clearScanHistory() {
+  if(!confirm('Clear scan history? This resets the list of previously scanned email IDs so all emails will be re-read on the next scan. Your trips, bookings, and other data are kept.')) return;
+  localStorage.removeItem('voy_scanned_email_ids');
+  localStorage.removeItem('voy_scanned_tracker_ids');
+  closeDrawer(); showToast('Scan history cleared — next scan will process all emails','success');
+}
 function clearAllData() {
   if(!confirm('Clear all Mara data?')) return;
   ['voy_bookings','voy_expenses','voy_pack','voy_budget','voy_scanned_email_ids','voy_scanned_tracker_ids'].forEach(k=>localStorage.removeItem(k));
@@ -6685,19 +6704,7 @@ function showToast(msg,type='info') {
   setTimeout(()=>t.style.opacity='0',3000); setTimeout(()=>t.remove(),3500);
 }
 
-// ═══════════════════════════════════════════════
-// DEMO DATA
-// ═══════════════════════════════════════════════
-if (!bookings.length) {
-  bookings = [
-    { id:1, type:'flight', title:'Stockholm → Nairobi', airline:'Kenya Airways', flightNumber:'KQ102', from:'ARN', to:'NBO', date:'2026-05-15', time:'22:15', confirmationCode:'KQ4X8Z', passengerName:'Young' },
-    { id:2, type:'hotel',  title:'Radisson Blu Nairobi', hotelName:'Radisson Blu', address:'Upper Hill, Nairobi', date:'2026-05-16', endDate:'2026-05-22', checkInTime:'14:00', checkOutTime:'12:00', confirmationCode:'RBL9934', roomType:'Executive Suite' },
-    { id:3, type:'restaurant', title:'Carnivore Restaurant', restaurantName:'Carnivore', address:'Langata Road, Nairobi', date:'2026-05-17', time:'19:30', confirmationCode:'CARN221', covers:2 },
-    { id:4, type:'flight', title:'Nairobi → Cape Town', airline:'Ethiopian Airlines', flightNumber:'ET858', from:'NBO', to:'CPT', date:'2026-05-22', time:'09:30', confirmationCode:'ET7X12' },
-    { id:5, type:'hotel',  title:'The Silo Hotel Cape Town', hotelName:'The Silo Hotel', address:'V&A Waterfront, Cape Town', date:'2026-05-22', endDate:'2026-05-27', checkInTime:'15:00', checkOutTime:'11:00', confirmationCode:'SLO4421', roomType:'Grain Loft Suite' },
-  ];
-  saveBookings();
-}
+// No demo data — app starts empty until a real Gmail scan is completed
 
 // ═══════════════════════════════════════════════
 // VAULT — DOCUMENTS & NOTES
