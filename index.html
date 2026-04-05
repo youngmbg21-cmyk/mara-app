@@ -911,8 +911,8 @@ input[type="date"] { color-scheme: dark; }
     <div class="login-sub">AI-powered travel intelligence. Scans your <strong style="color:var(--cyan);">Gmail</strong> for booking confirmations to build your complete trip picture.</div>
 
     <div class="login-features">
-      <div class="lf-item"><span class="lf-icon">📧</span>Travel folder scan</div>
-      <div class="lf-item"><span class="lf-icon">👥</span>Tracker folder scan</div>
+      <div class="lf-item"><span class="lf-icon">📧</span>Gmail folder scan</div>
+      <div class="lf-item"><span class="lf-icon">👥</span>Friends & family tracking</div>
       <div class="lf-item"><span class="lf-icon">✈️</span>Flight Search</div>
       <div class="lf-item"><span class="lf-icon">🏨</span>Hotel Search</div>
       <div class="lf-item"><span class="lf-icon">🗺️</span>Control Tower Map</div>
@@ -1284,11 +1284,11 @@ input[type="date"] { color-scheme: dark; }
     <!-- VISITORS -->
     <div class="tab-view" id="tab-visitors">
       <div style="flex-shrink:0;">
-        <div class="sec-header"><div><div class="sec-title">OTHER <span class="accent">TRACKER</span></div></div></div>
-        <div class="banner info">📁 Create a Gmail label <strong style="margin:0 4px;">"Tracker"</strong> and move friends/family travel emails there. Mara scans it automatically.</div>
+        <div class="sec-header"><div><div class="sec-title">OTHER <span class="accent">TRIPS</span></div></div></div>
+        <div class="banner info">📁 Forward friends/family travel confirmation emails into your configured Gmail label. Mara detects them automatically and sorts them here.</div>
       </div>
       <div id="visitors-list" style="padding:12px 20px;overflow-y:auto;flex:1;">
-        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No other trips found</div><div class="empty-body">Set up a Tracker folder and rescan.</div></div>
+        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No other trips found</div><div class="empty-body">Forward travel confirmation emails for others into your Gmail label and tap Rescan.</div></div>
       </div>
     </div>
 
@@ -1401,7 +1401,7 @@ input[type="date"] { color-scheme: dark; }
             <span style="color:var(--text2);margin-left:16px;">• <strong>Claude API Key</strong> (anthropic.com) — powers AI chat, booking extraction, and all intelligence features</span><br>
             <span style="color:var(--text2);margin-left:16px;">• <strong>SerpApi Key</strong> (serpapi.com) — enables live Google Flights and Hotels data in Price Pulse</span><br>
             <span style="color:var(--text2);margin-left:16px;">• <strong>AviationStack Key</strong> (aviationstack.com) — optional, enables live flight status tracking on dashboard</span><br>
-            <strong style="color:var(--text);">2. Connect Gmail</strong> — Click "Scan Gmail Inbox" on the dashboard. Mara will automatically search your inbox for booking confirmation emails. Optionally, create a Gmail label and set it in ⚙ Settings → Gmail Label to Scan for more precise scanning. For tracking others' trips, create a label called <strong>Tracker</strong>.<br>
+            <strong style="color:var(--text);">2. Connect Gmail</strong> — Create a Gmail label (default: "Travel"), move your booking confirmation emails into it, and set the label name in ⚙ Settings → Gmail Label to Scan. To track others' trips, forward their booking emails into the same label — Mara will categorise them automatically.<br>
             <strong style="color:var(--text);">3. Or add manually</strong> — Click "+ Add Manually" to paste any booking confirmation text. Claude will extract the details automatically.
           </div>
         </div>
@@ -1472,7 +1472,7 @@ input[type="date"] { color-scheme: dark; }
 
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--text2);">
               <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px;">👥 OTHERS</div>
-              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Track friends and family travel plans. Create a Gmail label called "Tracker" and move their travel emails there. Mara scans and extracts their bookings separately.</div>
+              <div style="font-size:10px;color:var(--text2);line-height:1.6;">Track friends and family travel plans. Forward their booking confirmation emails into your configured Gmail label — Mara automatically detects bookings for other people and sorts them here.</div>
 
             </div>
 
@@ -2158,7 +2158,7 @@ function buildMaraContext() {
     tower:'Control Tower & Timeline (map + chronological view)', alerts:'Alerts (gap analysis)',
     flights:'Flight Search', hotels:'Hotel Search', restaurants:'Restaurant Search',
     tower:'Control Tower map', planner:'AI Planner', budget:'Budget Tracker',
-    pack:'Pack List', vault:'Vault (documents & notes)', visitors:'Other Tracker',
+    pack:'Pack List', vault:'Vault (documents & notes)', visitors:'Other Trips',
   };
 
   let ctx = `You are Mara AI, an elite travel intelligence assistant embedded in the Mara Terminal app.
@@ -2582,12 +2582,25 @@ function launchTerminal(hasGmail = false) {
 
 // ═══════════════════════════════════════════════
 // GMAIL SCAN — TRIPVAULT-INSPIRED
-// Single Claude call · PDF attachments · 50 emails
-// Non-blocking Tracker · Specific error messages
+// Single label · Single Claude call · PDF attachments · 50 emails
+// Content-based visitor detection · Specific error messages
+//
+// ARCHITECTURE NOTE (label unification fix):
+// Previously the app used TWO Gmail labels: a user-configured label (default
+// "Travel") for the user's own bookings, and a hardcoded "Tracker" label for
+// friends/family bookings. The Settings panel only had one label input field,
+// so there was no way to configure both labels. The UI copy referenced "Tracker"
+// in multiple places but the settings couldn't fulfil it.
+//
+// FIX: One label (settings.gmailLabel, default "Travel") is used for everything.
+// A single scan fetches all emails from that label, and the Claude extraction
+// prompt detects visitor bookings by comparing passenger names against the
+// signed-in user's name (userName). The fetchTrackerEmails() and
+// extractVisitorBookings() functions were removed. All UI copy now references
+// settings.gmailLabel dynamically with zero hardcoded label names.
 // ═══════════════════════════════════════════════
 async function triggerForceScan() {
   localStorage.removeItem('voy_scanned_email_ids');
-  localStorage.removeItem('voy_scanned_tracker_ids');
   showToast('Scan history cleared — rescanning all emails', 'info');
   await triggerScan();
 }
@@ -2640,6 +2653,12 @@ PASSENGER NAME EXTRACTION — CRITICAL:
 9. The billing name, purchaser, "Booked by:", or account holder is NOT necessarily the passenger. Always prefer the actual traveller's name.
 10. If MULTIPLE passengers are listed (e.g. on a group booking), include ALL names separated by " / " in passengerName and set passengerCount accordingly.
 
+VISITOR DETECTION — CATEGORISE EACH BOOKING:
+The signed-in user's name is "${userName || 'unknown'}".
+11. If the booking's passenger/guest name matches or closely resembles the user's name, set isVisitor to false.
+12. If the booking is clearly for someone ELSE (different passenger name, forwarded email for another person, "on behalf of", guest name differs from user), set isVisitor to true and set visitorName to the actual passenger/guest name.
+13. When in doubt (e.g. no passenger name found, or name is ambiguous), default isVisitor to false.
+
 Each item (use null for missing fields):
 {
   "type": "flight"|"hotel"|"restaurant"|"other",
@@ -2664,7 +2683,8 @@ Each item (use null for missing fields):
   "covers": "number of guests or null",
   "price": "total price with currency or null",
   "notes": "any other key info or null",
-  "isVisitor": false
+  "isVisitor": false,
+  "visitorName": "if isVisitor is true, the actual passenger/guest name — otherwise null"
 }
 Return [] if no bookings found.`;
 
@@ -2696,17 +2716,6 @@ Return [] if no bookings found.`;
       return;
     }
 
-    // Tracker — non-blocking
-    let visitorBookings = [];
-    let trackerEmails = [];
-    try {
-      setStatus('Checking Tracker folder for other bookings…');
-      trackerEmails = await fetchTrackerEmails() || [];
-      if (trackerEmails.length > 0) {
-        visitorBookings = await extractVisitorBookings(trackerEmails);
-      }
-    } catch(_) {}
-
     // Deduplicate and save
     setStatus('Saving your bookings…');
 
@@ -2724,9 +2733,10 @@ Return [] if no bookings found.`;
     }
 
     const existingKeys = new Set(bookings.map(makeDedupeKey));
-    let added = 0;
-    [...extracted.map(b=>({...b,isVisitor:false})), ...visitorBookings].forEach(b => {
+    let added = 0, myCount = 0, visCount = 0;
+    extracted.forEach(b => {
       if (!b || !b.type) return;
+      if (b.isVisitor) visCount++; else myCount++;
       const key = makeDedupeKey(b);
       if (existingKeys.has(key)) return;
       b.id = Date.now() + Math.random();
@@ -2737,19 +2747,14 @@ Return [] if no bookings found.`;
 
     // Save processed email IDs to prevent re-scanning
     const prevTravel  = JSON.parse(localStorage.getItem('voy_scanned_email_ids') || '[]');
-    const prevTracker = JSON.parse(localStorage.getItem('voy_scanned_tracker_ids') || '[]');
     const newTravelIds  = travelEmails.filter(e => e.msgId).map(e => e.msgId);
-    const newTrackerIds = trackerEmails.filter(e => e.msgId).map(e => e.msgId);
     localStorage.setItem('voy_scanned_email_ids', JSON.stringify([...new Set([...prevTravel, ...newTravelIds])]));
-    localStorage.setItem('voy_scanned_tracker_ids', JSON.stringify([...new Set([...prevTracker, ...newTrackerIds])]));
 
     saveBookings(); renderAll();
     clearTimeout(safetyTimer);
     overlay.classList.remove('active');
     document.getElementById('topbar-status').textContent = 'GMAIL CONNECTED';
 
-    const myCount  = extracted.length;
-    const visCount = visitorBookings.length;
     showToast(`✓ ${added} bookings imported (${myCount} yours · ${visCount} others)`, 'success');
     if (bookings.length > 0) { switchTab('dashboard'); runProactiveAnalysis(); }
 
@@ -2864,78 +2869,6 @@ async function fetchTravelEmails() {
     } catch(e) { console.warn('Skipping email:', e.message); }
   }
   return emails;
-}
-
-async function fetchTrackerEmails() {
-  const labelsRes    = await gmailGet('/labels');
-  const trackerLabel = (labelsRes.labels||[]).find(l => l.name.toLowerCase() === 'tracker');
-  if (!trackerLabel) return null;
-
-  const listRes  = await gmailGet(`/messages?labelIds=${trackerLabel.id}&maxResults=50`);
-  const messages = listRes.messages || [];
-  if (!messages.length) return [];
-
-  const scannedIds = JSON.parse(localStorage.getItem('voy_scanned_tracker_ids') || '[]');
-  const scannedSet = new Set(scannedIds);
-
-  const emails = [];
-  for (const m of messages) {
-    if (scannedSet.has(m.id)) continue; // already processed
-    try {
-      const full = await gmailGet(`/messages/${m.id}?format=full`);
-      const hdrs = full.payload?.headers || [];
-      const get  = n => (hdrs.find(h=>h.name.toLowerCase()===n)||{}).value||'';
-      const body = extractBody(full.payload).slice(0, 8000);
-      const pdfs = await extractPdfAttachments(full, m.id);
-      emails.push({ msgId: m.id, subject:get('subject'), from:get('from'), date:get('date'), body, pdfs });
-    } catch(e) { console.warn('Skipping tracker email:', e.message); }
-  }
-  return emails;
-}
-
-async function extractVisitorBookings(emails) {
-  if (!emails || !emails.length) return [];
-  const contentBlocks = [];
-  let blob = '';
-  let pdfCount = 0;
-
-  for (let i = 0; i < emails.length; i++) {
-    const e = emails[i];
-    blob += `--- EMAIL ${i+1} ---\nSubject: ${e.subject}\nFrom: ${e.from}\nDate: ${e.date}\n${e.body||''}\n\n`;
-    if (e.pdfs) {
-      for (const pdf of e.pdfs) {
-        if (pdfCount >= 5) break;
-        contentBlocks.push({ type:'document', source:{ type:'base64', media_type:'application/pdf', data:pdf.data }, title:`PDF tracker email ${i+1}` });
-        pdfCount++;
-      }
-    }
-  }
-  contentBlocks.unshift({ type:'text', text:
-    `Extract travel bookings for other people (family/friends, not the user).
-Return ONLY a valid JSON array (no markdown). Use null for missing fields.
-
-PASSENGER NAME RULES:
-- ALWAYS extract the actual passenger/traveller/guest name from the BOOKING CONTENT itself.
-- Look for: "Passenger:", "Guest name:", "Travelling as:", seat assignments, boarding pass names, hotel guest fields.
-- Do NOT use the email sender, forwarder, or purchaser name as the passenger.
-- If the email is forwarded, ignore the forwarding chain and extract from the original booking.
-- The billing name or "Booked by" is NOT the passenger — use the actual traveller's name.
-- visitorName MUST be the actual passenger/guest name, not the email sender.
-
-Each item: {"type":"flight"|"hotel"|"restaurant"|"other","title":"","confirmationCode":null,
-"passengerName":"actual passenger/guest name from booking content",
-"date":"YYYY-MM-DD","endDate":null,"from":null,"to":null,
-"airline":null,"flightNumber":null,"hotelName":null,"address":null,
-"checkInTime":null,"checkOutTime":null,"roomType":null,"price":null,"notes":null,
-"isVisitor":true,"visitorName":"actual passenger/guest name from booking content — NOT the email sender or purchaser"}
-
-Emails:\n` + blob
-  });
-
-  try {
-    const raw = await callClaude(null, [{ role:'user', content:contentBlocks }], 3000);
-    return parseArr(raw).map(b => ({...b, isVisitor:true}));
-  } catch(e) { return []; }
 }
 
 async function extractPdfAttachments(fullMsg, msgId) {
@@ -3101,6 +3034,11 @@ function renderDashboard() {
   const visible  = getVisibleBookings();
   const empty    = document.getElementById('dash-empty');
   const content  = document.getElementById('dash-content');
+
+  // Update empty-state label name dynamically
+  const labelName = settings.gmailLabel || 'Travel';
+  const scanSub = empty.querySelector('.scan-sub');
+  if (scanSub) scanSub.textContent = `Connect Gmail to auto-extract flights, hotels, and reservations from your "${labelName}" label. Or add bookings manually.`;
 
   // API key guidance card
   const existingGuide = document.getElementById('dash-get-started');
@@ -3537,6 +3475,8 @@ function renderBookings(type) {
   const filtered = type==='all' ? visible : visible.filter(b=>b.type===type);
   const grid  = document.getElementById('bookings-cards');
   const empty = document.getElementById('bookings-empty');
+  const emptyBody = empty.querySelector('.empty-body');
+  if (emptyBody) emptyBody.textContent = `Scan your Gmail "${settings.gmailLabel||'Travel'}" label or add a booking manually.`;
   if (!filtered.length) { grid.innerHTML=''; empty.style.display='flex'; return; }
   empty.style.display='none';
   grid.innerHTML = filtered.sort((a,b)=>new Date(a.date||'2099')-new Date(b.date||'2099')).map(buildCard).join('');
@@ -6676,12 +6616,11 @@ function saveSettings() {
 function clearScanHistory() {
   if(!confirm('Clear scan history? This resets the list of previously scanned email IDs so all emails will be re-read on the next scan. Your trips, bookings, and other data are kept.')) return;
   localStorage.removeItem('voy_scanned_email_ids');
-  localStorage.removeItem('voy_scanned_tracker_ids');
   closeDrawer(); showToast('Scan history cleared — next scan will process all emails','success');
 }
 function clearAllData() {
   if(!confirm('Clear all Mara data?')) return;
-  ['voy_bookings','voy_expenses','voy_pack','voy_budget','voy_scanned_email_ids','voy_scanned_tracker_ids'].forEach(k=>localStorage.removeItem(k));
+  ['voy_bookings','voy_expenses','voy_pack','voy_budget','voy_scanned_email_ids'].forEach(k=>localStorage.removeItem(k));
   bookings=[];expenses=[];packList=[];tripBudget=0;
   renderAll(); closeDrawer(); showToast('All data cleared','warning');
 }
@@ -7128,10 +7067,11 @@ function renderVisitors() {
     .sort((a,b) => new Date(a.date||0) - new Date(b.date||0));
 
   if (!visitors.length) {
+    const labelName = settings.gmailLabel || 'Travel';
     list.innerHTML = `<div class="empty-state">
       <div class="empty-icon">👥</div>
-      <div class="empty-title">No other trips found</div>
-      <div class="empty-body">Create a Gmail label called <strong>"Tracker"</strong>, move friends/family travel emails into it, then tap ⟳ SCAN GMAIL.</div>
+      <div class="empty-title">No friends or family trips found yet</div>
+      <div class="empty-body">Forward travel confirmation emails for others into your <strong>"${esc(labelName)}"</strong> Gmail label and tap Rescan — Mara will sort them automatically.</div>
     </div>`;
     return;
   }
