@@ -6669,6 +6669,7 @@ function saveSettings() {
   settings.gmailLabel = (document.getElementById('s-gmail-label').value || '').trim();
   localStorage.setItem('voy_settings', JSON.stringify(settings));
   closeDrawer();
+  renderAll();
   showToast('✓ Settings saved', 'success');
 }
 
