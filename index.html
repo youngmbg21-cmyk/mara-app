@@ -5380,11 +5380,10 @@ function renderMapSidebar() {
 // CLAUDE API
 // ═══════════════════════════════════════════════
 // CORS Playbook applied:
-//   1. Direct fetch to api.anthropic.com (works only on claude.ai artifacts)
+//   1. Direct fetch to api.anthropic.com (works on claude.ai and some hosts)
 //   2. User's Netlify proxy — reliable, user-controlled, no CORS issues
 //   3. corsproxy.io — flaky last-resort fallback
-// Rule 3: anthropic-dangerous-direct-browser-access is claude.ai ONLY.
-// Rule 4: For external hosts, always proxy through a server-side function.
+// Timeout scales with maxTokens: small requests get 30s, large scans get 120s.
 async function callClaude(systemPrompt, messages, maxTokens=1000) {
   if (!apiKey) throw new Error('No API key configured');
   const body = {
@@ -5402,12 +5401,15 @@ async function callClaude(systemPrompt, messages, maxTokens=1000) {
     'anthropic-dangerous-direct-browser-access': 'true',
   };
 
+  // Scale timeout: large extractions (maxTokens > 2000) need much longer
+  const timeout = maxTokens > 2000 ? 120000 : 30000;
+
   let res;
 
-  // Strategy 1: Direct call (works in claude.ai artifacts only)
+  // Strategy 1: Direct call (works on claude.ai, may work on other hosts)
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30000);
+    const timer = setTimeout(() => controller.abort(), timeout);
     res = await fetch(anthropicUrl, {
       method: 'POST',
       headers: directHeaders,
@@ -5416,14 +5418,14 @@ async function callClaude(systemPrompt, messages, maxTokens=1000) {
     });
     clearTimeout(timer);
   } catch(directErr) {
-    res = null; // CORS blocked — fall through to proxy chain
+    res = null; // CORS blocked or timeout — fall through to proxy chain
   }
 
   // Strategy 2: User's Netlify proxy (reliable, no CORS)
   if (!res && proxyBase) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 60000);
+      const timer = setTimeout(() => controller.abort(), timeout);
       res = await fetch(`${proxyBase}/.netlify/functions/claude`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -5444,7 +5446,7 @@ async function callClaude(systemPrompt, messages, maxTokens=1000) {
   if (!res) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 30000);
+      const timer = setTimeout(() => controller.abort(), timeout);
       res = await fetch(
         `https://corsproxy.io/?${encodeURIComponent(anthropicUrl)}`,
         { method: 'POST', headers: directHeaders, body: JSON.stringify(body), signal: controller.signal }
@@ -6452,33 +6454,16 @@ async function testClaudeKey() {
   }
   if (resultEl) { resultEl.textContent = 'Testing…'; resultEl.style.color = 'var(--text2)'; }
 
+  // Use the same callClaude proxy chain so the test validates the real path
+  const savedKey = apiKey;
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': testKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'Hi' }]
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    const data = await res.json();
-    if (!res.ok) {
-      if (resultEl) { resultEl.textContent = '✗ ' + (data?.error?.message || `Error ${res.status}`); resultEl.style.color = 'var(--red)'; }
-    } else {
-      if (resultEl) { resultEl.textContent = '✓ Claude API key is valid'; resultEl.style.color = 'var(--green)'; }
-      if (keyVal && !keyVal.startsWith('••')) { apiKey = keyVal; localStorage.setItem('voy_api_key', apiKey); }
-    }
+    apiKey = testKey;
+    await callClaude(null, [{ role: 'user', content: 'Hi' }], 10);
+    if (resultEl) { resultEl.textContent = '✓ Claude API key is valid'; resultEl.style.color = 'var(--green)'; }
+    if (keyVal && !keyVal.startsWith('••')) { localStorage.setItem('voy_api_key', testKey); }
+    else { apiKey = savedKey; }
   } catch(e) {
+    apiKey = savedKey;
     if (resultEl) { resultEl.textContent = '✗ ' + e.message; resultEl.style.color = 'var(--red)'; }
   }
 }
