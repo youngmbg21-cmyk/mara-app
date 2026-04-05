@@ -1131,6 +1131,8 @@ input[type="date"] { color-scheme: dark; }
             <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--text3);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Past</span></div>
             <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green);animation:pulsePin 2s infinite;border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Home base</span></div>
             <div class="map-legend-item"><div style="width:10px;height:10px;background:#FFB800;border:1.5px solid #fff;transform:rotate(45deg);border-radius:2px;flex-shrink:0;box-shadow:0 0 6px rgba(255,184,0,0.6);"></div><span style="font-size:10px;color:var(--text2);">Hotel</span></div>
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--gold);border:2px dashed var(--gold);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Visitor flight</span></div>
+            <div class="map-legend-item"><div style="width:10px;height:10px;background:#FF6B6B;border:1.5px solid #fff;transform:rotate(45deg);border-radius:2px;flex-shrink:0;box-shadow:0 0 6px rgba(255,107,107,0.6);"></div><span style="font-size:10px;color:var(--text2);">Visitor hotel</span></div>
           </div>
         </div>
       </div>
@@ -1762,6 +1764,8 @@ input[type="date"] { color-scheme: dark; }
     <div class="modal-body" id="m-rows"></div>
     <div class="modal-footer">
       <button class="modal-close" onclick="closeModal()">CLOSE</button>
+      <button class="btn-secondary" id="m-edit-btn" onclick="toggleEditBooking()">EDIT</button>
+      <button class="btn-primary" id="m-save-btn" onclick="saveEditBooking()" style="display:none;">SAVE</button>
       <button class="btn-primary" onclick="askAiAboutBooking()">ASK AI →</button>
     </div>
   </div>
@@ -1948,9 +1952,11 @@ function isValidBooking(b) {
 // Apply dedup on startup
 bookings = deduplicateBookings().filter(isValidBooking);
 let expenses   = JSON.parse(localStorage.getItem('voy_expenses') || '[]');
+let excludedBookingExpenses = JSON.parse(localStorage.getItem('voy_excluded_booking_expenses') || '[]');
 let packList   = JSON.parse(localStorage.getItem('voy_pack') || '[]');
 let tripBudget = parseFloat(localStorage.getItem('voy_budget') || '0');
 let settings   = JSON.parse(localStorage.getItem('voy_settings') || '{}');
+function getCurrency() { return settings.currency || 'USD'; }
 let activeTab  = 'dashboard';
 let activePlannerModule = null;
 let terminalHistory = [];
@@ -2078,7 +2084,8 @@ function updateChatPills() {
 
   // Budget status
   if (tripBudget > 0) {
-    const spent = expenses.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+    const allExp = getEffectiveExpenses();
+    const spent = allExp.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
     const pct   = Math.round(spent / tripBudget * 100);
     const color = pct > 90 ? 'var(--red)' : pct > 70 ? 'var(--gold)' : 'var(--green)';
     p.push(`<span style="color:${color};">💰 ${pct}% spent</span>`);
@@ -2115,7 +2122,7 @@ function updateChatPills() {
 // ═══════════════════════════════════════════════
 function buildMaraContext() {
   const now  = new Date();
-  const cur  = settings.currency || 'SEK';
+  const cur  = getCurrency();
   const home = settings.home     || 'Stockholm';
   const pass = settings.passport || 'US';
 
@@ -2168,14 +2175,15 @@ Always reference specific booking details, confirmation codes, and dates when av
   }
 
   // ── Budget ────────────────────────────────────
-  if (tripBudget > 0 || expenses.length) {
-    const spent = expenses.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+  const allExp = getEffectiveExpenses();
+  if (tripBudget > 0 || allExp.length) {
+    const spent = allExp.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
     const rem   = tripBudget - spent;
     const pct   = tripBudget > 0 ? Math.round(spent/tripBudget*100) : 0;
     ctx += `\n\n── BUDGET ──`;
     ctx += `\nTotal: ${cur} ${tripBudget.toLocaleString()} | Spent: ${cur} ${spent.toLocaleString()} (${pct}%) | Remaining: ${cur} ${rem.toLocaleString()}`;
-    if (expenses.length)
-      ctx += `\nExpenses: ` + expenses.slice(0,10).map(e=>`${e.cat||'Other'} ${e.desc||''} ${cur}${e.amount||0}`).join('; ');
+    if (allExp.length)
+      ctx += `\nExpenses: ` + allExp.slice(0,10).map(e=>`${e.cat||'Other'} ${e.desc||''} ${cur}${e.amount||0}`).join('; ');
   }
 
   // ── Pack list ─────────────────────────────────
@@ -2969,6 +2977,39 @@ function renderDashboard() {
   const visible  = getVisibleBookings();
   const empty    = document.getElementById('dash-empty');
   const content  = document.getElementById('dash-content');
+
+  // API key guidance card
+  const existingGuide = document.getElementById('dash-get-started');
+  if (existingGuide) existingGuide.remove();
+  if (!apiKey) {
+    const guideCard = document.createElement('div');
+    guideCard.id = 'dash-get-started';
+    guideCard.style.cssText = 'margin:12px 20px;padding:16px 20px;background:linear-gradient(135deg,var(--bg3),var(--bg4));border:1px solid var(--border2);border-radius:10px;border-left:3px solid var(--gold);';
+    guideCard.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="font-size:22px;">🚀</span>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--gold);">Get Started with Mara</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px;">Add your API key to unlock AI-powered features</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div style="padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;">
+          <div style="font-size:9px;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:4px;">REQUIRES API KEY</div>
+          <div style="font-size:10px;color:var(--text2);line-height:1.6;">AI Planner · Agent search · Manual extraction · Mara Chat · Pack list AI generate</div>
+        </div>
+        <div style="padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;">
+          <div style="font-size:9px;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:4px;">WORKS WITHOUT API KEY</div>
+          <div style="font-size:10px;color:var(--text2);line-height:1.6;">Gmail scan · Bookings view · Control Tower map · Timeline · Budget tracker · Vault · Visitors</div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="openDrawer()" style="font-size:11px;padding:8px 20px;">⚙ OPEN SETTINGS TO ADD API KEY</button>
+    `;
+    const dashTab = document.getElementById('tab-dashboard');
+    const secHeader = dashTab.querySelector('.sec-header');
+    if (secHeader && secHeader.parentElement) secHeader.parentElement.insertAdjacentElement('afterend', guideCard);
+  }
+
   if (!visible.length) { empty.style.display='flex'; content.style.display='none'; return; }
   empty.style.display='none'; content.style.display='block';
 
@@ -3088,7 +3129,7 @@ function startCountdownTicker(nextEvent) {
 // EXPORT TRIP TO PRINT
 // ═══════════════════════════════════════════════
 function exportTripPrint() {
-  const cur = settings.currency || 'USD';
+  const cur = getCurrency();
   const all = getVisibleBookings().sort((a,b) => new Date(a.date||'2099') - new Date(b.date||'2099'));
   const flights = all.filter(b => b.type === 'flight');
   const hotels  = all.filter(b => b.type === 'hotel');
@@ -3137,12 +3178,13 @@ function exportTripPrint() {
   }
 
   // Budget summary
-  if (expenses.length || tripBudget) {
-    const spent = expenses.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const allExpPrint = getEffectiveExpenses();
+  if (allExpPrint.length || tripBudget) {
+    const spent = allExpPrint.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
     html += `<h2>💰 Budget</h2>`;
     if (tripBudget) html += `<div class="print-item"><strong>Budget</strong><span>${cur} ${tripBudget.toLocaleString()}</span><span>Spent: ${cur} ${spent.toLocaleString()}</span><span>Remaining: ${cur} ${(tripBudget - spent).toLocaleString()}</span></div>`;
-    expenses.forEach(e => {
-      html += `<div class="print-item"><span>${e.cat||'Other'}</span><span>${e.desc||''}</span><span>${parseFloat(e.amount||0).toFixed(2)} ${e.currency||cur}</span></div>`;
+    allExpPrint.forEach(e => {
+      html += `<div class="print-item"><span>${e.cat||'Other'}${e.fromBooking?' (auto)':''}</span><span>${e.desc||''}</span><span>${parseFloat(e.amount||0).toFixed(2)} ${e.currency||cur}</span></div>`;
     });
   }
 
@@ -3570,7 +3612,7 @@ async function searchHotelPulse() {
   const guests   = document.getElementById('pp-ht-guests').value || '2';
   const cat      = document.getElementById('pp-ht-cat').value;
   const budget   = parseFloat(document.getElementById('pp-ht-budget').value) || 0;
-  const cur      = settings.currency || 'USD';
+  const cur      = getCurrency();
   if (!city) { showToast('Select a city from the dropdown','warning'); return; }
   if (!checkin)  { showToast('Select a check-in date','warning'); return; }
   if (!checkout) { showToast('Select a check-out date','warning'); return; }
@@ -3936,7 +3978,7 @@ async function searchFlights2() {
   const toCode   = document.getElementById('fl2-to-code')?.value   || (to.match(/\(([A-Z]{3})\)/)||[,''])[1];
   if (!fromCode || !toCode) { showToast('Select origin and destination from the dropdown','warning'); return; }
   if (!depart) { showToast('Select a departure date','warning'); return; }
-  const cur  = settings.currency || 'USD';
+  const cur  = getCurrency();
   const isRT = !!ret;
   const container = document.getElementById('fl2-results');
 
@@ -4301,7 +4343,7 @@ async function searchFlights() {
   const pax      = document.getElementById('fl-pax').value||'1';
   const cls      = document.getElementById('fl-class').value||'economy';
   if (!to) { showToast('Select a destination city','warning'); return; }
-  const cur = settings.currency||'USD';
+  const cur = getCurrency();
 
   const container = document.getElementById('fl-results');
   const source = serpApiKey ? 'Google Flights' : 'AI Estimate';
@@ -4471,7 +4513,7 @@ async function searchHotels() {
   const cat      = document.getElementById('ht-cat').value;
   if (!city) { showToast('Select a destination city','warning'); return; }
   const nights = checkin && checkout ? Math.max(1, Math.round((new Date(checkout) - new Date(checkin)) / 86400000)) : 1;
-  const cur    = settings.currency || 'USD';
+  const cur    = getCurrency();
 
   const container = document.getElementById('ht-results');
   const source = serpApiKey ? 'Google Hotels' : 'AI Estimate';
@@ -4952,8 +4994,9 @@ async function renderMapHotels() {
 function placeHotelPin(hotel, coords) {
   if (!mapInstance) return;
   const isPast = hotel.endDate && new Date(hotel.endDate) < new Date();
-  const bg     = isPast ? '#6B7280' : '#FFB800';
-  const glow   = isPast ? 'rgba(107,114,128,0.4)' : 'rgba(255,184,0,0.7)';
+  const isVisitor = hotel.isVisitor;
+  const bg     = isVisitor ? (isPast ? '#6B5B3A' : '#FF6B6B') : (isPast ? '#6B7280' : '#FFB800');
+  const glow   = isVisitor ? (isPast ? 'rgba(107,91,58,0.4)' : 'rgba(255,107,107,0.7)') : (isPast ? 'rgba(107,114,128,0.4)' : 'rgba(255,184,0,0.7)');
 
   // Square pin — distinct from round flight dots
   const icon = L.divIcon({
@@ -4974,9 +5017,11 @@ function placeHotelPin(hotel, coords) {
     ? Math.max(1, Math.round((new Date(hotel.endDate) - new Date(hotel.date)) / 86400000))
     : '';
 
+  const hotelPinColor = isVisitor ? '#FF6B6B' : '#FFB800';
   L.marker(coords, { icon }).addTo(mapInstance).bindPopup(`
     <div style="min-width:170px;font-family:'JetBrains Mono',monospace;">
-      <div style="font-weight:700;color:#FFB800;margin-bottom:6px;font-size:13px;">🏨 ${esc(hotel.hotelName||hotel.title||'Hotel')}</div>
+      <div style="font-weight:700;color:${hotelPinColor};margin-bottom:6px;font-size:13px;">🏨 ${esc(hotel.hotelName||hotel.title||'Hotel')}</div>
+      ${isVisitor ? `<div style="font-size:9px;color:#FF6B6B;font-weight:700;margin-bottom:4px;">VISITOR${hotel.visitorName?' · '+esc(hotel.visitorName):''}</div>` : ''}
       ${hotel.address    ? `<div style="font-size:10px;color:#aaa;margin-bottom:2px;">📍 ${esc(hotel.address)}</div>` : ''}
       ${hotel.date       ? `<div style="font-size:10px;color:#aaa;">In: ${fd(hotel.date)}</div>` : ''}
       ${hotel.endDate    ? `<div style="font-size:10px;color:#aaa;">Out: ${fd(hotel.endDate)}</div>` : ''}
@@ -5015,9 +5060,12 @@ async function renderMapTrips() {
     html:`<div style="width:14px;height:14px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulsePin 2s infinite;"></div>`,
     iconSize:[14,14], className:''
   });
-  const homeCoords = getCityCoords('ARN') || [59.3, 18.1];
+  const homeIata = getHomeIatas()[0] || 'ARN';
+  const homeCoords = getCityCoords(homeIata) || [59.3, 18.1];
+  const homeCityObj = WORLD_CITIES.find(c => c.iata === homeIata);
+  const homeCityName = homeCityObj ? `${homeCityObj.name}, ${homeCityObj.country || ''}`.replace(/, $/, '') : homeIata;
   L.marker(homeCoords, {icon:homePing}).addTo(mapInstance)
-    .bindPopup(`<b style="color:var(--green);">HOME BASE</b><br>Stockholm, Sweden<br><small>Your current location</small>`);
+    .bindPopup(`<b style="color:var(--green);">HOME BASE</b><br>${esc(homeCityName)}<br><small>Your current location</small>`);
 
   const plotted = new Set();
 
@@ -5035,7 +5083,7 @@ async function renderMapTrips() {
       plotted.add(b.to);
       addCityPin(b.to, toC, isPast, b);
     }
-    if (fromC && toC) drawArc(fromC, toC, isPast);
+    if (fromC && toC) drawArc(fromC, toC, isPast, b.isVisitor);
   }
 
   // Hotel pins — geocode addresses via Nominatim
@@ -5101,23 +5149,26 @@ async function addHotelPin(hotel) {
 }
 
 function addCityPin(iata, coords, isPast, booking) {
-  const color = isPast ? 'var(--text3)' : 'var(--cyan)';
-  const glow  = isPast ? 'rgba(74,96,128,0.4)' : 'rgba(0,200,255,0.5)';
+  const isVisitor = booking.isVisitor;
+  const color = isVisitor ? (isPast ? '#8B6914' : 'var(--gold)') : (isPast ? 'var(--text3)' : 'var(--cyan)');
+  const glow  = isVisitor ? (isPast ? 'rgba(139,105,20,0.4)' : 'rgba(255,184,0,0.5)') : (isPast ? 'rgba(74,96,128,0.4)' : 'rgba(0,200,255,0.5)');
+  const border = isVisitor ? '2px dashed ' + color : '2px solid ' + color;
   const icon  = L.divIcon({
-    html:`<div style="width:12px;height:12px;border-radius:50%;background:${color};box-shadow:0 0 10px ${glow};border:2px solid ${color};"></div>`,
+    html:`<div style="width:12px;height:12px;border-radius:50%;background:${color};box-shadow:0 0 10px ${glow};border:${border};"></div>`,
     iconSize:[12,12], className:''
   });
   const hotelInCity = bookings.find(h=>h.type==='hotel'&&(h.address||'').toLowerCase().includes(iata.toLowerCase()));
+  const ownerLabel = isVisitor ? `<br><small style="color:var(--gold);">VISITOR${booking.visitorName?' · '+esc(booking.visitorName):''}</small>` : '';
   L.marker(coords, {icon}).addTo(mapInstance).bindPopup(`
-    <b style="color:var(--cyan);">${iata}</b><br>
+    <b style="color:${isVisitor?'var(--gold)':'var(--cyan)'};">${iata}</b>${ownerLabel}<br>
     <span style="color:var(--text);">${esc(booking.title||'')}</span><br>
     ${booking.date?`<small>Depart: ${fd(booking.date)}</small>`:''}
     ${hotelInCity?`<br><small>🏨 ${esc(hotelInCity.hotelName||'')}</small>`:''}
   `);
 }
 
-function drawArc(from, to, isPast) {
-  const color = isPast ? '#4A6080' : 'var(--cyan)';
+function drawArc(from, to, isPast, isVisitor) {
+  const color = isVisitor ? (isPast ? '#8B6914' : 'var(--gold)') : (isPast ? '#4A6080' : 'var(--cyan)');
   const mid = [(from[0]+to[0])/2 - Math.abs(from[1]-to[1])*0.3, (from[1]+to[1])/2];
   const pts = [];
   for (let t=0; t<=1; t+=0.05) {
@@ -5197,7 +5248,7 @@ async function loadWeatherOverlay() {
   });
 
   // Home base
-  const homeCoords = getCityCoords('ARN') || [59.3, 18.1];
+  const homeCoords = getCityCoords(getHomeIatas()[0] || 'ARN') || [59.3, 18.1];
   const homeKey = `${homeCoords[0].toFixed(2)},${homeCoords[1].toFixed(2)}`;
   if (!locations.has(homeKey)) locations.set(homeKey, homeCoords);
 
@@ -5677,6 +5728,8 @@ function openModal(id) {
     if(l==='Address'&&v){ const u='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(v); return `<div class="detail-row"><span class="detail-lbl">${l}</span><a class="detail-val" href="${u}" target="_blank" style="color:var(--cyan);">${esc(v)} ↗</a></div>`; }
     return `<div class="detail-row"><span class="detail-lbl">${l}</span><span class="detail-val">${esc(v)}</span></div>`;
   }).join('');
+  document.getElementById('m-edit-btn').style.display = '';
+  document.getElementById('m-save-btn').style.display = 'none';
   document.getElementById('modal-overlay').classList.add('open');
 }
 function closeModal()        { document.getElementById('modal-overlay').classList.remove('open'); }
@@ -5692,6 +5745,62 @@ function askAiAboutBooking() {
       sendChat();
     }, 200);
   }
+}
+
+function toggleEditBooking() {
+  const b = bookings.find(x => x.id === currentBookingId);
+  if (!b) return;
+  const editableFields = [
+    ['title', 'Title', b.title],
+    ['date', 'Date', b.date],
+    ['endDate', 'End Date', b.endDate],
+    ['time', 'Time', b.time],
+    ['airline', 'Airline', b.airline],
+    ['flightNumber', 'Flight No.', b.flightNumber],
+    ['terminal', 'Terminal', b.terminal],
+    ['from', 'From', b.from],
+    ['to', 'To', b.to],
+    ['hotelName', 'Hotel Name', b.hotelName],
+    ['restaurantName', 'Restaurant', b.restaurantName],
+    ['address', 'Address', b.address],
+    ['confirmationCode', 'Confirmation', b.confirmationCode],
+    ['passengerName', 'Passenger', b.passengerName],
+    ['roomType', 'Room Type', b.roomType],
+    ['checkInTime', 'Check-in Time', b.checkInTime],
+    ['checkOutTime', 'Check-out Time', b.checkOutTime],
+    ['covers', 'Covers', b.covers],
+    ['price', 'Price', b.price],
+    ['notes', 'Notes', b.notes],
+    ['isVisitor', 'Ownership', b.isVisitor ? 'visitor' : 'mine'],
+  ].filter(([key, , val]) => val || ['title','date','isVisitor'].includes(key));
+
+  document.getElementById('m-rows').innerHTML = editableFields.map(([key, label, val]) => {
+    if (key === 'isVisitor') {
+      return `<div class="detail-row"><span class="detail-lbl">${label}</span><select id="edit-${key}" style="flex:1;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:inherit;font-size:12px;padding:4px 8px;border-radius:4px;"><option value="mine" ${val==='mine'?'selected':''}>Mine</option><option value="visitor" ${val==='visitor'?'selected':''}>Visitor</option></select></div>`;
+    }
+    const inputType = (key === 'date' || key === 'endDate') ? 'date' : 'text';
+    return `<div class="detail-row"><span class="detail-lbl">${label}</span><input id="edit-${key}" type="${inputType}" value="${esc(val || '')}" style="flex:1;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:inherit;font-size:12px;padding:4px 8px;border-radius:4px;"/></div>`;
+  }).join('');
+  document.getElementById('m-edit-btn').style.display = 'none';
+  document.getElementById('m-save-btn').style.display = '';
+}
+
+function saveEditBooking() {
+  const b = bookings.find(x => x.id === currentBookingId);
+  if (!b) return;
+  const fields = ['title','date','endDate','time','airline','flightNumber','terminal','from','to','hotelName','restaurantName','address','confirmationCode','passengerName','roomType','checkInTime','checkOutTime','covers','price','notes'];
+  fields.forEach(key => {
+    const el = document.getElementById('edit-' + key);
+    if (el) b[key] = el.value.trim() || null;
+  });
+  const ownerEl = document.getElementById('edit-isVisitor');
+  if (ownerEl) b.isVisitor = ownerEl.value === 'visitor';
+  saveBookings();
+  renderAll();
+  showToast('Booking updated', 'success');
+  document.getElementById('m-edit-btn').style.display = '';
+  document.getElementById('m-save-btn').style.display = 'none';
+  openModal(currentBookingId);
 }
 
 // ═══════════════════════════════════════════════
@@ -5714,10 +5823,13 @@ async function processManualBooking() {
     );
     let parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
     if (!Array.isArray(parsed)) parsed = [parsed];
-    parsed.forEach(b => { b.id = Date.now() + Math.random(); bookings.push(b); });
+    const valid = parsed.filter(b => isValidBooking(b));
+    const rejected = parsed.length - valid.length;
+    valid.forEach(b => { b.id = Date.now() + Math.random(); bookings.push(b); });
     saveBookings(); renderAll();
     closeManual(); document.getElementById('manual-text').value='';
-    showToast(`✓ ${parsed.length} booking${parsed.length>1?'s':''} added`,'success');
+    if (valid.length) showToast(`✓ ${valid.length} booking${valid.length>1?'s':''} added`,'success');
+    if (rejected) showToast(`⚠ ${rejected} booking${rejected>1?'s':''} rejected — missing required fields (date, title, or route for flights)`,'warning');
     await runProactiveAnalysis();
   } catch(e) { showToast('Extraction failed: '+e.message,'error'); }
   finally { btn.textContent='EXTRACT & ADD →'; btn.disabled=false; }
@@ -5735,28 +5847,58 @@ function toggleAiPanel() {
 // ═══════════════════════════════════════════════
 // BUDGET
 // ═══════════════════════════════════════════════
+function getBookingExpenses() {
+  return bookings
+    .filter(b => b.price && !excludedBookingExpenses.includes(b.id))
+    .map(b => {
+      const amt = parseFloat(String(b.price).replace(/[^0-9.]/g, ''));
+      if (!amt || isNaN(amt)) return null;
+      const cat = b.type === 'flight' ? 'Flights' : b.type === 'hotel' ? 'Hotels' : b.type === 'restaurant' ? 'Restaurants' : 'Other';
+      return { cat, desc: b.title || b.hotelName || b.restaurantName || b.type, amount: amt, currency: getCurrency(), date: b.date, fromBooking: true, bookingId: b.id };
+    }).filter(Boolean);
+}
+
+function getEffectiveExpenses() {
+  return [...expenses, ...getBookingExpenses()];
+}
+
+function toggleBookingExpense(bookingId) {
+  const idx = excludedBookingExpenses.indexOf(bookingId);
+  if (idx >= 0) excludedBookingExpenses.splice(idx, 1);
+  else excludedBookingExpenses.push(bookingId);
+  localStorage.setItem('voy_excluded_booking_expenses', JSON.stringify(excludedBookingExpenses));
+  renderBudget();
+}
+
 function renderBudget() {
+  const allExpenses = getEffectiveExpenses();
   const empty=document.getElementById('budget-empty'); const list=document.getElementById('expenses-list');
-  if (!expenses.length) { empty.style.display='flex'; list.innerHTML=''; renderBudgetHeader(); return; }
-  empty.style.display='none'; renderBudgetHeader();
+  if (!allExpenses.length) { if(empty)empty.style.display='flex'; if(list)list.innerHTML=''; renderBudgetHeader(); return; }
+  if(empty)empty.style.display='none'; renderBudgetHeader();
   const cats={};
-  expenses.forEach(e=>{ cats[e.cat]=(cats[e.cat]||0)+parseFloat(e.amount||0); });
-  document.getElementById('budget-by-cat').innerHTML=Object.entries(cats).map(([cat,amt])=>
+  allExpenses.forEach(e=>{ cats[e.cat]=(cats[e.cat]||0)+parseFloat(e.amount||0); });
+  const catEl=document.getElementById('budget-by-cat');
+  if(catEl)catEl.innerHTML=Object.entries(cats).map(([cat,amt])=>
     `<span class="pill cyan">${cat}: ${amt.toFixed(0)}</span>`).join('');
-  list.innerHTML=expenses.map((e,i)=>`
+  if(list)list.innerHTML=allExpenses.map((e,i)=>`
     <div class="expense-row">
-      <div class="expense-cat">${esc(e.cat)}</div>
+      <div class="expense-cat">${esc(e.cat)}${e.fromBooking?'<span style="font-size:8px;color:var(--cyan);margin-left:4px;">AUTO</span>':''}</div>
       <div class="expense-desc">${esc(e.desc)}</div>
       <div class="expense-amt">${parseFloat(e.amount||0).toFixed(2)} ${esc(e.currency||'')}</div>
-      <button class="expense-del" onclick="deleteExpense(${i})">✕</button>
+      ${e.fromBooking
+        ? `<button class="expense-del" onclick="toggleBookingExpense(${e.bookingId})" title="Exclude from budget">✕</button>`
+        : `<button class="expense-del" onclick="deleteExpense(${i})">✕</button>`}
     </div>`).join('');
 }
 
 function renderBudgetHeader() {
-  const total=expenses.reduce((s,e)=>s+parseFloat(e.amount||0),0);
-  document.getElementById('budget-spend-label').textContent=total.toFixed(2)+' spent';
+  const allExpenses = getEffectiveExpenses();
+  const total=allExpenses.reduce((s,e)=>s+parseFloat(e.amount||0),0);
+  const spendEl=document.getElementById('budget-spend-label');
+  if(spendEl)spendEl.textContent=total.toFixed(2)+' spent';
   const fill=document.getElementById('budget-fill');
   const label=document.getElementById('budget-total-label');
+  if(!fill||!label) return;
   if (tripBudget>0) {
     const pct=Math.min(100,total/tripBudget*100);
     fill.style.width=pct+'%';
@@ -5799,10 +5941,53 @@ function renderPackList() {
 
 async function generatePackList() {
   if (!apiKey) { showToast('API key required','warning'); return; }
-  const ctx=document.getElementById('pack-trip-context').value||(bookings.length?`Trip to ${bookings.filter(b=>b.type==='flight'&&b.to).map(b=>b.to).join(', ')||'upcoming destinations'}`:'general travel');
+  let ctx=document.getElementById('pack-trip-context').value||(bookings.length?`Trip to ${bookings.filter(b=>b.type==='flight'&&b.to).map(b=>b.to).join(', ')||'upcoming destinations'}`:'general travel');
+
+  // Enrich context with hotel nights, planner activities, and weather
+  const hotels = bookings.filter(b=>b.type==='hotel'&&b.date&&b.endDate);
+  if (hotels.length) {
+    const nightsInfo = hotels.map(h => {
+      const n = Math.max(1, Math.round((new Date(h.endDate)-new Date(h.date))/86400000));
+      return `${h.hotelName||h.title||'Hotel'}: ${n} night${n>1?'s':''} (${fd(h.date)} to ${fd(h.endDate)})`;
+    }).join('; ');
+    ctx += `\nHotel stays: ${nightsInfo}`;
+  }
+  const totalNights = hotels.reduce((s,h) => {
+    const n = Math.max(1, Math.round((new Date(h.endDate)-new Date(h.date))/86400000));
+    return s + n;
+  }, 0);
+  if (totalNights) ctx += `\nTotal trip duration: ~${totalNights} nights`;
+
+  // Planner activity data
+  const plannerDest = document.getElementById('planner-dest')?.value;
+  const plannerDates = document.getElementById('planner-dates')?.value;
+  const plannerContext = document.getElementById('planner-context')?.value;
+  if (plannerContext) ctx += `\nPlanned activities: ${plannerContext}`;
+  if (plannerDates) ctx += `\nTravel dates: ${plannerDates}`;
+
+  // Fetch weather for first destination
+  const destFlight = bookings.find(b=>b.type==='flight'&&b.to);
+  if (destFlight) {
+    const destCoords = getCityCoords(destFlight.to);
+    if (destCoords) {
+      try {
+        const startDate = destFlight.date || new Date(Date.now()+7*86400000).toISOString().split('T')[0];
+        const endDate = hotels.length && hotels[0].endDate ? hotels[0].endDate : new Date(new Date(startDate).getTime()+7*86400000).toISOString().split('T')[0];
+        const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${destCoords[0]}&longitude=${destCoords[1]}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&start_date=${startDate}&end_date=${endDate}&timezone=auto`);
+        const wData = await wRes.json();
+        if (wData.daily) {
+          const maxT = Math.max(...wData.daily.temperature_2m_max);
+          const minT = Math.min(...wData.daily.temperature_2m_min);
+          const rainDays = wData.daily.precipitation_sum.filter(p=>p>1).length;
+          ctx += `\nWeather forecast at destination: ${minT}°C to ${maxT}°C, ${rainDays} rainy day${rainDays!==1?'s':''}`;
+        }
+      } catch(e) { /* weather fetch optional */ }
+    }
+  }
+
   showToast('Generating pack list…','info');
   try {
-    const raw=await callClaude(`Generate a packing list. Return ONLY a JSON array: [{"name":"item","cat":"category"}]. Categories: Clothing, Documents, Electronics, Toiletries, Health, Activities, Other.`,[{role:'user',content:`Pack list for: ${ctx}`}],1200);
+    const raw=await callClaude(`Generate a packing list based on the trip context provided. Factor in the duration, weather, and planned activities. Return ONLY a JSON array: [{"name":"item","cat":"category"}]. Categories: Clothing, Documents, Electronics, Toiletries, Health, Activities, Other.`,[{role:'user',content:`Pack list for: ${ctx}`}],1200);
     const items=parseArr(raw);
     items.forEach(item=>{ item.id=Math.random().toString(36).slice(2); item.checked=false; });
     packList=[...packList,...items]; localStorage.setItem('voy_pack',JSON.stringify(packList));
@@ -7036,7 +7221,7 @@ async function runIntelSearch() {
   const ret      = document.getElementById('intel-return').value;
   const pax      = document.getElementById('intel-pax').value || '1';
   const cls      = document.getElementById('intel-class').value || 'economy';
-  const cur      = settings.currency || 'USD';
+  const cur      = getCurrency();
 
   if (!fromCode) { showToast('Select an origin city from the dropdown','warning'); return; }
   if (!toCode)   { showToast('Select a destination city from the dropdown','warning'); return; }
@@ -7526,7 +7711,7 @@ async function executeAgentSearch(parsed) {
 
 // ── Flight search ─────────────────────────────
 async function agentFlightSearch(p, container, headerEl) {
-  const cur = settings.currency || 'USD';
+  const cur = getCurrency();
   let results = '';
   let source  = 'AI Estimate';
 
@@ -7580,7 +7765,7 @@ Each: {"airline":"","stops":0,"price":number,"currency":"${cur}","cabinClass":"$
 
 // ── Hotel search ──────────────────────────────
 async function agentHotelSearch(p, container, headerEl) {
-  const cur    = settings.currency || 'USD';
+  const cur    = getCurrency();
   const nights = p.nights || (p.checkIn && p.checkOut ? Math.max(1,Math.round((new Date(p.checkOut)-new Date(p.checkIn))/86400000)) : 1);
   let results  = '';
 
@@ -7922,7 +8107,14 @@ function showUploadConfirmation(container, headerEl, extracted) {
         <span style="font-size:9px;color:var(--text3);">${conf}</span>
       </div>
       ${lines.map(([k,v]) => `<div class="booking-line"><span style="color:var(--text3);">${esc(k)}</span><span style="color:var(--text);">${esc(v)}</span></div>`).join('')}
-      <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+        <label style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:4px;">
+          <select id="upload-owner-${i}" style="background:var(--bg4);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:3px 6px;border-radius:4px;">
+            <option value="mine">Mine</option>
+            <option value="visitor">Visitor</option>
+          </select>
+        </label>
+        <div style="flex:1;"></div>
         <button class="btn-secondary" style="font-size:10px;padding:5px 12px;" onclick="skipUploadBooking(${i})">SKIP</button>
         <button class="btn-primary" style="font-size:10px;padding:5px 12px;" id="confirm-upload-${i}" onclick="confirmUploadBooking(${i})">CONFIRM & ADD</button>
       </div>
@@ -7931,7 +8123,7 @@ function showUploadConfirmation(container, headerEl, extracted) {
 
   container.innerHTML = `
     <div class="agent-chat-msg ai" style="margin-bottom:12px;">
-      I found <strong>${extracted.length} booking${extracted.length>1?'s':''}</strong> in your upload. Please review each one below — you can confirm to add it to your trips, or skip if it's incorrect.
+      I found <strong>${extracted.length} booking${extracted.length>1?'s':''}</strong> in your upload. Please review each one below — you can confirm to add it to your trips, or skip if it's incorrect. <strong>For each booking, select whether it's yours or a visitor's trip</strong> using the dropdown before confirming.
     </div>
     ${cardsHtml}
     <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -7944,7 +8136,8 @@ function confirmUploadBooking(idx) {
   const b = _agentPendingBookings[idx];
   if (!b) return;
   b.id = Date.now() + Math.random();
-  b.isVisitor = false;
+  const ownerSel = document.getElementById('upload-owner-' + idx);
+  b.isVisitor = ownerSel ? ownerSel.value === 'visitor' : false;
   delete b.confidence;
   bookings.push(b);
   saveBookings();
@@ -7969,7 +8162,8 @@ function confirmAllUploadBookings() {
     const btn = document.getElementById('confirm-upload-' + i);
     if (btn && !btn.disabled) {
       b.id = Date.now() + Math.random() + i;
-      b.isVisitor = false;
+      const ownerSel = document.getElementById('upload-owner-' + i);
+      b.isVisitor = ownerSel ? ownerSel.value === 'visitor' : false;
       delete b.confidence;
       bookings.push(b);
       added++;
