@@ -1039,7 +1039,6 @@ input[type="date"] { color-scheme: dark; }
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
             <button class="btn-secondary" onclick="exportTripPrint()" style="font-size:10px;padding:5px 12px;">🖨️ EXPORT TRIP</button>
-            <button class="btn-secondary" id="demo-flight-btn" onclick="toggleFlightStatusDemo()" style="font-size:10px;padding:5px 12px;">✈️ FLIGHT STATUS PREVIEW</button>
             <div id="dash-date" style="font-size:11px;color:var(--text2);"></div>
           </div>
         </div>
@@ -1925,10 +1924,13 @@ function deduplicateBookings() {
   const seen = new Set();
   const deduped = [];
   for (const b of bookings) {
-    // Use confirmationCode as primary key, fallback to title+date+type
-    const key = b.confirmationCode
-      ? b.confirmationCode.trim().toUpperCase()
-      : `${b.type}|${b.title||''}|${b.date||''}`;
+    // Build a key that distinguishes different legs/types sharing the same PNR.
+    // Round-trip flights share a confirmationCode but differ by date/from/to.
+    // Mixed bookings (flight+hotel) share a code but differ by type.
+    const codePart = b.confirmationCode ? b.confirmationCode.trim().toUpperCase() : '';
+    const key = codePart
+      ? `${codePart}|${b.type||''}|${b.date||''}|${b.from||''}|${b.to||''}`
+      : `${b.type}|${b.title||''}|${b.date||''}|${b.from||''}|${b.to||''}`;
     if (!seen.has(key)) {
       seen.add(key);
       deduped.push(b);
@@ -2663,13 +2665,22 @@ Return [] if no bookings found.`;
 
     // Deduplicate and save
     setStatus('Saving your bookings…');
-    const existingCodes = new Set(bookings.map(b => b.confirmationCode).filter(Boolean));
+    const existingKeys = new Set(bookings.map(b => {
+      const code = b.confirmationCode ? b.confirmationCode.trim().toUpperCase() : '';
+      return code
+        ? `${code}|${b.type||''}|${b.date||''}|${b.from||''}|${b.to||''}`
+        : `${b.type}|${b.title||''}|${b.date||''}|${b.from||''}|${b.to||''}`;
+    }));
     let added = 0;
     [...extracted.map(b=>({...b,isVisitor:false})), ...visitorBookings].forEach(b => {
       if (!b || !b.type) return;
-      if (b.confirmationCode && existingCodes.has(b.confirmationCode)) return;
+      const code = b.confirmationCode ? b.confirmationCode.trim().toUpperCase() : '';
+      const key = code
+        ? `${code}|${b.type||''}|${b.date||''}|${b.from||''}|${b.to||''}`
+        : `${b.type}|${b.title||''}|${b.date||''}|${b.from||''}|${b.to||''}`;
+      if (existingKeys.has(key)) return;
       b.id = Date.now() + Math.random();
-      if (b.confirmationCode) existingCodes.add(b.confirmationCode);
+      existingKeys.add(key);
       bookings.push(b);
       added++;
     });
@@ -2912,13 +2923,24 @@ function switchBookingTab(type, el) {
 function renderAll() {
   updateStats();
   renderDashboard();
-  // Re-render active tab so deletes/updates reflect immediately
-  // Skip tabs that are heavy to re-init or don't show booking data
-  const skipTabs = ['dashboard', 'agent', 'planner', 'flights2', 'vault', 'gems'];
-  if (activeTab && !skipTabs.includes(activeTab)) {
-    if (activeTab === 'tower') renderTimeline(); // don't re-init map, just refresh timeline
-    else renderTab(activeTab);
+
+  // ── Full-circle sync: refresh ALL booking-data tabs so every view
+  //    reflects the same underlying bookings array. Tabs that don't
+  //    display booking data (agent, planner, vault, gems) are skipped.
+  renderBookings('all');
+  renderAlerts();
+  renderTimeline();
+  renderVisitors();
+  // Refresh control-tower map if it has been initialised
+  if (mapInstance) refreshMap();
+
+  // Also re-render whichever tab-specific view is currently active
+  // (covers flights2, restaurants, etc.)
+  const alreadySynced = ['dashboard','bookings','alerts','tower','visitors'];
+  if (activeTab && !alreadySynced.includes(activeTab)) {
+    renderTab(activeTab);
   }
+
   // Update visitors badge
   const visCount = bookings.filter(b=>b.isVisitor).length;
   const navVis = document.getElementById('nav-visitors');
@@ -3026,9 +3048,9 @@ function renderDashboard() {
     }
   }
 
-  // Booking cards
+  // Booking cards — show all visible bookings (no arbitrary limit)
   document.getElementById('upcoming-cards').innerHTML =
-    visible.sort((a,b)=>new Date(a.date||'2099')-new Date(b.date||'2099')).slice(0,6).map(buildCard).join('');
+    visible.sort((a,b)=>new Date(a.date||'2099')-new Date(b.date||'2099')).map(buildCard).join('');
 
   // Alerts bar with Ask Mara links
   const bar = document.getElementById('dash-alerts-bar');
@@ -3270,52 +3292,6 @@ async function renderFlightStatus() {
   container.innerHTML = `<div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">✈️ LIVE FLIGHT STATUS <span style="color:var(--green);font-weight:400;">· AviationStack</span></div>${cards}`;
 }
 
-// ── Flight Status Demo Mode ──────────────────
-function showFlightStatusDemo() {
-  const container = document.getElementById('dash-flight-status');
-  if (!container) return;
-  const demoFlights = [
-    { route:'ARN → NBO', airline:'Kenya Airways', flight:'KQ102', status:'scheduled', label:'ON TIME', color:'var(--text2)', gate:'42A', terminal:'5', delay:0, date:'Today at 22:15' },
-    { route:'NBO → CPT', airline:'Ethiopian Airlines', flight:'ET858', status:'delayed', label:'DELAYED', color:'var(--gold)', gate:'12', terminal:'1', delay:35, date:'Tomorrow at 09:30' },
-  ];
-  const cards = demoFlights.map(f => {
-    const delay = f.delay > 0 ? `<span style="color:var(--gold);"> +${f.delay}min</span>` : '';
-    return `<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;border-left:3px solid ${f.color};margin-bottom:6px;">
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:13px;font-weight:700;color:var(--text);">${f.route}</span>
-          <span style="font-size:9px;font-weight:700;color:${f.color};letter-spacing:0.08em;background:${f.color}22;padding:2px 6px;border-radius:4px;">${f.label}</span>
-          ${delay}
-        </div>
-        <div style="font-size:10px;color:var(--text2);margin-top:3px;">${f.airline} ${f.flight} · ${f.date}</div>
-      </div>
-      <div style="text-align:right;font-size:10px;color:var(--text3);">
-        <div>Gate <span style="color:var(--cyan);font-weight:700;">${f.gate}</span></div>
-        <div>Terminal ${f.terminal}</div>
-      </div>
-    </div>`;
-  }).join('');
-  container.style.display = 'block';
-  container.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-    <div style="font-size:9px;letter-spacing:0.14em;color:var(--text3);text-transform:uppercase;">✈️ LIVE FLIGHT STATUS <span style="color:var(--gold);font-weight:400;">· DEMO PREVIEW</span></div>
-    <button onclick="closeFlightStatusDemo()" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:9px;padding:2px 8px;cursor:pointer;font-family:inherit;">✕ CLOSE</button>
-  </div>${cards}
-  <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:4px;opacity:0.6;">This is demo data · Add your AviationStack API key in ⚙ Settings for live status</div>`;
-}
-
-function closeFlightStatusDemo() {
-  const container = document.getElementById('dash-flight-status');
-  if (container) { container.style.display = 'none'; container.innerHTML = ''; }
-}
-
-function toggleFlightStatusDemo() {
-  const container = document.getElementById('dash-flight-status');
-  if (container && container.style.display !== 'none' && container.innerHTML) {
-    closeFlightStatusDemo();
-  } else {
-    showFlightStatusDemo();
-  }
-}
 
 // ═══════════════════════════════════════════════
 // CARD BUILDER
@@ -3445,7 +3421,13 @@ function renderTimeline() {
 }
 
 function renderAlerts() {
-  const all  = [...proactiveGaps,...proactiveAlerts];
+  // Sort alerts chronologically by trip date — most imminent first
+  const all  = [...proactiveGaps,...proactiveAlerts]
+    .sort((a, b) => {
+      const da = a.date ? new Date(a.date) : new Date('2099-12-31');
+      const db = b.date ? new Date(b.date) : new Date('2099-12-31');
+      return da - db;
+    });
   const list = document.getElementById('alerts-list');
   let html = '';
 
@@ -3465,6 +3447,7 @@ function renderAlerts() {
       <div style="flex:1;">
         <div class="alert-title">${esc(a.title)}</div>
         <div class="alert-body">${esc(a.message)}</div>
+        ${a.date?`<div style="margin-top:3px;font-size:9px;color:var(--text3);">Trip date: ${fd(a.date)}</div>`:''}
         ${a.city?`<div style="margin-top:4px;"><span class="pill cyan">${esc(a.city)}</span></div>`:''}
         ${a.type==='transit'?`<div style="margin-top:6px;"><span style="font-size:10px;color:var(--cyan);cursor:pointer;letter-spacing:0.06em;" onclick="askMaraAboutAlert('${esc(a.title)}','${esc(a.city||'')}')">Ask Mara AI about transport →</span></div>`:''}
       </div>
