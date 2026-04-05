@@ -5379,6 +5379,12 @@ function renderMapSidebar() {
 // ═══════════════════════════════════════════════
 // CLAUDE API
 // ═══════════════════════════════════════════════
+// CORS Playbook applied:
+//   1. Direct fetch to api.anthropic.com (works only on claude.ai artifacts)
+//   2. User's Netlify proxy — reliable, user-controlled, no CORS issues
+//   3. corsproxy.io — flaky last-resort fallback
+// Rule 3: anthropic-dangerous-direct-browser-access is claude.ai ONLY.
+// Rule 4: For external hosts, always proxy through a server-side function.
 async function callClaude(systemPrompt, messages, maxTokens=1000) {
   if (!apiKey) throw new Error('No API key configured');
   const body = {
@@ -5389,41 +5395,63 @@ async function callClaude(systemPrompt, messages, maxTokens=1000) {
   if (systemPrompt && typeof systemPrompt === 'string') body.system = systemPrompt;
 
   const anthropicUrl = 'https://api.anthropic.com/v1/messages';
-  const headers = {
+  const directHeaders = {
     'Content-Type':                              'application/json',
     'x-api-key':                                 apiKey,
     'anthropic-version':                         '2023-06-01',
     'anthropic-dangerous-direct-browser-access': 'true',
   };
 
-  // Try direct call first (works in claude.ai artifacts)
-  // Rule 3: anthropic-dangerous-direct-browser-access is claude.ai only.
-  // For external hosts fall through to proxy chain.
   let res;
+
+  // Strategy 1: Direct call (works in claude.ai artifacts only)
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30000);
     res = await fetch(anthropicUrl, {
       method: 'POST',
-      headers,
+      headers: directHeaders,
       body: JSON.stringify(body),
       signal: controller.signal
     });
     clearTimeout(timer);
   } catch(directErr) {
-    // Direct blocked (CORS on external host) — try proxy chain
+    res = null; // CORS blocked — fall through to proxy chain
+  }
+
+  // Strategy 2: User's Netlify proxy (reliable, no CORS)
+  if (!res && proxyBase) {
     try {
-      const proxyBody = JSON.stringify({ url: anthropicUrl, headers, body: JSON.stringify(body) });
-      // Use corsproxy.io to forward POST
-      const controller2 = new AbortController();
-      const timer2 = setTimeout(() => controller2.abort(), 30000);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 60000);
+      res = await fetch(`${proxyBase}/.netlify/functions/claude`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey,
+          anthropicVersion: '2023-06-01',
+          body
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+    } catch(proxyErr) {
+      res = null; // Netlify proxy failed — fall through
+    }
+  }
+
+  // Strategy 3: corsproxy.io fallback (flaky, last resort)
+  if (!res) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 30000);
       res = await fetch(
         `https://corsproxy.io/?${encodeURIComponent(anthropicUrl)}`,
-        { method: 'POST', headers, body: JSON.stringify(body), signal: controller2.signal }
+        { method: 'POST', headers: directHeaders, body: JSON.stringify(body), signal: controller.signal }
       );
-      clearTimeout(timer2);
-    } catch(proxyErr) {
-      throw new Error('Cannot reach Claude API. Check your internet connection and API key.');
+      clearTimeout(timer);
+    } catch(fallbackErr) {
+      throw new Error('Cannot reach Claude API. Check your internet connection, API key, and Proxy URL in Settings.');
     }
   }
 
