@@ -105,7 +105,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .bcard-hotel  .bcard-shimmer{background:linear-gradient(90deg,transparent,var(--green),transparent);}
 .bcard-resto  .bcard-shimmer{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
 .bcard-other  .bcard-shimmer{background:linear-gradient(90deg,transparent,var(--amber),transparent);}
-.bcard-body{padding:12px 14px 0;}
+.bcard-body{padding:10px 14px 0;}
 .bcard-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
 .bcard-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
 .bcard-flight .bcard-icon{background:var(--cyan-dim);color:var(--cyan);}
@@ -114,10 +114,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .bcard-other  .bcard-icon{background:rgba(255,140,0,0.12);color:var(--amber);}
 .bcard-info{flex:1;min-width:0;}
 .bcard-type{font-size:9px;letter-spacing:0.14em;color:var(--text2);text-transform:uppercase;margin-bottom:2px;}
-.bcard-title{font-size:13px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bcard-title{font-size:12px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bcard-date{font-size:10px;color:var(--text2);margin-top:2px;}
-.route-row{display:flex;align-items:center;gap:8px;margin:8px 0;}
-.route-code{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);}
+.route-row{display:flex;align-items:center;gap:6px;margin:4px 0;}
+.route-code{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);}
 .route-mid{flex:1;display:flex;align-items:center;gap:4px;}
 .route-line{flex:1;height:1px;background:var(--border2);}
 .route-plane{font-size:12px;color:var(--cyan);}
@@ -1024,7 +1024,7 @@ input[type="date"] { color-scheme: dark; }
     <div class="nav-btn"        id="nav-pack"         onclick="switchTab('pack')">🎒<div class="nav-tip">PACK LIST</div></div>
     <div class="nav-btn"        id="nav-vault"        onclick="switchTab('vault')">🔐<div class="nav-tip">VAULT</div></div>
     <div class="nav-btn"        id="nav-gems"         onclick="switchTab('gems')">💎<div class="nav-tip">SAVED GEMS</div><span class="nav-badge" id="gems-badge" style="display:none;"></span></div>
-    <div class="nav-btn"        id="nav-visitors"     onclick="switchTab('visitors')">👥<div class="nav-tip">VISITORS</div></div>
+    <div class="nav-btn"        id="nav-visitors"     onclick="switchTab('visitors')">👥<div class="nav-tip">OTHERS</div></div>
     <div class="nav-btn"        id="nav-guide"        onclick="switchTab('guide')">📖<div class="nav-tip">GUIDE</div></div>
   </div>
 
@@ -1131,8 +1131,8 @@ input[type="date"] { color-scheme: dark; }
             <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--text3);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Past</span></div>
             <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green);animation:pulsePin 2s infinite;border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Home base</span></div>
             <div class="map-legend-item"><div style="width:10px;height:10px;background:#FFB800;border:1.5px solid #fff;transform:rotate(45deg);border-radius:2px;flex-shrink:0;box-shadow:0 0 6px rgba(255,184,0,0.6);"></div><span style="font-size:10px;color:var(--text2);">Hotel</span></div>
-            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--gold);border:2px dashed var(--gold);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Visitor flight</span></div>
-            <div class="map-legend-item"><div style="width:10px;height:10px;background:#FF6B6B;border:1.5px solid #fff;transform:rotate(45deg);border-radius:2px;flex-shrink:0;box-shadow:0 0 6px rgba(255,107,107,0.6);"></div><span style="font-size:10px;color:var(--text2);">Visitor hotel</span></div>
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--gold);border:2px dashed var(--gold);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Other's flight</span></div>
+            <div class="map-legend-item"><div style="width:10px;height:10px;background:#FF6B6B;border:1.5px solid #fff;transform:rotate(45deg);border-radius:2px;flex-shrink:0;box-shadow:0 0 6px rgba(255,107,107,0.6);"></div><span style="font-size:10px;color:var(--text2);">Other's hotel</span></div>
           </div>
         </div>
       </div>
@@ -1282,11 +1282,11 @@ input[type="date"] { color-scheme: dark; }
     <!-- VISITORS -->
     <div class="tab-view" id="tab-visitors">
       <div style="flex-shrink:0;">
-        <div class="sec-header"><div><div class="sec-title">VISITOR <span class="accent">TRACKER</span></div></div></div>
+        <div class="sec-header"><div><div class="sec-title">OTHER <span class="accent">TRACKER</span></div></div></div>
         <div class="banner info">📁 Create a Gmail label <strong style="margin:0 4px;">"Tracker"</strong> and move friends/family travel emails there. Mara scans it automatically.</div>
       </div>
       <div id="visitors-list" style="padding:12px 20px;overflow-y:auto;flex:1;">
-        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No visitor trips found</div><div class="empty-body">Set up a Tracker folder and rescan.</div></div>
+        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No other trips found</div><div class="empty-body">Set up a Tracker folder and rescan.</div></div>
       </div>
     </div>
 
@@ -1469,8 +1469,9 @@ input[type="date"] { color-scheme: dark; }
             </div>
 
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--text2);">
-              <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px;">👥 VISITORS</div>
+              <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px;">👥 OTHERS</div>
               <div style="font-size:10px;color:var(--text2);line-height:1.6;">Track friends and family travel plans. Create a Gmail label called "Tracker" and move their travel emails there. Mara scans and extracts their bookings separately.</div>
+
             </div>
 
           </div>
@@ -1924,11 +1925,23 @@ function deduplicateBookings() {
   for (const b of bookings) {
     // Build a key that distinguishes different legs/types sharing the same PNR.
     // Round-trip flights share a confirmationCode but differ by date/from/to.
-    // Mixed bookings (flight+hotel) share a code but differ by type.
-    const codePart = b.confirmationCode ? b.confirmationCode.trim().toUpperCase() : '';
-    const key = codePart
-      ? `${codePart}|${b.type||''}|${b.date||''}|${b.from||''}|${b.to||''}`
-      : `${b.type}|${b.title||''}|${b.date||''}|${b.from||''}|${b.to||''}`;
+    const code = b.confirmationCode ? b.confirmationCode.trim().toUpperCase() : '';
+    const type = (b.type||'').toLowerCase();
+    const date = (b.date||'').trim();
+    const from = (b.from||'').trim().toUpperCase();
+    const to   = (b.to||'').trim().toUpperCase();
+    const title = (b.title||'').trim().toLowerCase();
+    // Primary: confirmation code + type (strongest dedup)
+    let key;
+    if (code) {
+      key = `ref:${code}|${type}`;
+      // For flights with same PNR, include route to distinguish legs
+      if (type === 'flight' && from && to) key += `|${from}→${to}`;
+    } else if (type === 'flight' && from && to) {
+      key = `${type}|${from}→${to}|${date}`;
+    } else {
+      key = `${type}|${title}|${date}`;
+    }
     if (!seen.has(key)) {
       seen.add(key);
       deduped.push(b);
@@ -2131,7 +2144,7 @@ function buildMaraContext() {
     tower:'Control Tower & Timeline (map + chronological view)', alerts:'Alerts (gap analysis)',
     flights:'Flight Search', hotels:'Hotel Search', restaurants:'Restaurant Search',
     tower:'Control Tower map', planner:'AI Planner', budget:'Budget Tracker',
-    pack:'Pack List', vault:'Vault (documents & notes)', visitors:'Visitor Tracker',
+    pack:'Pack List', vault:'Vault (documents & notes)', visitors:'Other Tracker',
   };
 
   let ctx = `You are Mara AI, an elite travel intelligence assistant embedded in the Mara Terminal app.
@@ -2162,7 +2175,7 @@ Always reference specific booking details, confirmation codes, and dates when av
   }
 
   if (visitorBookings.length) {
-    ctx += `\n\n── VISITORS (${visitorBookings.length} bookings tracked) ──`;
+    ctx += `\n\n── OTHERS (${visitorBookings.length} bookings tracked for family/friends) ──`;
     visitorBookings.slice(0,8).forEach(b => ctx += `\n• [${(b.type||'').toUpperCase()}] ${b.title||''} | ${b.date||''}`);
   }
 
@@ -2599,12 +2612,19 @@ CRITICAL RULES:
 4. Read the FULL itinerary — departure AND return. Do not stop after finding the first flight leg.
 5. For PDFs: scan every page. Itinerary details, e-tickets, and hotel vouchers often span multiple pages.
 
+PASSENGER NAME EXTRACTION — CRITICAL:
+6. ALWAYS extract the actual passenger/traveller/guest name from the BOOKING CONTENT, not the email sender, forwarder, or purchaser.
+7. Look for these fields in the content: "Passenger:", "Traveller:", "Guest name:", "Guest:", "Travelling as:", "Name:", seat assignments, boarding pass names, hotel guest fields, "Booked for:", ticket holder names on e-tickets.
+8. If the email is FORWARDED (contains "Forwarded message", "Fwd:", "Begin forwarded message", "---------- Forwarded message ----------"), IGNORE the forwarding sender — extract the passenger name from the original booking content only.
+9. The billing name, purchaser, "Booked by:", or account holder is NOT necessarily the passenger. Always prefer the actual traveller's name.
+10. If MULTIPLE passengers are listed (e.g. on a group booking), include ALL names separated by " / " in passengerName and set passengerCount accordingly.
+
 Each item (use null for missing fields):
 {
   "type": "flight"|"hotel"|"restaurant"|"other",
   "title": "short descriptive title e.g. Stockholm → Helsinki",
   "confirmationCode": "PNR / booking ref or null",
-  "passengerName": "all passenger names separated by / or null",
+  "passengerName": "actual passenger/guest name(s) from the booking (NOT the email sender or purchaser) separated by / or null",
   "passengerCount": number of passengers or null,
   "date": "YYYY-MM-DD (departure date for flights, check-in for hotels)",
   "endDate": "YYYY-MM-DD (check-out date for hotels, null for flights)",
@@ -2657,35 +2677,51 @@ Return [] if no bookings found.`;
 
     // Tracker — non-blocking
     let visitorBookings = [];
+    let trackerEmails = [];
     try {
-      setStatus('Checking Tracker folder for visitor bookings…');
-      const trackerEmails = await fetchTrackerEmails();
-      if (trackerEmails && trackerEmails.length > 0) {
+      setStatus('Checking Tracker folder for other bookings…');
+      trackerEmails = await fetchTrackerEmails() || [];
+      if (trackerEmails.length > 0) {
         visitorBookings = await extractVisitorBookings(trackerEmails);
       }
     } catch(_) {}
 
     // Deduplicate and save
     setStatus('Saving your bookings…');
-    const existingKeys = new Set(bookings.map(b => {
+
+    function makeDedupeKey(b) {
       const code = b.confirmationCode ? b.confirmationCode.trim().toUpperCase() : '';
-      return code
-        ? `${code}|${b.type||''}|${b.date||''}|${b.from||''}|${b.to||''}`
-        : `${b.type}|${b.title||''}|${b.date||''}|${b.from||''}|${b.to||''}`;
-    }));
+      const type = (b.type||'').toLowerCase();
+      const date = (b.date||'').trim();
+      const from = (b.from||'').trim().toUpperCase();
+      const to   = (b.to||'').trim().toUpperCase();
+      const title = (b.title||'').trim().toLowerCase();
+      // Primary key: confirmation code + type (strongest match)
+      if (code) return `ref:${code}|${type}`;
+      // Secondary: type + route/title + date
+      if (type === 'flight' && from && to) return `${type}|${from}→${to}|${date}`;
+      return `${type}|${title}|${date}`;
+    }
+
+    const existingKeys = new Set(bookings.map(makeDedupeKey));
     let added = 0;
     [...extracted.map(b=>({...b,isVisitor:false})), ...visitorBookings].forEach(b => {
       if (!b || !b.type) return;
-      const code = b.confirmationCode ? b.confirmationCode.trim().toUpperCase() : '';
-      const key = code
-        ? `${code}|${b.type||''}|${b.date||''}|${b.from||''}|${b.to||''}`
-        : `${b.type}|${b.title||''}|${b.date||''}|${b.from||''}|${b.to||''}`;
+      const key = makeDedupeKey(b);
       if (existingKeys.has(key)) return;
       b.id = Date.now() + Math.random();
       existingKeys.add(key);
       bookings.push(b);
       added++;
     });
+
+    // Save processed email IDs to prevent re-scanning
+    const prevTravel  = JSON.parse(localStorage.getItem('voy_scanned_email_ids') || '[]');
+    const prevTracker = JSON.parse(localStorage.getItem('voy_scanned_tracker_ids') || '[]');
+    const newTravelIds  = travelEmails.filter(e => e.msgId).map(e => e.msgId);
+    const newTrackerIds = trackerEmails.filter(e => e.msgId).map(e => e.msgId);
+    localStorage.setItem('voy_scanned_email_ids', JSON.stringify([...new Set([...prevTravel, ...newTravelIds])]));
+    localStorage.setItem('voy_scanned_tracker_ids', JSON.stringify([...new Set([...prevTracker, ...newTrackerIds])]));
 
     saveBookings(); renderAll();
     clearTimeout(safetyTimer);
@@ -2694,7 +2730,7 @@ Return [] if no bookings found.`;
 
     const myCount  = extracted.length;
     const visCount = visitorBookings.length;
-    showToast(`✓ ${added} bookings imported (${myCount} yours · ${visCount} visitors)`, 'success');
+    showToast(`✓ ${added} bookings imported (${myCount} yours · ${visCount} others)`, 'success');
     if (bookings.length > 0) { switchTab('dashboard'); runProactiveAnalysis(); }
 
   } catch(err) {
@@ -2741,8 +2777,13 @@ async function fetchTravelEmails() {
   const messages = listRes.messages || [];
   if (!messages.length) return [];
 
+  // Skip emails already processed in previous scans
+  const scannedIds = JSON.parse(localStorage.getItem('voy_scanned_email_ids') || '[]');
+  const scannedSet = new Set(scannedIds);
+
   const emails = [];
   for (const m of messages) {
+    if (scannedSet.has(m.id)) continue; // already processed
     try {
       setStatus(`Reading email ${emails.length+1} of ${messages.length}…`);
       const full = await gmailGet(`/messages/${m.id}?format=full`);
@@ -2750,7 +2791,7 @@ async function fetchTravelEmails() {
       const get  = n => (hdrs.find(h=>h.name.toLowerCase()===n)||{}).value||'';
       const body = extractBody(full.payload).slice(0, 8000);
       const pdfs = await extractPdfAttachments(full, m.id);
-      emails.push({ subject:get('subject'), from:get('from'), date:get('date'), body, pdfs });
+      emails.push({ msgId: m.id, subject:get('subject'), from:get('from'), date:get('date'), body, pdfs });
     } catch(e) { console.warn('Skipping email:', e.message); }
   }
   return emails;
@@ -2765,15 +2806,19 @@ async function fetchTrackerEmails() {
   const messages = listRes.messages || [];
   if (!messages.length) return [];
 
+  const scannedIds = JSON.parse(localStorage.getItem('voy_scanned_tracker_ids') || '[]');
+  const scannedSet = new Set(scannedIds);
+
   const emails = [];
   for (const m of messages) {
+    if (scannedSet.has(m.id)) continue; // already processed
     try {
       const full = await gmailGet(`/messages/${m.id}?format=full`);
       const hdrs = full.payload?.headers || [];
       const get  = n => (hdrs.find(h=>h.name.toLowerCase()===n)||{}).value||'';
       const body = extractBody(full.payload).slice(0, 8000);
       const pdfs = await extractPdfAttachments(full, m.id);
-      emails.push({ subject:get('subject'), from:get('from'), date:get('date'), body, pdfs });
+      emails.push({ msgId: m.id, subject:get('subject'), from:get('from'), date:get('date'), body, pdfs });
     } catch(e) { console.warn('Skipping tracker email:', e.message); }
   }
   return emails;
@@ -2797,13 +2842,23 @@ async function extractVisitorBookings(emails) {
     }
   }
   contentBlocks.unshift({ type:'text', text:
-    `Extract visitor travel bookings (for family/friends, not the user).
+    `Extract travel bookings for other people (family/friends, not the user).
 Return ONLY a valid JSON array (no markdown). Use null for missing fields.
+
+PASSENGER NAME RULES:
+- ALWAYS extract the actual passenger/traveller/guest name from the BOOKING CONTENT itself.
+- Look for: "Passenger:", "Guest name:", "Travelling as:", seat assignments, boarding pass names, hotel guest fields.
+- Do NOT use the email sender, forwarder, or purchaser name as the passenger.
+- If the email is forwarded, ignore the forwarding chain and extract from the original booking.
+- The billing name or "Booked by" is NOT the passenger — use the actual traveller's name.
+- visitorName MUST be the actual passenger/guest name, not the email sender.
+
 Each item: {"type":"flight"|"hotel"|"restaurant"|"other","title":"","confirmationCode":null,
-"passengerName":null,"date":"YYYY-MM-DD","endDate":null,"from":null,"to":null,
+"passengerName":"actual passenger/guest name from booking content",
+"date":"YYYY-MM-DD","endDate":null,"from":null,"to":null,
 "airline":null,"flightNumber":null,"hotelName":null,"address":null,
 "checkInTime":null,"checkOutTime":null,"roomType":null,"price":null,"notes":null,
-"isVisitor":true,"visitorName":"infer from passenger name or email sender"}
+"isVisitor":true,"visitorName":"actual passenger/guest name from booking content — NOT the email sender or purchaser"}
 
 Emails:\n` + blob
   });
@@ -3000,7 +3055,7 @@ function renderDashboard() {
         </div>
         <div style="padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;">
           <div style="font-size:9px;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:4px;">WORKS WITHOUT API KEY</div>
-          <div style="font-size:10px;color:var(--text2);line-height:1.6;">Gmail scan · Bookings view · Control Tower map · Timeline · Budget tracker · Vault · Visitors</div>
+          <div style="font-size:10px;color:var(--text2);line-height:1.6;">Gmail scan · Bookings view · Control Tower map · Timeline · Budget tracker · Vault · Others</div>
         </div>
       </div>
       <button class="btn-primary" onclick="openDrawer()" style="font-size:11px;padding:8px 20px;">⚙ OPEN SETTINGS TO ADD API KEY</button>
@@ -3352,9 +3407,9 @@ function buildCard(b) {
   const codeVal   = b.confirmationCode||'—';
   const extra     = b.type==='flight'?(b.flightNumber||b.airline||''):b.type==='hotel'?(b.roomType||''):(b.covers?`${b.covers} guests`:'');
   const extraLabel= b.type==='flight'?'FLIGHT':b.type==='hotel'?'ROOM':'COVERS';
-  // Visitor badge
+  // Ownership badge
   const visitorBadge = b.isVisitor
-    ? `<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:rgba(255,184,0,0.15);border:1px solid rgba(255,184,0,0.3);color:var(--gold);letter-spacing:0.06em;font-weight:600;">VISITOR${b.visitorName?' · '+esc(b.visitorName.split(' ')[0]):''}</span>`
+    ? `<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:rgba(255,184,0,0.15);border:1px solid rgba(255,184,0,0.3);color:var(--gold);letter-spacing:0.06em;font-weight:600;">OTHER${b.visitorName?' · '+esc(b.visitorName.split(' ')[0]):''}</span>`
     : `<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:var(--cyan-dim);border:1px solid var(--border2);color:var(--cyan);letter-spacing:0.06em;font-weight:600;">MINE</span>`;
   return `<div class="bcard ${m.cls}" onclick="openModal(${b.id})">
     <div class="bcard-shimmer"></div>
@@ -4930,19 +4985,31 @@ function getCityCoords(iata) {
   return null;
 }
 
-async function resolveCityCoords(iata) {
-  // Try hardcoded lookup first
-  const quick = getCityCoords(iata);
+async function resolveCityCoords(iataOrCity) {
+  if (!iataOrCity) return null;
+  const key = iataOrCity.trim().toUpperCase();
+  // Try hardcoded lookup first (by IATA)
+  const quick = getCityCoords(key);
   if (quick) return quick;
-  // Fall back to geocoding via Nominatim using city name from WORLD_CITIES
-  const city = WORLD_CITIES.find(c => c.iata === iata);
-  const query = city ? `${city.name}, ${city.country}` : iata;
-  const coords = await geocodeAddress(query);
-  if (coords) {
-    // Cache in CITY_COORDS for future lookups
-    CITY_COORDS[iata] = [coords[1], coords[0]];
+  // Try matching by city name in WORLD_CITIES (handles "Stockholm" instead of "ARN")
+  const city = WORLD_CITIES.find(c => c.iata === key)
+    || WORLD_CITIES.find(c => c.name.toUpperCase() === key)
+    || WORLD_CITIES.find(c => c.name.toUpperCase().startsWith(key));
+  // If we found a match by name, try its IATA in CITY_COORDS
+  if (city) {
+    const byIata = getCityCoords(city.iata);
+    if (byIata) return byIata;
   }
-  return coords;
+  const query = city ? `${city.name}, ${city.country}` : iataOrCity;
+  try {
+    const coords = await geocodeAddress(query);
+    if (coords) {
+      // Cache in CITY_COORDS for future lookups
+      CITY_COORDS[key] = [coords[1], coords[0]];
+      if (city) CITY_COORDS[city.iata] = [coords[1], coords[0]];
+    }
+    return coords;
+  } catch(e) { return null; }
 }
 
 function initMap() {
@@ -5021,7 +5088,7 @@ function placeHotelPin(hotel, coords) {
   L.marker(coords, { icon }).addTo(mapInstance).bindPopup(`
     <div style="min-width:170px;font-family:'JetBrains Mono',monospace;">
       <div style="font-weight:700;color:${hotelPinColor};margin-bottom:6px;font-size:13px;">🏨 ${esc(hotel.hotelName||hotel.title||'Hotel')}</div>
-      ${isVisitor ? `<div style="font-size:9px;color:#FF6B6B;font-weight:700;margin-bottom:4px;">VISITOR${hotel.visitorName?' · '+esc(hotel.visitorName):''}</div>` : ''}
+      ${isVisitor ? `<div style="font-size:9px;color:#FF6B6B;font-weight:700;margin-bottom:4px;">OTHER${hotel.visitorName?' · '+esc(hotel.visitorName):''}</div>` : ''}
       ${hotel.address    ? `<div style="font-size:10px;color:#aaa;margin-bottom:2px;">📍 ${esc(hotel.address)}</div>` : ''}
       ${hotel.date       ? `<div style="font-size:10px;color:#aaa;">In: ${fd(hotel.date)}</div>` : ''}
       ${hotel.endDate    ? `<div style="font-size:10px;color:#aaa;">Out: ${fd(hotel.endDate)}</div>` : ''}
@@ -5057,7 +5124,7 @@ async function renderMapTrips() {
 
   // Home pin (pulsing)
   const homePing = L.divIcon({
-    html:`<div style="width:14px;height:14px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulsePin 2s infinite;"></div>`,
+    html:`<div style="width:14px;height:14px;border-radius:50%;background:#00FF88;box-shadow:0 0 12px #00FF88;animation:pulsePin 2s infinite;"></div>`,
     iconSize:[14,14], className:''
   });
   const homeIata = getHomeIatas()[0] || 'ARN';
@@ -5150,7 +5217,7 @@ async function addHotelPin(hotel) {
 
 function addCityPin(iata, coords, isPast, booking) {
   const isVisitor = booking.isVisitor;
-  const color = isVisitor ? (isPast ? '#8B6914' : 'var(--gold)') : (isPast ? 'var(--text3)' : 'var(--cyan)');
+  const color = isVisitor ? (isPast ? '#8B6914' : '#FFB800') : (isPast ? '#7A9AB8' : '#00C8FF');
   const glow  = isVisitor ? (isPast ? 'rgba(139,105,20,0.4)' : 'rgba(255,184,0,0.5)') : (isPast ? 'rgba(74,96,128,0.4)' : 'rgba(0,200,255,0.5)');
   const border = isVisitor ? '2px dashed ' + color : '2px solid ' + color;
   const icon  = L.divIcon({
@@ -5158,17 +5225,17 @@ function addCityPin(iata, coords, isPast, booking) {
     iconSize:[12,12], className:''
   });
   const hotelInCity = bookings.find(h=>h.type==='hotel'&&(h.address||'').toLowerCase().includes(iata.toLowerCase()));
-  const ownerLabel = isVisitor ? `<br><small style="color:var(--gold);">VISITOR${booking.visitorName?' · '+esc(booking.visitorName):''}</small>` : '';
+  const ownerLabel = isVisitor ? `<br><small style="color:#FFB800;">OTHER${booking.visitorName?' · '+esc(booking.visitorName):''}</small>` : '';
   L.marker(coords, {icon}).addTo(mapInstance).bindPopup(`
-    <b style="color:${isVisitor?'var(--gold)':'var(--cyan)'};">${iata}</b>${ownerLabel}<br>
-    <span style="color:var(--text);">${esc(booking.title||'')}</span><br>
+    <b style="color:${isVisitor?'#FFB800':'#00C8FF'};">${iata}</b>${ownerLabel}<br>
+    <span style="color:#E2EAF4;">${esc(booking.title||'')}</span><br>
     ${booking.date?`<small>Depart: ${fd(booking.date)}</small>`:''}
     ${hotelInCity?`<br><small>🏨 ${esc(hotelInCity.hotelName||'')}</small>`:''}
   `);
 }
 
 function drawArc(from, to, isPast, isVisitor) {
-  const color = isVisitor ? (isPast ? '#8B6914' : 'var(--gold)') : (isPast ? '#4A6080' : 'var(--cyan)');
+  const color = isVisitor ? (isPast ? '#8B6914' : '#FFB800') : (isPast ? '#4A6080' : '#00C8FF');
   const mid = [(from[0]+to[0])/2 - Math.abs(from[1]-to[1])*0.3, (from[1]+to[1])/2];
   const pts = [];
   for (let t=0; t<=1; t+=0.05) {
@@ -5176,7 +5243,7 @@ function drawArc(from, to, isPast, isVisitor) {
     const lng = (1-t)*(1-t)*from[1] + 2*(1-t)*t*mid[1] + t*t*to[1];
     pts.push([lat,lng]);
   }
-  L.polyline(pts, { color, weight:1.5, opacity: isPast?0.3:0.7, dashArray: isPast?'4,4':null }).addTo(mapInstance);
+  L.polyline(pts, { color, weight:2, opacity: isPast?0.35:0.8, dashArray: isPast?'4,4':null }).addTo(mapInstance);
 }
 
 // ── Weather Overlay ─────────────────────────────
@@ -5771,12 +5838,12 @@ function toggleEditBooking() {
     ['covers', 'Covers', b.covers],
     ['price', 'Price', b.price],
     ['notes', 'Notes', b.notes],
-    ['isVisitor', 'Ownership', b.isVisitor ? 'visitor' : 'mine'],
+    ['isVisitor', 'Ownership', b.isVisitor ? 'other' : 'mine'],
   ].filter(([key, , val]) => val || ['title','date','isVisitor'].includes(key));
 
   document.getElementById('m-rows').innerHTML = editableFields.map(([key, label, val]) => {
     if (key === 'isVisitor') {
-      return `<div class="detail-row"><span class="detail-lbl">${label}</span><select id="edit-${key}" style="flex:1;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:inherit;font-size:12px;padding:4px 8px;border-radius:4px;"><option value="mine" ${val==='mine'?'selected':''}>Mine</option><option value="visitor" ${val==='visitor'?'selected':''}>Visitor</option></select></div>`;
+      return `<div class="detail-row"><span class="detail-lbl">${label}</span><select id="edit-${key}" style="flex:1;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:inherit;font-size:12px;padding:4px 8px;border-radius:4px;"><option value="mine" ${val==='mine'?'selected':''}>Mine</option><option value="other" ${val==='other'?'selected':''}>Other</option></select></div>`;
     }
     const inputType = (key === 'date' || key === 'endDate') ? 'date' : 'text';
     return `<div class="detail-row"><span class="detail-lbl">${label}</span><input id="edit-${key}" type="${inputType}" value="${esc(val || '')}" style="flex:1;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:inherit;font-size:12px;padding:4px 8px;border-radius:4px;"/></div>`;
@@ -5786,21 +5853,22 @@ function toggleEditBooking() {
 }
 
 function saveEditBooking() {
-  const b = bookings.find(x => x.id === currentBookingId);
-  if (!b) return;
+  const idx = bookings.findIndex(x => x.id === currentBookingId);
+  if (idx === -1) return;
+  const b = bookings[idx];
   const fields = ['title','date','endDate','time','airline','flightNumber','terminal','from','to','hotelName','restaurantName','address','confirmationCode','passengerName','roomType','checkInTime','checkOutTime','covers','price','notes'];
   fields.forEach(key => {
     const el = document.getElementById('edit-' + key);
     if (el) b[key] = el.value.trim() || null;
   });
   const ownerEl = document.getElementById('edit-isVisitor');
-  if (ownerEl) b.isVisitor = ownerEl.value === 'visitor';
-  saveBookings();
+  if (ownerEl) b.isVisitor = ownerEl.value === 'other';
+  // Persist to localStorage directly (skip dedup to preserve edit)
+  localStorage.setItem('voy_bookings', JSON.stringify(bookings));
+  // Close modal first, then re-render so cards reflect changes
+  closeModal();
   renderAll();
   showToast('Booking updated', 'success');
-  document.getElementById('m-edit-btn').style.display = '';
-  document.getElementById('m-save-btn').style.display = 'none';
-  openModal(currentBookingId);
 }
 
 // ═══════════════════════════════════════════════
@@ -5818,7 +5886,7 @@ async function processManualBooking() {
   btn.textContent='EXTRACTING…'; btn.disabled=true;
   try {
     const raw=await callClaude(
-      `Extract ALL booking details from this confirmation. If it contains multiple booking types (e.g. a flight AND a hotel), create separate entries for each. Return ONLY a valid JSON array of objects — even if there is only one booking, wrap it in []. Each object has fields: type, title, airline, flightNumber, terminal, from, to, hotelName, restaurantName, address, date (YYYY-MM-DD), endDate, time, checkInTime, checkOutTime, confirmationCode, passengerName, roomType, covers, price, notes. No markdown.`,
+      `Extract ALL booking details from this confirmation. If it contains multiple booking types (e.g. a flight AND a hotel), create separate entries for each. Return ONLY a valid JSON array of objects — even if there is only one booking, wrap it in []. Each object has fields: type, title, airline, flightNumber, terminal, from, to, hotelName, restaurantName, address, date (YYYY-MM-DD), endDate, time, checkInTime, checkOutTime, confirmationCode, passengerName (the actual traveller/guest name from the booking — NOT the sender or purchaser), roomType, covers, price, notes. No markdown.`,
       [{role:'user',content:text}], 600
     );
     let parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
@@ -6529,7 +6597,7 @@ function saveSettings() {
 
 function clearAllData() {
   if(!confirm('Clear all Mara data?')) return;
-  ['voy_bookings','voy_expenses','voy_pack','voy_budget'].forEach(k=>localStorage.removeItem(k));
+  ['voy_bookings','voy_expenses','voy_pack','voy_budget','voy_scanned_email_ids','voy_scanned_tracker_ids'].forEach(k=>localStorage.removeItem(k));
   bookings=[];expenses=[];packList=[];tripBudget=0;
   renderAll(); closeDrawer(); showToast('All data cleared','warning');
 }
@@ -6990,7 +7058,7 @@ function renderVisitors() {
   if (!visitors.length) {
     list.innerHTML = `<div class="empty-state">
       <div class="empty-icon">👥</div>
-      <div class="empty-title">No visitor trips found</div>
+      <div class="empty-title">No other trips found</div>
       <div class="empty-body">Create a Gmail label called <strong>"Tracker"</strong>, move friends/family travel emails into it, then tap ⟳ SCAN GMAIL.</div>
     </div>`;
     return;
@@ -8036,7 +8104,7 @@ For EACH booking found, return an object:
   "type": "flight"|"hotel"|"restaurant"|"other",
   "title": "short title e.g. Stockholm → Nairobi",
   "confirmationCode": "PNR / booking ref or null",
-  "passengerName": "name(s) or null",
+  "passengerName": "actual passenger/guest name(s) from the booking — NOT the sender or purchaser",
   "date": "YYYY-MM-DD",
   "endDate": "YYYY-MM-DD for hotels (checkout) or null",
   "time": "HH:MM or null",
@@ -8111,7 +8179,7 @@ function showUploadConfirmation(container, headerEl, extracted) {
         <label style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:4px;">
           <select id="upload-owner-${i}" style="background:var(--bg4);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:3px 6px;border-radius:4px;">
             <option value="mine">Mine</option>
-            <option value="visitor">Visitor</option>
+            <option value="other">Other</option>
           </select>
         </label>
         <div style="flex:1;"></div>
@@ -8123,7 +8191,7 @@ function showUploadConfirmation(container, headerEl, extracted) {
 
   container.innerHTML = `
     <div class="agent-chat-msg ai" style="margin-bottom:12px;">
-      I found <strong>${extracted.length} booking${extracted.length>1?'s':''}</strong> in your upload. Please review each one below — you can confirm to add it to your trips, or skip if it's incorrect. <strong>For each booking, select whether it's yours or a visitor's trip</strong> using the dropdown before confirming.
+      I found <strong>${extracted.length} booking${extracted.length>1?'s':''}</strong> in your upload. Please review each one below — you can confirm to add it to your trips, or skip if it's incorrect. <strong>For each booking, select whether it's yours or someone else's trip</strong> using the dropdown before confirming.
     </div>
     ${cardsHtml}
     <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -8137,7 +8205,7 @@ function confirmUploadBooking(idx) {
   if (!b) return;
   b.id = Date.now() + Math.random();
   const ownerSel = document.getElementById('upload-owner-' + idx);
-  b.isVisitor = ownerSel ? ownerSel.value === 'visitor' : false;
+  b.isVisitor = ownerSel ? ownerSel.value === 'other' : false;
   delete b.confidence;
   bookings.push(b);
   saveBookings();
@@ -8163,7 +8231,7 @@ function confirmAllUploadBookings() {
     if (btn && !btn.disabled) {
       b.id = Date.now() + Math.random() + i;
       const ownerSel = document.getElementById('upload-owner-' + i);
-      b.isVisitor = ownerSel ? ownerSel.value === 'visitor' : false;
+      b.isVisitor = ownerSel ? ownerSel.value === 'other' : false;
       delete b.confidence;
       bookings.push(b);
       added++;
