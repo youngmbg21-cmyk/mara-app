@@ -2587,6 +2587,7 @@ async function triggerScan() {
     const SCHEMA = `Extract all travel bookings from the emails and PDF documents provided.
 Return ONLY a valid JSON array — no markdown, no explanation.
 IMPORTANT: If a booking confirmation contains MULTIPLE passengers (e.g. two travelers on the same flight), create ONE booking entry and list all passenger names together in passengerName (e.g. "Young / Jane Smith"). Do NOT create separate bookings for each passenger from the same confirmation code.
+IMPORTANT: If a single email contains MULTIPLE booking types (e.g. a flight AND a hotel, or flights AND car rental), create SEPARATE entries for each booking type. One entry per flight, one entry per hotel, one entry per restaurant, etc. Do NOT combine different booking types into one entry.
 Each item (use null for missing fields):
 {
   "type": "flight"|"hotel"|"restaurant"|"other",
@@ -5554,13 +5555,15 @@ async function processManualBooking() {
   btn.textContent='EXTRACTING…'; btn.disabled=true;
   try {
     const raw=await callClaude(
-      `Extract booking details from this confirmation. Return ONLY a JSON object with fields: type, title, airline, flightNumber, terminal, from, to, hotelName, restaurantName, address, date (YYYY-MM-DD), endDate, time, checkInTime, checkOutTime, confirmationCode, passengerName, roomType, covers, price, notes. No markdown.`,
+      `Extract ALL booking details from this confirmation. If it contains multiple booking types (e.g. a flight AND a hotel), create separate entries for each. Return ONLY a valid JSON array of objects — even if there is only one booking, wrap it in []. Each object has fields: type, title, airline, flightNumber, terminal, from, to, hotelName, restaurantName, address, date (YYYY-MM-DD), endDate, time, checkInTime, checkOutTime, confirmationCode, passengerName, roomType, covers, price, notes. No markdown.`,
       [{role:'user',content:text}], 600
     );
-    const b=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    b.id=Date.now(); bookings.push(b); saveBookings(); renderAll();
+    let parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    if (!Array.isArray(parsed)) parsed = [parsed];
+    parsed.forEach(b => { b.id = Date.now() + Math.random(); bookings.push(b); });
+    saveBookings(); renderAll();
     closeManual(); document.getElementById('manual-text').value='';
-    showToast('✓ Booking added: '+(b.title||b.type),'success');
+    showToast(`✓ ${parsed.length} booking${parsed.length>1?'s':''} added`,'success');
     await runProactiveAnalysis();
   } catch(e) { showToast('Extraction failed: '+e.message,'error'); }
   finally { btn.textContent='EXTRACT & ADD →'; btn.disabled=false; }
