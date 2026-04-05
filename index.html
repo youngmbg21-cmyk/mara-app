@@ -842,6 +842,16 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .agent-history-date { font-size:9px; color:var(--text3); }
 .agent-results-header { padding:12px 20px; border-bottom:1px solid var(--border); background:var(--bg2); flex-shrink:0; display:flex; align-items:center; justify-content:space-between; }
 .agent-results-body { flex:1; overflow-y:auto; padding:16px 20px; }
+.agent-upload-btn { display:flex; align-items:center; gap:5px; background:var(--bg4); border:1px dashed var(--border2); border-radius:6px; padding:6px 12px; color:var(--text2); font-family:'JetBrains Mono',monospace; font-size:10px; cursor:pointer; transition:all 0.2s; letter-spacing:0.04em; }
+.agent-upload-btn:hover { border-color:var(--cyan); color:var(--cyan); background:var(--cyan-dim); }
+.agent-upload-preview { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--bg4); border:1px solid var(--border); border-radius:6px; font-size:10px; color:var(--text2); margin-top:6px; }
+.agent-upload-preview .remove-upload { background:none; border:none; color:var(--red); cursor:pointer; font-size:12px; padding:0 4px; }
+.agent-chat-msg { padding:10px 14px; border-radius:8px; font-size:11px; line-height:1.6; max-width:90%; }
+.agent-chat-msg.ai { background:var(--bg4); border:1px solid var(--border); color:var(--text); }
+.agent-chat-msg.user { background:var(--cyan-dim); border:1px solid var(--border2); color:var(--text); margin-left:auto; }
+.agent-confirm-card { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px; margin:8px 0; }
+.agent-confirm-card .booking-line { display:flex; justify-content:space-between; font-size:10px; padding:3px 0; border-bottom:1px solid var(--border); }
+.agent-confirm-card .booking-line:last-child { border:none; }
 .agent-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; }
 .agent-warn-card { background:rgba(255,184,0,0.08); border:1px solid rgba(255,184,0,0.3); border-radius:10px; padding:16px 20px; margin-bottom:16px; }
 .agent-warn-title { font-size:13px; color:var(--gold); font-weight:600; margin-bottom:6px; }
@@ -1098,7 +1108,7 @@ input[type="date"] { color-scheme: dark; }
       </div>
     </div>
 
-    <!-- CONTROL TOWER (includes timeline) -->
+    <!-- CONTROL TOWER (includes timeline + sidebar + map) -->
     <div class="tab-view" id="tab-tower">
       <div class="sec-header">
         <div><div class="sec-title">CONTROL <span class="accent">TOWER</span></div><div class="sec-subtitle">INTERACTIVE TRAVEL MAP — ALL YOUR DESTINATIONS</div></div>
@@ -1108,6 +1118,10 @@ input[type="date"] { color-scheme: dark; }
         <div class="map-timeline-panel">
           <div class="map-timeline-header">📅 TRIP TIMELINE</div>
           <div id="timeline-list" style="flex:1;overflow-y:auto;min-height:0;"></div>
+          <div class="map-sidebar-header" style="margin-top:4px;">✈ FLIGHTS</div>
+          <div id="map-trip-list"></div>
+          <div class="map-sidebar-header" style="margin-top:4px;">🏨 HOTELS</div>
+          <div id="map-hotel-list"></div>
         </div>
         <div style="flex:1;position:relative;">
           <div id="map"></div>
@@ -1204,31 +1218,6 @@ input[type="date"] { color-scheme: dark; }
     </div>
 
     <!-- CONTROL TOWER -->
-    <div class="tab-view" id="tab-tower">
-      <div class="sec-header">
-        <div><div class="sec-title">CONTROL <span class="accent">TOWER</span></div><div class="sec-subtitle">INTERACTIVE TRAVEL MAP — ALL YOUR DESTINATIONS</div></div>
-        <button class="btn-secondary" onclick="refreshMap()">⟳ REFRESH MAP</button>
-      </div>
-      <div class="map-container" style="flex:1;">
-        <div class="map-sidebar">
-          <div class="map-sidebar-header">✈ FLIGHTS</div>
-          <div id="map-trip-list"></div>
-          <div class="map-sidebar-header" style="margin-top:4px;">🏨 HOTELS</div>
-          <div id="map-hotel-list"></div>
-        </div>
-        <div style="flex:1;position:relative;">
-          <div id="map"></div>
-          <button class="map-weather-toggle" id="map-weather-btn2" onclick="toggleWeatherOverlay()">🌤️ Weather</button>
-          <div class="map-legend">
-            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--cyan);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Upcoming</span></div>
-            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--text3);border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Flight · Past</span></div>
-            <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green);animation:pulsePin 2s infinite;border-radius:50%;"></div><span style="font-size:10px;color:var(--text2);">Home base</span></div>
-            <div class="map-legend-item"><div style="width:10px;height:10px;background:#FFB800;border:1.5px solid #fff;transform:rotate(45deg);border-radius:2px;flex-shrink:0;box-shadow:0 0 6px rgba(255,184,0,0.6);"></div><span style="font-size:10px;color:var(--text2);">Hotel</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- ALERTS -->
     <div class="tab-view" id="tab-alerts">
       <div class="sec-header">
@@ -1545,8 +1534,13 @@ input[type="date"] { color-scheme: dark; }
             <textarea class="agent-textarea" id="agent-input"
               placeholder="Describe what you're looking for…&#10;e.g. &#34;Find me a flight to Nairobi under $600&#34;&#10;e.g. &#34;Luxury hotel in Cape Town, 3 nights from May 22&#34;&#10;e.g. &#34;Best fine dining restaurant in Nairobi&#34;"
               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();runAgent();}"></textarea>
+            <div id="agent-upload-preview-area"></div>
             <div class="agent-input-footer">
-              <span class="agent-hint" id="agent-hint">Press Enter or tap Search</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="agent-hint" id="agent-hint">Press Enter or tap Search</span>
+                <input type="file" id="agent-file-input" accept="image/*,.pdf" multiple style="display:none;" onchange="handleAgentFileUpload(this)">
+                <button class="agent-upload-btn" onclick="document.getElementById('agent-file-input').click()">📎 Upload booking</button>
+              </div>
               <button class="btn-primary" style="padding:8px 20px;" onclick="runAgent()">SEARCH →</button>
             </div>
           </div>
@@ -5319,28 +5313,198 @@ function parseArr(raw) {
 }
 
 // ═══════════════════════════════════════════════
-// PROACTIVE ANALYSIS
+// PROACTIVE ANALYSIS — LOCAL GAP DETECTION
 // ═══════════════════════════════════════════════
+
+// ── Resolve user's home IATA codes from settings ──
+function getHomeIatas() {
+  const homeStr = (settings.home || '').toLowerCase().trim();
+  if (!homeStr) return ['ARN']; // default Stockholm
+  const codes = [];
+  // Check if the setting itself is an IATA code
+  const upper = homeStr.toUpperCase();
+  if (WORLD_CITIES.find(c => c.iata === upper)) codes.push(upper);
+  // Match against city names
+  WORLD_CITIES.forEach(c => {
+    if (homeStr.includes(c.name.toLowerCase()) || c.name.toLowerCase().includes(homeStr)) {
+      codes.push(c.iata);
+    }
+  });
+  return codes.length ? [...new Set(codes)] : ['ARN'];
+}
+
+function isHomeAirport(iata) {
+  if (!iata) return false;
+  return getHomeIatas().includes(iata.toUpperCase());
+}
+
+// ── Deterministic gap detector ──────────────────
+function detectItineraryGaps() {
+  const now = new Date();
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+  const flights = bookings.filter(b => b.type === 'flight' && b.date && b.from && b.to && new Date(b.date) >= cutoff)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const hotels = bookings.filter(b => b.type === 'hotel' && b.date)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const gaps = [];
+
+  // Helper: check if a hotel covers a given night (date string YYYY-MM-DD)
+  function hotelCoversNight(nightDate, city) {
+    const night = new Date(nightDate);
+    return hotels.some(h => {
+      const checkIn  = new Date(h.date);
+      const checkOut = h.endDate ? new Date(h.endDate) : new Date(checkIn.getTime() + 86400000);
+      if (night >= checkIn && night < checkOut) {
+        // Loose city match: if we have city info, try to match
+        if (city && h.address) {
+          const addr = (h.address + ' ' + (h.hotelName || '') + ' ' + (h.title || '')).toLowerCase();
+          if (addr.includes(city.toLowerCase())) return true;
+        }
+        // If no city info to compare, assume it covers
+        return true;
+      }
+      return false;
+    });
+  }
+
+  // Analyze consecutive flight pairs
+  for (let i = 0; i < flights.length; i++) {
+    const f = flights[i];
+    const arrivalCity = f.to;
+    const arrivalDate = new Date(f.date);
+
+    // Find the next departure from this arrival city (or any next flight)
+    let nextFlight = null;
+    for (let j = i + 1; j < flights.length; j++) {
+      // Next flight departing from where we arrived, or just the chronologically next flight
+      if (flights[j].from === arrivalCity || !nextFlight) {
+        nextFlight = flights[j];
+        break;
+      }
+    }
+
+    // If we arrived at home, no gap needed
+    if (isHomeAirport(arrivalCity)) continue;
+
+    // Calculate overnight stays needed at this destination
+    const departureDate = nextFlight ? new Date(nextFlight.date) : null;
+
+    if (departureDate) {
+      // Check each night between arrival and next departure
+      const arrDay = new Date(arrivalDate.toISOString().split('T')[0]);
+      const depDay = new Date(departureDate.toISOString().split('T')[0]);
+      const nightsNeeded = Math.floor((depDay - arrDay) / 86400000);
+
+      if (nightsNeeded > 0) {
+        // Check if hotel covers these nights
+        let uncoveredNights = 0;
+        let firstUncovered = null;
+        for (let d = 0; d < nightsNeeded; d++) {
+          const nightDate = new Date(arrDay.getTime() + d * 86400000).toISOString().split('T')[0];
+          if (!hotelCoversNight(nightDate, arrivalCity)) {
+            uncoveredNights++;
+            if (!firstUncovered) firstUncovered = nightDate;
+          }
+        }
+        if (uncoveredNights > 0) {
+          const cityName = WORLD_CITIES.find(c => c.iata === arrivalCity)?.name || arrivalCity;
+          gaps.push({
+            type: 'missing_hotel',
+            severity: 'warning',
+            title: `No hotel in ${cityName} (${uncoveredNights} night${uncoveredNights > 1 ? 's' : ''})`,
+            message: `You arrive in ${cityName} on ${fd(arrDay.toISOString().split('T')[0])} but have no accommodation booked${nextFlight ? ' before your ' + (nextFlight.from || '') + ' → ' + (nextFlight.to || '') + ' flight on ' + fd(depDay.toISOString().split('T')[0]) : ''}.`,
+            city: cityName,
+            date: firstUncovered
+          });
+        }
+      }
+    } else {
+      // No onward flight — check if we have a hotel at destination
+      const arrDay = arrivalDate.toISOString().split('T')[0];
+      if (!hotelCoversNight(arrDay, arrivalCity)) {
+        const cityName = WORLD_CITIES.find(c => c.iata === arrivalCity)?.name || arrivalCity;
+        gaps.push({
+          type: 'missing_hotel',
+          severity: 'info',
+          title: `No hotel booked in ${cityName}`,
+          message: `You arrive in ${cityName} on ${fd(arrDay)} with no accommodation and no onward flight booked.`,
+          city: cityName,
+          date: arrDay
+        });
+      }
+    }
+  }
+
+  // Check for stranded segments: arrived somewhere non-home with no departing flight
+  const destinationVisits = {};
+  flights.forEach(f => {
+    if (!isHomeAirport(f.to)) {
+      destinationVisits[f.to] = destinationVisits[f.to] || { arrivals: 0, departures: 0 };
+      destinationVisits[f.to].arrivals++;
+    }
+    if (!isHomeAirport(f.from)) {
+      destinationVisits[f.from] = destinationVisits[f.from] || { arrivals: 0, departures: 0 };
+      destinationVisits[f.from].departures++;
+    }
+  });
+  for (const [iata, counts] of Object.entries(destinationVisits)) {
+    if (counts.arrivals > counts.departures) {
+      const cityName = WORLD_CITIES.find(c => c.iata === iata)?.name || iata;
+      const arrFlight = [...flights].reverse().find(f => f.to === iata);
+      // Only flag if the arrival is in the future
+      if (arrFlight && new Date(arrFlight.date) >= now) {
+        const alreadyFlagged = gaps.some(g => g.city === cityName && g.type === 'missing_flight');
+        if (!alreadyFlagged) {
+          gaps.push({
+            type: 'missing_flight',
+            severity: 'warning',
+            title: `No return flight from ${cityName}`,
+            message: `You fly into ${cityName} but have no departing flight booked. You may need a return or onward flight.`,
+            city: cityName,
+            date: arrFlight.date
+          });
+        }
+      }
+    }
+  }
+
+  return gaps;
+}
+
 async function runProactiveAnalysis() {
-  if (!apiKey) { showToast('Add your Claude API key in ⚙ Settings to enable trip analysis','warning'); openDrawer(); return; }
   const sorted = [...bookings].filter(b=>b.date).sort((a,b)=>new Date(a.date)-new Date(b.date));
   if (!sorted.length) { showToast('No bookings to analyze','info'); return; }
   showToast('Analyzing your trips for gaps…','info');
-  try {
-    const raw = await callClaude(
-      `Analyze bookings for travel gaps. Return ONLY a JSON array (no markdown). Empty array if no issues.
-Each item: { "type":"missing_flight"|"missing_hotel"|"transit"|"gap", "severity":"warning"|"info", "title":"...", "message":"...", "city":"...", "date":"..." }`,
-      [{role:'user', content:`Bookings:\n${JSON.stringify(sorted.slice(0,30),null,2)}`}], 1200
-    );
-    const issues = parseArr(raw);
-    proactiveGaps   = issues.filter(i=>['missing_flight','missing_hotel','gap'].includes(i.type));
-    proactiveAlerts = issues.filter(i=>i.type==='transit');
-    updateStats();
-    renderAlerts();
-    if (remindersEnabled) setupCheckInReminders();
-    const total = proactiveGaps.length + proactiveAlerts.length;
-    showToast(total > 0 ? `Found ${total} issue${total>1?'s':''}` : 'No issues found — all clear!', total > 0 ? 'warning' : 'success');
-  } catch(e) { showToast('Analysis failed: ' + (e.message||'unknown error'), 'error'); }
+
+  // ── Step 1: Run deterministic local gap detection (always works, no API needed) ──
+  const localGaps = detectItineraryGaps();
+  proactiveGaps = localGaps;
+  proactiveAlerts = [];
+  updateStats();
+  renderAlerts();
+
+  // ── Step 2: If API key available, enhance with Claude for transit/logistics alerts ──
+  if (apiKey) {
+    try {
+      const homeInfo = settings.home || 'Stockholm';
+      const raw = await callClaude(
+        `Analyze these travel bookings for transit/logistics issues. The user's home city is "${homeInfo}" — do NOT flag gaps when the traveller returns home.
+Return ONLY a JSON array (no markdown). Empty array if no issues.
+Only flag transit concerns (e.g. tight connections, airport-to-hotel transport needs, ground transport between cities).
+Each item: { "type":"transit", "severity":"warning"|"info", "title":"...", "message":"...", "city":"...", "date":"YYYY-MM-DD" }`,
+        [{role:'user', content:`Bookings:\n${JSON.stringify(sorted.slice(0,30),null,2)}`}], 1200
+      );
+      const transitAlerts = parseArr(raw).filter(i => i.type === 'transit');
+      proactiveAlerts = transitAlerts;
+    } catch(e) { /* Transit alerts are a nice-to-have; local gaps are the core */ }
+  }
+
+  updateStats();
+  renderAlerts();
+  if (remindersEnabled) setupCheckInReminders();
+  const total = proactiveGaps.length + proactiveAlerts.length;
+  showToast(total > 0 ? `Found ${total} issue${total>1?'s':''}` : 'No issues found — all clear!', total > 0 ? 'warning' : 'success');
 }
 
 // ═══════════════════════════════════════════════
@@ -7615,6 +7779,213 @@ function initAgent() {
   renderAgentQuota();
   renderAgentMemory();
   renderAgentHistory();
+}
+
+// ═══════════════════════════════════════════════
+// AGENT: DOCUMENT & IMAGE UPLOAD FOR TRIP SCANNING
+// ═══════════════════════════════════════════════
+let _agentUploadedFiles = [];   // { name, type, dataUrl }
+let _agentUploadConvo   = [];   // conversational flow messages
+let _agentPendingBookings = []; // extracted bookings awaiting confirmation
+
+function handleAgentFileUpload(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  if (!apiKey) { showToast('Add your Claude API key in ⚙ Settings first', 'warning'); openDrawer(); return; }
+
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      _agentUploadedFiles.push({ name: file.name, type: file.type, dataUrl: reader.result });
+      renderUploadPreviews();
+      // Auto-start extraction once files are ready
+      if (_agentUploadedFiles.length === files.length) {
+        startUploadExtraction();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = ''; // reset so same file can be re-selected
+}
+
+function renderUploadPreviews() {
+  const area = document.getElementById('agent-upload-preview-area');
+  if (!_agentUploadedFiles.length) { area.innerHTML = ''; return; }
+  area.innerHTML = _agentUploadedFiles.map((f, i) =>
+    `<div class="agent-upload-preview">
+      <span>${f.type.startsWith('image/') ? '🖼️' : '📄'} ${esc(f.name)}</span>
+      <button class="remove-upload" onclick="removeUploadedFile(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
+function removeUploadedFile(idx) {
+  _agentUploadedFiles.splice(idx, 1);
+  renderUploadPreviews();
+}
+
+async function startUploadExtraction() {
+  const container = document.getElementById('agent-results');
+  const headerEl  = document.getElementById('agent-results-header');
+  headerEl.innerHTML = `<div style="font-size:11px;color:var(--cyan);">📎 Scanning uploaded documents…</div>`;
+  container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:30px;">
+    <div class="spinner"></div>
+    <span style="color:var(--text2);font-size:12px;">Reading ${_agentUploadedFiles.length} file${_agentUploadedFiles.length>1?'s':''}… extracting booking details…</span>
+  </div>`;
+
+  // Build multimodal content blocks
+  const contentBlocks = [];
+  for (const f of _agentUploadedFiles) {
+    const base64 = f.dataUrl.split(',')[1];
+    if (f.type === 'application/pdf') {
+      contentBlocks.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 }, title: f.name });
+    } else if (f.type.startsWith('image/')) {
+      contentBlocks.push({ type: 'image', source: { type: 'base64', media_type: f.type, data: base64 } });
+    }
+  }
+  contentBlocks.push({ type: 'text', text:
+    `Extract ALL travel booking details from the uploaded document(s)/image(s).
+Read every page and every section thoroughly. Return ONLY a valid JSON array (no markdown).
+For EACH booking found, return an object:
+{
+  "type": "flight"|"hotel"|"restaurant"|"other",
+  "title": "short title e.g. Stockholm → Nairobi",
+  "confirmationCode": "PNR / booking ref or null",
+  "passengerName": "name(s) or null",
+  "date": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD for hotels (checkout) or null",
+  "time": "HH:MM or null",
+  "from": "IATA or city (flights only) or null",
+  "to": "IATA or city (flights only) or null",
+  "airline": "carrier or null",
+  "flightNumber": "e.g. KQ102 or null",
+  "hotelName": "property name or null",
+  "address": "full address or null",
+  "checkInTime": "HH:MM or null",
+  "checkOutTime": "HH:MM or null",
+  "roomType": "room type or null",
+  "price": "price with currency or null",
+  "notes": "any other info or null",
+  "confidence": "high"|"medium"|"low"
+}
+IMPORTANT: Create SEPARATE entries for each flight leg (outbound and return). Return [] if nothing found.`
+  });
+
+  try {
+    const raw = await callClaude(null, [{ role: 'user', content: contentBlocks }], 4000);
+    const extracted = parseArr(raw);
+    _agentUploadedFiles = [];
+    renderUploadPreviews();
+
+    if (!extracted.length) {
+      container.innerHTML = `<div class="agent-warn-card">
+        <div class="agent-warn-title">No bookings found</div>
+        <div class="agent-warn-body">Could not find any booking details in the uploaded file(s). Try uploading a clearer image or a different document.</div>
+      </div>`;
+      headerEl.innerHTML = `<div style="font-size:11px;color:var(--text2);">Upload scan complete — no bookings found</div>`;
+      return;
+    }
+
+    _agentPendingBookings = extracted;
+    showUploadConfirmation(container, headerEl, extracted);
+  } catch(e) {
+    container.innerHTML = `<div class="agent-warn-card">
+      <div class="agent-warn-title">Extraction failed</div>
+      <div class="agent-warn-body">${esc(e.message || 'Unknown error')}. Try a clearer image or check your API key.</div>
+    </div>`;
+    headerEl.innerHTML = `<div style="font-size:11px;color:var(--red);">Scan failed</div>`;
+  }
+}
+
+function showUploadConfirmation(container, headerEl, extracted) {
+  headerEl.innerHTML = `<div style="font-size:11px;color:var(--green);">📎 Found ${extracted.length} booking${extracted.length>1?'s':''}  — confirm below</div>`;
+
+  const cardsHtml = extracted.map((b, i) => {
+    const icon = b.type==='flight'?'✈️':b.type==='hotel'?'🏨':b.type==='restaurant'?'🍽️':'📌';
+    const conf = b.confidence === 'high' ? '🟢 High' : b.confidence === 'medium' ? '🟡 Medium' : '🔴 Low';
+    const lines = [];
+    if (b.title)             lines.push(['Booking', b.title]);
+    if (b.date)              lines.push(['Date', fd(b.date) + (b.endDate ? ' → ' + fd(b.endDate) : '')]);
+    if (b.time)              lines.push(['Time', b.time]);
+    if (b.from && b.to)      lines.push(['Route', b.from + ' → ' + b.to]);
+    if (b.airline)           lines.push(['Airline', b.airline + (b.flightNumber ? ' ' + b.flightNumber : '')]);
+    if (b.hotelName)         lines.push(['Hotel', b.hotelName]);
+    if (b.address)           lines.push(['Address', b.address]);
+    if (b.roomType)          lines.push(['Room', b.roomType]);
+    if (b.confirmationCode)  lines.push(['Ref', b.confirmationCode]);
+    if (b.passengerName)     lines.push(['Passenger', b.passengerName]);
+    if (b.price)             lines.push(['Price', b.price]);
+
+    return `<div class="agent-confirm-card" id="upload-booking-${i}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text);">${icon} ${esc(b.title || b.type)}</div>
+        <span style="font-size:9px;color:var(--text3);">${conf}</span>
+      </div>
+      ${lines.map(([k,v]) => `<div class="booking-line"><span style="color:var(--text3);">${esc(k)}</span><span style="color:var(--text);">${esc(v)}</span></div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+        <button class="btn-secondary" style="font-size:10px;padding:5px 12px;" onclick="skipUploadBooking(${i})">SKIP</button>
+        <button class="btn-primary" style="font-size:10px;padding:5px 12px;" id="confirm-upload-${i}" onclick="confirmUploadBooking(${i})">CONFIRM & ADD</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="agent-chat-msg ai" style="margin-bottom:12px;">
+      I found <strong>${extracted.length} booking${extracted.length>1?'s':''}</strong> in your upload. Please review each one below — you can confirm to add it to your trips, or skip if it's incorrect.
+    </div>
+    ${cardsHtml}
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <button class="btn-primary" style="padding:8px 20px;" onclick="confirmAllUploadBookings()">CONFIRM ALL (${extracted.length})</button>
+    </div>
+  `;
+}
+
+function confirmUploadBooking(idx) {
+  const b = _agentPendingBookings[idx];
+  if (!b) return;
+  b.id = Date.now() + Math.random();
+  b.isVisitor = false;
+  delete b.confidence;
+  bookings.push(b);
+  saveBookings();
+  renderAll();
+  const btn = document.getElementById('confirm-upload-' + idx);
+  if (btn) { btn.textContent = '✓ ADDED'; btn.disabled = true; btn.classList.add('added'); }
+  const card = document.getElementById('upload-booking-' + idx);
+  if (card) card.style.opacity = '0.5';
+  showToast(`✓ ${b.title || b.type} added to bookings`, 'success');
+  // Run gap detection after adding
+  runProactiveAnalysis();
+}
+
+function skipUploadBooking(idx) {
+  const card = document.getElementById('upload-booking-' + idx);
+  if (card) { card.style.opacity = '0.3'; card.style.pointerEvents = 'none'; }
+}
+
+function confirmAllUploadBookings() {
+  let added = 0;
+  _agentPendingBookings.forEach((b, i) => {
+    const btn = document.getElementById('confirm-upload-' + i);
+    if (btn && !btn.disabled) {
+      b.id = Date.now() + Math.random() + i;
+      b.isVisitor = false;
+      delete b.confidence;
+      bookings.push(b);
+      added++;
+      if (btn) { btn.textContent = '✓ ADDED'; btn.disabled = true; btn.classList.add('added'); }
+      const card = document.getElementById('upload-booking-' + i);
+      if (card) card.style.opacity = '0.5';
+    }
+  });
+  if (added) {
+    saveBookings();
+    renderAll();
+    showToast(`✓ ${added} booking${added>1?'s':''} added`, 'success');
+    runProactiveAnalysis();
+  }
+  const headerEl = document.getElementById('agent-results-header');
+  if (headerEl) headerEl.innerHTML = `<div style="font-size:11px;color:var(--green);">✓ ${added} booking${added>1?'s':''} imported from upload</div>`;
 }
 </script>
 <div id="print-overlay"></div>
