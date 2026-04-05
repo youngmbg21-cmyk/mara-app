@@ -2569,7 +2569,7 @@ async function triggerScan() {
   const safetyTimer = setTimeout(() => {
     overlay.classList.remove('active');
     showToast('Scan timed out — please try again','error');
-  }, 120000);
+  }, 180000);
 
   try {
     setStatus('Locating your Travel folder…');
@@ -2585,21 +2585,28 @@ async function triggerScan() {
     setStatus(`Found ${travelEmails.length} email${travelEmails.length>1?'s':''}. Extracting bookings with AI…`);
 
     const SCHEMA = `Extract all travel bookings from the emails and PDF documents provided.
+Read the ENTIRE email body and ALL pages of every PDF attachment — do not stop after the first match.
 Return ONLY a valid JSON array — no markdown, no explanation.
-IMPORTANT: If a booking confirmation contains MULTIPLE passengers (e.g. two travelers on the same flight), create ONE booking entry and list all passenger names together in passengerName (e.g. "Young / Jane Smith"). Do NOT create separate bookings for each passenger from the same confirmation code.
-IMPORTANT: If a single email contains MULTIPLE booking types (e.g. a flight AND a hotel, or flights AND car rental), create SEPARATE entries for each booking type. One entry per flight, one entry per hotel, one entry per restaurant, etc. Do NOT combine different booking types into one entry.
+
+CRITICAL RULES:
+1. MULTIPLE PASSENGERS on the SAME flight: create ONE booking entry and list all names in passengerName (e.g. "Young / Jane Smith"). Do NOT create separate bookings per passenger.
+2. MULTIPLE BOOKING TYPES in one email (e.g. flight + hotel + car rental): create SEPARATE entries for each type.
+3. ROUND-TRIP or MULTI-LEG FLIGHTS: create a SEPARATE entry for EACH flight leg. An outbound flight and a return flight must be TWO separate entries, each with its own date, from, to, flightNumber, and time. A connecting itinerary (A→B→C) must be separate entries for each segment.
+4. Read the FULL itinerary — departure AND return. Do not stop after finding the first flight leg.
+5. For PDFs: scan every page. Itinerary details, e-tickets, and hotel vouchers often span multiple pages.
+
 Each item (use null for missing fields):
 {
   "type": "flight"|"hotel"|"restaurant"|"other",
-  "title": "short descriptive title",
+  "title": "short descriptive title e.g. Stockholm → Helsinki",
   "confirmationCode": "PNR / booking ref or null",
   "passengerName": "all passenger names separated by / or null",
   "passengerCount": number of passengers or null,
-  "date": "YYYY-MM-DD or null",
-  "endDate": "YYYY-MM-DD or null",
-  "time": "HH:MM or null",
-  "from": "departure IATA or city or null",
-  "to": "destination IATA or city or null",
+  "date": "YYYY-MM-DD (departure date for flights, check-in for hotels)",
+  "endDate": "YYYY-MM-DD (check-out date for hotels, null for flights)",
+  "time": "HH:MM (departure time for flights, reservation time for restaurants)",
+  "from": "departure IATA code or city (flights only)",
+  "to": "arrival IATA code or city (flights only)",
   "airline": "carrier name or null",
   "flightNumber": "e.g. KQ102 or null",
   "terminal": "terminal info or null",
@@ -2626,7 +2633,7 @@ Return [] if no bookings found.`;
       emailTextBlob += `--- EMAIL ${i+1} ---\nSubject: ${e.subject}\nFrom: ${e.from}\nDate: ${e.date}\n${e.body ? '\n' + e.body : '(body empty — see attached PDF)'}\n\n`;
       if (e.pdfs && e.pdfs.length) {
         for (const pdf of e.pdfs) {
-          if (pdfCount >= 5) break;
+          if (pdfCount >= 10) break;
           contentBlocks.push({ type:'document', source:{ type:'base64', media_type:'application/pdf', data:pdf.data }, title:`PDF from email ${i+1}: ${pdf.filename}` });
           pdfCount++;
         }
@@ -2634,7 +2641,7 @@ Return [] if no bookings found.`;
     }
     contentBlocks.unshift({ type:'text', text: SCHEMA + '\n\nEmails:\n' + emailTextBlob });
 
-    const raw       = await callClaude(null, [{ role:'user', content:contentBlocks }], 4000);
+    const raw       = await callClaude(null, [{ role:'user', content:contentBlocks }], 8000);
     const extracted = parseArr(raw);
 
     if (!extracted.length) {
@@ -2728,7 +2735,7 @@ async function fetchTravelEmails() {
       const full = await gmailGet(`/messages/${m.id}?format=full`);
       const hdrs = full.payload?.headers || [];
       const get  = n => (hdrs.find(h=>h.name.toLowerCase()===n)||{}).value||'';
-      const body = extractBody(full.payload).slice(0, 3000);
+      const body = extractBody(full.payload).slice(0, 8000);
       const pdfs = await extractPdfAttachments(full, m.id);
       emails.push({ subject:get('subject'), from:get('from'), date:get('date'), body, pdfs });
     } catch(e) { console.warn('Skipping email:', e.message); }
@@ -2751,7 +2758,7 @@ async function fetchTrackerEmails() {
       const full = await gmailGet(`/messages/${m.id}?format=full`);
       const hdrs = full.payload?.headers || [];
       const get  = n => (hdrs.find(h=>h.name.toLowerCase()===n)||{}).value||'';
-      const body = extractBody(full.payload).slice(0, 3000);
+      const body = extractBody(full.payload).slice(0, 8000);
       const pdfs = await extractPdfAttachments(full, m.id);
       emails.push({ subject:get('subject'), from:get('from'), date:get('date'), body, pdfs });
     } catch(e) { console.warn('Skipping tracker email:', e.message); }
@@ -2806,7 +2813,7 @@ async function extractPdfAttachments(fullMsg, msgId) {
   findPdfParts(fullMsg.payload);
 
   const result = [];
-  for (const p of pdfs.slice(0, 3)) {
+  for (const p of pdfs.slice(0, 5)) {
     try {
       let data = p.part.body.data;
       if (!data && p.part.body.attachmentId) {
