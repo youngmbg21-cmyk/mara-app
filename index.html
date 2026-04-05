@@ -908,7 +908,7 @@ input[type="date"] { color-scheme: dark; }
   <div class="login-card" style="max-width:480px;">
     <div class="login-logo">🧭</div>
     <div class="login-title">MAR<span>A</span></div>
-    <div class="login-sub">AI-powered travel intelligence. Reads your <strong style="color:var(--cyan);">Travel</strong> and <strong style="color:var(--gold);">Tracker</strong> Gmail folders to build your complete trip picture.</div>
+    <div class="login-sub">AI-powered travel intelligence. Scans your <strong style="color:var(--cyan);">Gmail</strong> for booking confirmations to build your complete trip picture.</div>
 
     <div class="login-features">
       <div class="lf-item"><span class="lf-icon">📧</span>Travel folder scan</div>
@@ -1399,7 +1399,7 @@ input[type="date"] { color-scheme: dark; }
             <span style="color:var(--text2);margin-left:16px;">• <strong>Claude API Key</strong> (anthropic.com) — powers AI chat, booking extraction, and all intelligence features</span><br>
             <span style="color:var(--text2);margin-left:16px;">• <strong>SerpApi Key</strong> (serpapi.com) — enables live Google Flights and Hotels data in Price Pulse</span><br>
             <span style="color:var(--text2);margin-left:16px;">• <strong>AviationStack Key</strong> (aviationstack.com) — optional, enables live flight status tracking on dashboard</span><br>
-            <strong style="color:var(--text);">2. Connect Gmail</strong> — Click "Scan Gmail Inbox" on the dashboard. Create Gmail labels called <strong>Travel</strong> and <strong>Tracker</strong>, then move your booking confirmation emails there. Mara will auto-extract flights, hotels, and restaurants.<br>
+            <strong style="color:var(--text);">2. Connect Gmail</strong> — Click "Scan Gmail Inbox" on the dashboard. Mara will automatically search your inbox for booking confirmation emails. Optionally, create a Gmail label and set it in ⚙ Settings → Gmail Label to Scan for more precise scanning. For tracking others' trips, create a label called <strong>Tracker</strong>.<br>
             <strong style="color:var(--text);">3. Or add manually</strong> — Click "+ Add Manually" to paste any booking confirmation text. Claude will extract the details automatically.
           </div>
         </div>
@@ -1859,6 +1859,17 @@ input[type="date"] { color-scheme: dark; }
       <input class="field-input" id="s-passport" placeholder="US">
     </div>
 
+    <div style="font-size:9px;letter-spacing:0.16em;color:var(--cyan);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);margin-top:4px;">GMAIL SCANNING</div>
+    <div class="field-group">
+      <div class="field-label">GMAIL LABEL TO SCAN
+        <span style="color:var(--text3);font-weight:400;letter-spacing:0;text-transform:none;"> · optional</span>
+      </div>
+      <input class="field-input" id="s-gmail-label" placeholder="Travel">
+      <div style="font-size:9px;color:var(--text3);margin-top:3px;">
+        If set, Mara scans this Gmail label for bookings. If left empty, Mara will search your inbox for travel-related emails automatically.
+      </div>
+    </div>
+
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
       <button class="btn-primary" style="width:100%;" onclick="saveSettings()">SAVE ALL SETTINGS</button>
       <button class="btn-secondary" style="width:100%;" onclick="clearAllData()">CLEAR ALL DATA</button>
@@ -1931,12 +1942,11 @@ function deduplicateBookings() {
     const from = (b.from||'').trim().toUpperCase();
     const to   = (b.to||'').trim().toUpperCase();
     const title = (b.title||'').trim().toLowerCase();
-    // Primary: confirmation code + type (strongest dedup)
     let key;
     if (code) {
-      key = `ref:${code}|${type}`;
-      // For flights with same PNR, include route to distinguish legs
-      if (type === 'flight' && from && to) key += `|${from}→${to}`;
+      // Include type + date + route so round-trip legs and mixed bookings
+      // (flight + hotel on the same PNR) all survive dedup
+      key = `ref:${code}|${type}|${date}|${from}|${to}`;
     } else if (type === 'flight' && from && to) {
       key = `${type}|${from}→${to}|${date}`;
     } else {
@@ -2589,13 +2599,13 @@ async function triggerScan() {
   }, 180000);
 
   try {
-    setStatus('Locating your Travel folder…');
+    setStatus('Searching for booking emails…');
     const travelEmails = await fetchTravelEmails();
 
     if (!travelEmails.length) {
       clearTimeout(safetyTimer);
       overlay.classList.remove('active');
-      showScanError('No emails found in Travel folder.', 'Create a label called "Travel" in Gmail, move your booking confirmation emails into it, then scan again.');
+      showScanError('No new emails to scan.', 'All previously scanned emails have been processed. Move new booking confirmation emails into your configured Gmail label, or clear scan history in Settings → Clear All Data to rescan.');
       return;
     }
 
@@ -2671,7 +2681,7 @@ Return [] if no bookings found.`;
     if (!extracted.length) {
       clearTimeout(safetyTimer);
       overlay.classList.remove('active');
-      showScanError('No bookings found in your Travel emails.', 'Make sure your Travel folder contains booking confirmation emails from airlines, hotels, or restaurants, then scan again.');
+      showScanError('No bookings found in your emails.', 'The AI could not extract any booking details from the emails found. Make sure your emails contain booking confirmations from airlines, hotels, or restaurants.');
       return;
     }
 
@@ -2696,9 +2706,8 @@ Return [] if no bookings found.`;
       const from = (b.from||'').trim().toUpperCase();
       const to   = (b.to||'').trim().toUpperCase();
       const title = (b.title||'').trim().toLowerCase();
-      // Primary key: confirmation code + type (strongest match)
-      if (code) return `ref:${code}|${type}`;
-      // Secondary: type + route/title + date
+      // Include type + date + route so round-trip legs survive dedup
+      if (code) return `ref:${code}|${type}|${date}|${from}|${to}`;
       if (type === 'flight' && from && to) return `${type}|${from}→${to}|${date}`;
       return `${type}|${title}|${date}`;
     }
@@ -2742,8 +2751,8 @@ Return [] if no bookings found.`;
       showScanError('Gmail session expired.', 'Tap ⟳ SCAN GMAIL again to reconnect.');
     } else if (m.includes('403')) {
       showScanError('Gmail access denied.', 'Sign out and sign back in, making sure to tap Allow on the Gmail permissions screen.');
-    } else if (m.includes('LABEL_NOT_FOUND')) {
-      showScanError('No "Travel" folder found in Gmail.', 'Create a label called "Travel", move your booking emails into it, then scan again.');
+    } else if (m.includes('No travel booking emails found') || m.includes('No emails found in your')) {
+      showScanError('No booking emails found.', m);
     } else {
       showToast('Scan failed: ' + m, 'error');
     }
@@ -2767,15 +2776,62 @@ function showScanError(title, advice) {
 }
 
 async function fetchTravelEmails() {
-  setStatus('Locating your "Travel" folder…');
-  const labelsRes   = await gmailGet('/labels');
-  const travelLabel = (labelsRes.labels||[]).find(l => l.name.toLowerCase() === 'travel');
-  if (!travelLabel) throw new Error('LABEL_NOT_FOUND');
+  const labelsRes = await gmailGet('/labels');
+  const allLabels = labelsRes.labels || [];
 
-  setStatus('Reading messages from Travel folder…');
-  const listRes  = await gmailGet(`/messages?labelIds=${travelLabel.id}&maxResults=50`);
-  const messages = listRes.messages || [];
-  if (!messages.length) return [];
+  // Strategy 1: User-configured label in settings
+  const userLabel = (settings.gmailLabel || '').trim().toLowerCase();
+  let messages = [];
+  let scanSource = '';
+
+  if (userLabel) {
+    setStatus(`Locating your "${settings.gmailLabel}" folder…`);
+    const match = allLabels.find(l => l.name.toLowerCase() === userLabel);
+    if (match) {
+      const listRes = await gmailGet(`/messages?labelIds=${match.id}&maxResults=50`);
+      messages = listRes.messages || [];
+      scanSource = `"${settings.gmailLabel}" label`;
+    }
+  }
+
+  // Strategy 2: Look for common travel-related labels
+  if (!messages.length && !userLabel) {
+    setStatus('Searching for travel-related folders…');
+    const travelKeywords = ['travel', 'trips', 'bookings', 'flights', 'itineraries', 'reservations'];
+    for (const keyword of travelKeywords) {
+      const match = allLabels.find(l => l.name.toLowerCase() === keyword || l.name.toLowerCase().includes(keyword));
+      if (match) {
+        const listRes = await gmailGet(`/messages?labelIds=${match.id}&maxResults=50`);
+        messages = listRes.messages || [];
+        if (messages.length) {
+          scanSource = `"${match.name}" label`;
+          break;
+        }
+      }
+    }
+  }
+
+  // Strategy 3: Search inbox for travel-related emails using Gmail search
+  if (!messages.length) {
+    setStatus('Searching inbox for travel booking emails…');
+    const searchQuery = encodeURIComponent(
+      'subject:(booking OR confirmation OR itinerary OR e-ticket OR reservation OR "flight" OR "hotel" OR "check-in") -category:promotions'
+    );
+    try {
+      const searchRes = await gmailGet(`/messages?q=${searchQuery}&maxResults=50`);
+      messages = searchRes.messages || [];
+      scanSource = 'inbox search';
+    } catch(e) { console.warn('Inbox search failed:', e.message); }
+  }
+
+  if (!messages.length) {
+    const hint = userLabel
+      ? `No emails found in your "${settings.gmailLabel}" label. Move booking confirmation emails into this label, or clear the label field in Settings to let Mara search your inbox automatically.`
+      : `No travel booking emails found. Mara searched your Gmail labels and inbox for booking confirmations but found nothing. You can create a Gmail label (e.g. "Travel") and move your booking emails into it, then set it in ⚙ Settings → Gmail Label to Scan.`;
+    throw new Error(hint);
+  }
+
+  setStatus(`Found ${messages.length} email${messages.length>1?'s':''} in ${scanSource}. Reading…`);
 
   // Skip emails already processed in previous scans
   const scannedIds = JSON.parse(localStorage.getItem('voy_scanned_email_ids') || '[]');
@@ -5776,8 +5832,8 @@ function formatAiSections(sections) {
 // MODAL
 // ═══════════════════════════════════════════════
 function openModal(id) {
-  const b=bookings.find(x=>x.id===id); if(!b) return;
-  currentBookingId=id;
+  const b=bookings.find(x=>x.id==id); if(!b) return;
+  currentBookingId=b.id;
   const m=META[b.type]||META.other;
   document.getElementById('m-icon').textContent=m.icon;
   document.getElementById('m-type').textContent=m.label;
@@ -5853,21 +5909,27 @@ function toggleEditBooking() {
 }
 
 function saveEditBooking() {
-  const idx = bookings.findIndex(x => x.id === currentBookingId);
+  const idx = bookings.findIndex(x => x.id == currentBookingId);
   if (idx === -1) return;
-  const b = bookings[idx];
   const fields = ['title','date','endDate','time','airline','flightNumber','terminal','from','to','hotelName','restaurantName','address','confirmationCode','passengerName','roomType','checkInTime','checkOutTime','covers','price','notes'];
   fields.forEach(key => {
     const el = document.getElementById('edit-' + key);
-    if (el) b[key] = el.value.trim() || null;
+    if (el) bookings[idx][key] = el.value.trim() || null;
   });
   const ownerEl = document.getElementById('edit-isVisitor');
-  if (ownerEl) b.isVisitor = ownerEl.value === 'other';
-  // Persist to localStorage directly (skip dedup to preserve edit)
+  if (ownerEl) bookings[idx].isVisitor = ownerEl.value === 'other';
+  // Persist to localStorage and close modal
   localStorage.setItem('voy_bookings', JSON.stringify(bookings));
-  // Close modal first, then re-render so cards reflect changes
   closeModal();
-  renderAll();
+  // Force full re-render of all views from the in-memory bookings array
+  updateStats();
+  renderDashboard();
+  renderBookings('all');
+  renderTimeline();
+  renderVisitors();
+  if (mapInstance) refreshMap();
+  const alreadySynced = ['dashboard','bookings','alerts','tower','visitors'];
+  if (activeTab && !alreadySynced.includes(activeTab)) renderTab(activeTab);
   showToast('Booking updated', 'success');
 }
 
@@ -6550,9 +6612,10 @@ function populateSettingsDrawer() {
   if (serpApiKey) document.getElementById('s-serp-key').value = serpApiKey ? '••••••••••••' + serpApiKey.slice(-4) : '';
   if (aviationKey) document.getElementById('s-aviation-key').value = aviationKey ? '••••••••••••' + aviationKey.slice(-4) : '';
   if (proxyBase)  document.getElementById('s-proxy-url').value = proxyBase;
-  if (settings.home)     document.getElementById('s-home').value     = settings.home;
-  if (settings.passport) document.getElementById('s-passport').value = settings.passport;
-  if (settings.currency) document.getElementById('s-currency').value = settings.currency;
+  if (settings.home)       document.getElementById('s-home').value        = settings.home;
+  if (settings.passport)   document.getElementById('s-passport').value    = settings.passport;
+  if (settings.currency)   document.getElementById('s-currency').value    = settings.currency;
+  if (settings.gmailLabel) document.getElementById('s-gmail-label').value = settings.gmailLabel;
   const usage = getSerpUsage();
   const el = document.getElementById('serp-quota-display');
   if (el && serpApiKey) {
@@ -6587,9 +6650,10 @@ function saveSettings() {
     localStorage.setItem('voy_aviation_key', aviationKey);
   }
   // Preferences
-  settings.home     = document.getElementById('s-home').value;
-  settings.passport = document.getElementById('s-passport').value;
-  settings.currency = document.getElementById('s-currency').value;
+  settings.home       = document.getElementById('s-home').value;
+  settings.passport   = document.getElementById('s-passport').value;
+  settings.currency   = document.getElementById('s-currency').value;
+  settings.gmailLabel = (document.getElementById('s-gmail-label').value || '').trim();
   localStorage.setItem('voy_settings', JSON.stringify(settings));
   closeDrawer();
   showToast('✓ Settings saved', 'success');
