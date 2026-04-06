@@ -2305,6 +2305,16 @@ Always reference specific booking details, confirmation codes, and dates when av
     });
   }
 
+  // ── Dashboard ticker ───────────────────────────
+  const tickerHome = settings.home || 'Stockholm';
+  ctx += `\n\n── DASHBOARD TICKER (scrolling banner at top of dashboard) ──
+The scrolling ticker on the Dashboard shows a **Cost of Living Comparison** for 40+ world cities vs the user's home city (${tickerHome}).
+Each city displays 4 cost indicators in local currency:
+  🍜 Lunch (avg restaurant meal) · 🍺 Beer (avg pint) · 🚇 Transport (single fare) · 🏨 Hotel (avg per night)
+Colour coding: **green** = significantly cheaper than ${tickerHome}, **red** = significantly more expensive, **white** = roughly similar.
+This helps travellers quickly gauge how expensive a destination is compared to home before searching for flights or hotels.
+The ticker scrolls continuously on a 120-second loop and covers cities across Europe, Americas, Asia, Middle East, Africa, and Oceania.`;
+
   // ── SerpApi status ────────────────────────────
   if (window._lastPulseResult && activeTab !== 'flights2') {
     const p = window._lastPulseResult;
@@ -2324,9 +2334,26 @@ Always reference specific booking details, confirmation codes, and dates when av
   }
 
   // ── Core instructions ─────────────────────────
-  ctx += `\n\n── HOW TO USE THIS CONTEXT ──
+  ctx += `\n\n── APP KNOWLEDGE (you know everything about Mara Terminal) ──
+You have full knowledge of every feature in Mara Terminal. When users ask about any UI element, explain it clearly:
+• **Dashboard**: Shows booking stats (flights, hotels, nights), countdown to next trip, upcoming cards, and the scrolling cost-of-living ticker.
+• **Scrolling Ticker**: The animated banner at the top of the Dashboard comparing cost of living in 40+ world cities vs the user's home city. Shows lunch, beer, transport, and hotel costs colour-coded green (cheaper), red (more expensive), or white (similar).
+• **Control Tower**: Interactive map plotting all flight routes and hotel pins. Toggle weather overlay for live conditions.
+• **Bookings**: All reservations in card format, filtered by type (flights, hotels, restaurants, other). Each card shows an ownership badge (MINE/OTHER · name).
+• **Price Pulse**: Live flight and hotel price search powered by SerpApi with AI buy/wait signals and price band analysis.
+• **AI Planner**: Multi-module trip planner covering logistics, visa/health, dining, experiences, and budget breakdown.
+• **Budget Tracker**: Set a trip budget, log expenses by category, track spending vs budget with visual progress bars.
+• **Pack List**: AI-generated or manual packing checklist with categories and check-off tracking.
+• **Vault**: Document storage (PDFs, tickets, passport scans) and trip notes organised by category.
+• **Others Tab**: Bookings for friends/family automatically detected from forwarded emails in the Gmail label.
+• **Alerts**: Proactive gap analysis that detects missing hotels, long layovers, or logistics issues.
+• **Settings**: API keys, proxy URL, home city, passport, currency, Gmail label config, scan history management.
+• **Force Rescan**: Clears scan history and re-reads all emails. Regular scan skips already-processed emails.
+
+── HOW TO USE THIS CONTEXT ──
 • Reference actual booking data, codes, and dates in your answers
 • When search results are on screen — comment on the specific options shown
+• When asked about any part of the app UI — explain what it is and how to use it
 • When asked "am I ready" — cross-reference pack list, budget, alerts, and bookings
 • If something is not in the context, say so honestly and offer general travel advice`;
 
