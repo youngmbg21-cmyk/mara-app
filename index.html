@@ -3414,10 +3414,11 @@ function buildCard(b) {
   const codeVal   = b.confirmationCode||'—';
   const extra     = b.type==='flight'?(b.flightNumber||b.airline||''):b.type==='hotel'?(b.roomType||''):(b.covers?`${b.covers} guests`:'');
   const extraLabel= b.type==='flight'?'FLIGHT':b.type==='hotel'?'ROOM':'COVERS';
-  // Ownership badge
+  // Ownership badge — always show first name from passengerName
+  const firstName = (b.passengerName||'').split(/\s*\/\s*/)[0].split(' ')[0] || '';
   const visitorBadge = b.isVisitor
-    ? `<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:rgba(255,184,0,0.15);border:1px solid rgba(255,184,0,0.3);color:var(--gold);letter-spacing:0.06em;font-weight:600;">OTHER${b.visitorName?' · '+esc(b.visitorName.split(' ')[0]):''}</span>`
-    : `<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:var(--cyan-dim);border:1px solid var(--border2);color:var(--cyan);letter-spacing:0.06em;font-weight:600;">MINE</span>`;
+    ? `<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:rgba(255,184,0,0.15);border:1px solid rgba(255,184,0,0.3);color:var(--gold);letter-spacing:0.06em;font-weight:600;">OTHER${firstName?' · '+esc(firstName):''}</span>`
+    : `<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:var(--cyan-dim);border:1px solid var(--border2);color:var(--cyan);letter-spacing:0.06em;font-weight:600;">MINE${firstName?' · '+esc(firstName):''}</span>`;
   return `<div class="bcard ${m.cls}" onclick="openModal(${b.id})">
     <div class="bcard-shimmer"></div>
     <div class="bcard-body">
@@ -5823,7 +5824,7 @@ function openModal(id) {
   document.getElementById('m-title').textContent=b.title||'Booking';
   const rows=[
     b.airline&&['Airline',b.airline],b.flightNumber&&['Flight No.',b.flightNumber],b.terminal&&['Terminal',b.terminal],
-    b.confirmationCode&&['Confirmation',b.confirmationCode],b.passengerName&&['Passenger',b.passengerName],
+    b.confirmationCode&&['Confirmation',b.confirmationCode],['Passenger',b.passengerName||'—'],
     b.date&&['Date',fd(b.date)],b.endDate&&['End date',fd(b.endDate)],
     b.checkInTime&&['Check-in',b.checkInTime],b.checkOutTime&&['Check-out',b.checkOutTime],
     b.roomType&&['Room type',b.roomType],b.time&&['Time',b.time],b.covers&&['Covers',b.covers+' guests'],
@@ -5878,7 +5879,7 @@ function toggleEditBooking() {
     ['price', 'Price', b.price],
     ['notes', 'Notes', b.notes],
     ['isVisitor', 'Ownership', b.isVisitor ? 'other' : 'mine'],
-  ].filter(([key, , val]) => val || ['title','date','isVisitor'].includes(key));
+  ].filter(([key, , val]) => val || ['title','date','passengerName','isVisitor'].includes(key));
 
   document.getElementById('m-rows').innerHTML = editableFields.map(([key, label, val]) => {
     if (key === 'isVisitor') {
@@ -5901,6 +5902,12 @@ function saveEditBooking() {
   });
   const ownerEl = document.getElementById('edit-isVisitor');
   if (ownerEl) bookings[idx].isVisitor = ownerEl.value === 'other';
+  // Sync visitorName from passengerName when ownership is set to other
+  if (bookings[idx].isVisitor && bookings[idx].passengerName) {
+    bookings[idx].visitorName = bookings[idx].passengerName;
+  } else if (!bookings[idx].isVisitor) {
+    bookings[idx].visitorName = null;
+  }
   // Persist to localStorage and close modal
   localStorage.setItem('voy_bookings', JSON.stringify(bookings));
   closeModal();
